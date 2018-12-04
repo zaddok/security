@@ -87,7 +87,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 		FirstName: first_name,
 		LastName:  last_name,
 		Email:     email,
-		Password:  password, //TODO: Should be hashPassword(password)
+		Password:  HashPassword(password),
 	}
 	data, merr := json.Marshal(ui)
 
@@ -310,7 +310,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 
 		// So "expires" is still in the future... Update the session expiry in the database
 		if newExpiry-i.Expiry > 30 {
-			fmt.Printf("updating expiry new:  %d old: %d\n", newExpiry, i.Expiry)
+			g.Log().Debug("updating expiry new:  %d old: %d\n", newExpiry, i.Expiry)
 
 			type SI struct {
 				Expiry int64
@@ -351,6 +351,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
+// Password must already be hashed
 func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, password string) (string, error) {
 
 	uuid, err := uuid.NewUUID()
@@ -368,7 +369,7 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, password 
 		Created   int64
 	}
 	now := time.Now().Unix()
-	si := &SI{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: HashPassword(password), Created: now}
+	si := &SI{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: password, Created: now}
 	k := datastore.NameKey("Person", uuid.String(), nil)
 	if _, err := g.client.Put(g.ctx, k, &si); err != nil {
 		g.Log().Error("AddPerson() Person storage failed. Error: %v", err)
@@ -379,47 +380,59 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, password 
 }
 
 func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, string, error) {
-	/*
-		uuid, err := uuid.Parse(token)
-		if err != nil {
-			return "", "Invalid account activation token", nil
+	// Check the token is a valid uuid
+	_, err := uuid.Parse(token)
+	if err != nil {
+		return "", "Invalid account activation token", nil
+	}
+
+	// Lookup the request token for the account creation request details
+	type SI struct {
+		Expiry int64
+		Data   string
+	}
+	k := datastore.NameKey("RequestToken", token, nil)
+	i := new(SI)
+	err := g.client.Get(g.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity || i.Expiry < time.Now().Unix() {
+		return "", "Invalid activation token", nil
+	} else if err != nil {
+		g.Log().Error("ActivateSignup() failure: " + err.Error())
+		return "", "", err
+	}
+	i := &NewUserInfo{}
+	json.Unmarshal([]byte(data), i)
+
+	// Do one last final double check an account does not exist with this email address
+	type RI struct {
+		Email string
+	}
+	var items []RI
+	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
+	_, err := g.client.GetAll(g.ctx, q, &items)
+	if err != nil {
+		g.Log().Error("ActivateSignup() failure: " + err.Error())
+		return "", "", err
+	}
+	if len(items) > 0 {
+		g.Log().Error("ActivateSignup() Email address already exists: %v", err)
+		return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
+	}
+
+	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
+
+	if aerr == nil {
+		token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
+		if err2 == nil {
+			return token, "", nil
+		} else {
+			g.Log().Error("addPerson() createSession() failure: " + err2.Error())
+			return "", "", err2
 		}
-
-		// Look up the details of the person this message is for
-		var data string
-		i := g.cql.Query("select data from request_token where uid=?", uuid.String()).Iter()
-		match := i.Scan(&data)
-		if match {
-			i := &NewUserInfo{}
-			json.Unmarshal([]byte(data), i)
-
-			// Check another account sign up has not just occured using this same email address
-			var e string
-			pc := g.cql.Query("select email from person where site = ? and email = ?", site, i.Email).Iter()
-			defer pc.Close()
-			match := pc.Scan(&e)
-			if match {
-				return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
-			} else {
-
-				uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
-
-				if aerr == nil {
-					token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
-					if err2 == nil {
-						return token, "", nil
-					} else {
-						g.Log().Error("addPerson() createSession() failure: " + err2.Error())
-						return "", "", err2
-					}
-				} else {
-					g.Log().Error("addPerson() failure: " + aerr.Error())
-					return "", "", aerr
-				}
-			}
-
-		}
-	*/
+	} else {
+		g.Log().Error("addPerson() failure: " + aerr.Error())
+		return "", "", aerr
+	}
 
 	return "", "Invalid activation token", nil
 }
