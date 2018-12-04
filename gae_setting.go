@@ -52,7 +52,6 @@ func (s *GaeSetting) Get(site, name string) *string {
 
 // Lookup a configuration setting. Loads from database only if cache has expired.
 func (s *GaeSetting) GetWithDefault(site, name string, defaultValue string) string {
-	fmt.Println(site, name)
 	s.refreshCache()
 
 	sm, exists := s.sites[site]

@@ -47,6 +47,16 @@ type GaePerson struct {
 	LastSigninIP string
 }
 
+type GaeSession struct {
+	Site       string
+	PersonUUID string
+	FirstName  string
+	LastName   string
+	Created    int64
+	Expiry     int64
+	Roles      string
+}
+
 func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
@@ -268,16 +278,8 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
-		type RI struct {
-			FirstName  string
-			LastName   string
-			PersonUUID string
-			Created    int64
-			Expiry     int64
-			Roles      string
-		}
 		k := datastore.NameKey("Session", site+"|"+cookie, nil)
-		i := new(RI)
+		i := new(GaeSession)
 		err := g.client.Get(g.ctx, k, i)
 		if err == datastore.ErrNoSuchEntity || i.Expiry < time.Now().Unix() {
 			return g.GuestSession(site), nil
@@ -366,7 +368,7 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 	now := time.Now().Unix()
 	si := &GaePerson{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: password, Created: now}
 	k := datastore.NameKey("Person", uuid.String(), nil)
-	if _, err := g.client.Put(g.ctx, k, &si); err != nil {
+	if _, err := g.client.Put(g.ctx, k, si); err != nil {
 		g.Log().Error("AddPerson() Person storage failed. Error: %v", err)
 		return "", err
 	}
@@ -405,10 +407,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	json.Unmarshal([]byte(si.Data), i)
 
 	// Do one last final double check an account does not exist with this email address
-	type RI struct {
-		Email string
-	}
-	var items []RI
+	var items []GaePerson
 	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
@@ -461,18 +460,9 @@ func (g *GaeAccessManager) CreateSession(site string, person string, firstName s
 		return "", err
 	}
 
-	type RI struct {
-		Site       string
-		PersonUUID string
-		FirstName  string
-		LastName   string
-		Created    int64
-		Expiry     int64
-		Roles      string
-	}
-	ri := &RI{Site: site, PersonUUID: personUuid.String(), FirstName: firstName, LastName: lastName, Created: now, Expiry: expires, Roles: roles}
+	ri := &GaeSession{Site: site, PersonUUID: personUuid.String(), FirstName: firstName, LastName: lastName, Created: now, Expiry: expires, Roles: roles}
 	k := datastore.NameKey("Session", site+"|"+token, nil)
-	if _, err := g.client.Put(g.ctx, k, &ri); err != nil {
+	if _, err := g.client.Put(g.ctx, k, ri); err != nil {
 		return "", err
 	}
 
