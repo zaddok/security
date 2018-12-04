@@ -352,7 +352,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 }
 
 // Password must already be hashed
-func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, password string) (string, error) {
+func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
 
 	uuid, err := uuid.NewUUID()
 	if err != nil {
@@ -392,24 +392,24 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		Data   string
 	}
 	k := datastore.NameKey("RequestToken", token, nil)
-	i := new(SI)
-	err := g.client.Get(g.ctx, k, i)
-	if err == datastore.ErrNoSuchEntity || i.Expiry < time.Now().Unix() {
+	si := new(SI)
+	err = g.client.Get(g.ctx, k, si)
+	if err == datastore.ErrNoSuchEntity || si.Expiry < time.Now().Unix() {
 		return "", "Invalid activation token", nil
 	} else if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
 		return "", "", err
 	}
 	i := &NewUserInfo{}
-	json.Unmarshal([]byte(data), i)
+	json.Unmarshal([]byte(si.Data), i)
 
 	// Do one last final double check an account does not exist with this email address
 	type RI struct {
 		Email string
 	}
 	var items []RI
-	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
-	_, err := g.client.GetAll(g.ctx, q, &items)
+	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
+	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
 		return "", "", err

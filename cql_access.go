@@ -98,7 +98,7 @@ func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, 
 		FirstName: first_name,
 		LastName:  last_name,
 		Email:     email,
-		Password:  password, //TODO: Should be hashPassword(password)
+		Password:  HashPassword(password),
 	}
 	data, merr := json.Marshal(ui)
 
@@ -336,11 +336,11 @@ func (g *CqlAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
-func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email, password string) (string, error) {
+func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
 
 	uuid := gocql.TimeUUID()
 	rows := g.cql.Query("insert into person (site, uuid, first_name, last_name, email, password, created) values(?,?,?,?,?,?,?)",
-		site, uuid, firstName, lastName, email, HashPassword(password), NowMilliseconds()).Iter()
+		site, uuid, firstName, lastName, email, password, NowMilliseconds()).Iter()
 	err := rows.Close()
 	if err != nil {
 		return "", err

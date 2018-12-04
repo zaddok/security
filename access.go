@@ -12,7 +12,7 @@ type AccessManager interface {
 	GuestSession(site string) Session
 	Invalidate(host, cookie string) (Session, error)
 	CreateSession(site string, uuid string, firstName string, lastName string, ip string) (string, error)
-	AddPerson(site, firstName, lastName, email, password string) (string, error)
+	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	Log() log.Log
 	Setting() Setting
 }
@@ -43,11 +43,11 @@ type Session interface {
 }
 
 type NewUserInfo struct {
-	Site      string `json:"site"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+	Site      string  `json:"site"`
+	FirstName string  `json:"first_name"`
+	LastName  string  `json:"last_name"`
+	Email     string  `json:"email"`
+	Password  *string `json:"password"`
 }
 
 type person struct {
