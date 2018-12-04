@@ -26,15 +26,14 @@ type GaeAccessManager struct {
 	template *template.Template
 }
 
-func NewGaeAccessManager(log log.Log) (AccessManager, error) {
+func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
 
-	settings, client, ctx := NewGaeSetting()
+	settings, client, ctx := NewGaeSetting(projectId)
 
 	t := template.New("api")
 	var err error
 
 	if t, err = t.Parse(emailHtmlTemplates); err != nil {
-		fmt.Println("Email Template Problem: %s", err)
 		log.Error("Email Template Problem: %s", err)
 	}
 

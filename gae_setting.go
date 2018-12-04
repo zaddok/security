@@ -17,9 +17,8 @@ type GaeSetting struct {
 	sites   map[string]map[string]string
 }
 
-func NewGaeSetting() (Setting, *datastore.Client, context.Context) {
+func NewGaeSetting(projectID string) (Setting, *datastore.Client, context.Context) {
 	ctx := context.Background()
-	projectID := "sis-test-215805"
 
 	client, err := datastore.NewClient(ctx, projectID)
 	if err != nil {

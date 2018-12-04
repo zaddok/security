@@ -8,25 +8,23 @@ import (
 	"net/mail"
 	"strings"
 	"time"
-
-	"security/resource"
 )
 
 var COOKIE_DAYS = 365
 
 func RegisterHttpHandlers() {
 
-	data, berr := base64.StdEncoding.DecodeString(resource.FontAwesomeWebfontTtf)
+	data, berr := base64.StdEncoding.DecodeString(FontAwesomeWebfontTtf)
 	if berr != nil {
 		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
 	}
 	http.HandleFunc("/font/fontawesome-webfont.ttf", BinaryFile(data, 604800))
-	data, berr = base64.StdEncoding.DecodeString(resource.FontAwesomeWebfontEot)
+	data, berr = base64.StdEncoding.DecodeString(FontAwesomeWebfontEot)
 	if berr != nil {
 		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
 	}
 	http.HandleFunc("/font/fontawesome-webfont.eot", BinaryFile(data, 604800))
-	data, berr = base64.StdEncoding.DecodeString(resource.FontAwesomeWebfontWoff)
+	data, berr = base64.StdEncoding.DecodeString(FontAwesomeWebfontWoff)
 	if berr != nil {
 		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
 	}

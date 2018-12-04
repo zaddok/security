@@ -3,45 +3,49 @@ package security
 import (
 	"fmt"
 	"testing"
-	"time"
-
-	"github.com/gocql/gocql"
 )
 
-const TEST_KEYSPACE = "realnews_test"
-const TEST_NODE = "127.0.0.1"
+const TEST_CASSANDRA_KEYSPACE = "realnews_test"
+const TEST_CASSANDRA_NODE = "127.0.0.1"
+const TEST_GAE_PROJECT_ID = "sis-test-215805"
 
 // Test settings
 func TestSettings(t *testing.T) {
 
-	cluster := gocql.NewCluster(TEST_NODE)
-	cluster.Keyspace = TEST_KEYSPACE
-	cluster.ProtoVersion = 4
-	cluster.Timeout = 1 * time.Minute
-	cluster.Consistency = gocql.LocalOne
-	cql, err := cluster.CreateSession()
-	if err != nil {
-		t.Fatalf("Connect to test data store failed: %v", err)
-		return
-	}
+	/*
+		cluster := gocql.NewCluster(TEST_NODE)
+		cluster.Keyspace = TEST_KEYSPACE
+		cluster.ProtoVersion = 4
+		cluster.Timeout = 1 * time.Minute
+		cluster.Consistency = gocql.LocalOne
+		cql, err := cluster.CreateSession()
+		if err != nil {
+			t.Fatalf("Connect to test data store failed: %v", err)
+			return
+		}
+	*/
+	host := RandomString(20) + ".test.com"
+	host2 := RandomString(20) + ".test.com"
 
-	s := NewSetting(cql)
+	s, _, _ := NewGaeSetting(TEST_GAE_PROJECT_ID)
 
+	// Test Put with two different hostnames
 	{
-		err := s.Put("example.com", "s1", "v1")
+		err := s.Put(host, "s1", "v1")
 		if err != nil {
 			t.Fatalf("settings.Put() failed: %v", err)
 		}
-		err = s.Put("test.com", "s1", "v2")
+		err = s.Put(host2, "s1", "v2")
 		if err != nil {
 			t.Fatalf("settings.Put() failed: %v", err)
 		}
 	}
 
-	s = NewSetting(cql)
+	s, _, _ = NewGaeSetting(TEST_GAE_PROJECT_ID)
 
+	// Test Get and ensure value for right hostname was returned
 	{
-		value := s.Get("example.com", "s1")
+		value := s.Get(host, "s1")
 		if value == nil {
 			t.Fatal("settings.Get() should return \"v1\" not nil.")
 		}
@@ -51,7 +55,7 @@ func TestSettings(t *testing.T) {
 	}
 
 	{
-		value := s.Get("test.com", "s1")
+		value := s.Get(host2, "s1")
 		if value == nil {
 			t.Fatal("settings.Get() should return \"v2\" not nil.")
 		}
