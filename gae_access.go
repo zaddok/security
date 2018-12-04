@@ -383,6 +383,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	// Check the token is a valid uuid
 	_, err := uuid.Parse(token)
 	if err != nil {
+		g.Log().Error("ActivateSignup() called with invalid uuid: " + err.Error())
 		return "", "Invalid account activation token", nil
 	}
 
@@ -394,11 +395,15 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	k := datastore.NameKey("RequestToken", token, nil)
 	si := new(SI)
 	err = g.client.Get(g.ctx, k, si)
-	if err == datastore.ErrNoSuchEntity || si.Expiry < time.Now().Unix() {
+	if err == datastore.ErrNoSuchEntity {
+		g.Log().Error("ActivateSignup() called with uuid not in the datastore: " + err.Error())
 		return "", "Invalid activation token", nil
 	} else if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
 		return "", "", err
+	} else if si.Expiry < time.Now().Unix() {
+		g.Log().Error("ActivateSignup() called with expired uuid: %d < %d ", si.Expiry, time.Now().Unix())
+		return "", "Invalid activation token", nil
 	}
 	i := &NewUserInfo{}
 	json.Unmarshal([]byte(si.Data), i)
@@ -411,8 +416,8 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
-		g.Log().Error("ActivateSignup() failure: " + err.Error())
-		return "", "", err
+		g.Log().Error("ActivateSignup() email lookup failure: " + err.Error())
+		return "", "Activation was temporarily offline, please try again.", err
 	}
 	if len(items) > 0 {
 		g.Log().Error("ActivateSignup() Email address already exists: %v", err)
@@ -420,21 +425,18 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	}
 
 	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
-
-	if aerr == nil {
-		token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
-		if err2 == nil {
-			return token, "", nil
-		} else {
-			g.Log().Error("addPerson() createSession() failure: " + err2.Error())
-			return "", "", err2
-		}
-	} else {
+	if aerr != nil {
 		g.Log().Error("addPerson() failure: " + aerr.Error())
 		return "", "", aerr
 	}
 
-	return "", "Invalid activation token", nil
+	token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
+	if err2 == nil {
+		return token, "", nil
+	}
+
+	g.Log().Error("addPerson() createSession() failure: " + err2.Error())
+	return "", "", err2
 }
 
 func (g *GaeAccessManager) CreateSession(site string, person string, firstName string, lastName string, ip string) (string, error) {
