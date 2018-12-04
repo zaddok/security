@@ -276,6 +276,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
 
+// Request the session information associated the site hostname and cookie in the web request
 func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
 		k := datastore.NameKey("Session", site+"|"+cookie, nil)

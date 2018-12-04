@@ -119,7 +119,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		am.Log().Debug("Singup page")
-		session, err := am.Session("", r.Host)
+		session, err := LookupSession(r, am)
 		if err != nil {
 			am.Log().Notice("Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
@@ -220,7 +220,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName string) func(w 
 		AddSafeHeaders(w)
 		am.Log().Debug("Forgot password page")
 
-		_, err := am.Session("", r.Host)
+		_, err := LookupSession(r, am)
 		if err != nil {
 			am.Log().Notice("Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
@@ -313,7 +313,7 @@ func IpFromRequest(r *http.Request) string {
 	// This fails in some cases, such as if the web server and load balancer or
 	// reverse proxy use public IP addresses.
 
-	if strings.HasPrefix(ip, "10.") || strings.HasPrefix(ip, "172.") || strings.HasPrefix(ip, "192.168.") || strings.HasPrefix(ip, "127.") || strings.HasPrefix(ip, "0:0:0:0") {
+	if strings.HasPrefix(ip, "10.") || strings.HasPrefix(ip, "172.") || strings.HasPrefix(ip, "192.168.") || strings.HasPrefix(ip, "127.") || strings.HasPrefix(ip, "0:0:0:0") || strings.HasPrefix(ip, "169.254.") {
 		var providedIp string
 		if len(r.Header.Get("HTTP_X_FORWARDED_FOR")) > 0 {
 			providedIp = r.Header.Get("HTTP_X_FORWARDED_FOR")
