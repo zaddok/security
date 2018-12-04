@@ -75,7 +75,7 @@ func (c *GaeAccessManager) Log() log.Log {
 	return c.log
 }
 
-func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, error) {
+func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, string, error) {
 	var results []string
 
 	// Check email does not already exist
@@ -83,7 +83,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if len(items) > 0 {
 		results = append(results, "This email address already belongs to a valid user.")
@@ -91,7 +91,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 
 	if strings.ToLower(a.setting.GetWithDefault(site, "self.signup", "no")) == "no" {
 		results = append(results, "Self registration is not allowed at this time.")
-		return &results, errors.New(results[0])
+		return &results, "", errors.New(results[0])
 	}
 
 	smtpHostname := a.setting.GetWithDefault(site, "smtp.hostname", "")
@@ -129,12 +129,12 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	}
 
 	if len(results) > 0 {
-		return &results, errors.New(results[0])
+		return &results, "", errors.New(results[0])
 	}
 
 	token, err := uuid.NewUUID()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	a.log.Info("%s Sign up confirmation token for \"%s\" is \"%s\"", ip, email, token.String())
 
@@ -143,7 +143,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	k := datastore.NameKey("RequestToken", token.String(), nil)
 	i := GaeRequestToken{Uuid: token.String(), PersonUuid: token.String(), Type: `signup_confirmation`, IP: ip, Expiry: time.Now().Unix(), Data: string(data)}
 	if _, err := a.client.Put(a.ctx, k, &i); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	type Page struct {
@@ -183,7 +183,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	err = a.template.ExecuteTemplate(&w, "signup_confirmation_text", p)
 	if err != nil {
 		results = append(results, fmt.Sprintf("Error rendering template \"signup_confirmation_text\": %v", err))
-		return &results, errors.New(results[0])
+		return &results, "", errors.New(results[0])
 	}
 	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
 	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
@@ -194,7 +194,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	err = a.template.ExecuteTemplate(&w, "signup_confirmation_html", p)
 	if err != nil {
 		results = append(results, fmt.Sprintf("Error rendering template \"signup_confirmation_html\": %v", err))
-		return &results, errors.New(results[0])
+		return &results, "", errors.New(results[0])
 	}
 	w.Write([]byte(base64.StdEncoding.EncodeToString(h.Bytes())))
 	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
@@ -208,12 +208,12 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	if err != nil {
 		a.log.Error("%s Send signup confirmation mail failed: %v\n", ip, err)
 		results = append(results, "Sending your signup confirmation mail failed. Please retry shortly.")
-		return &results, errors.New(results[0])
+		return &results, "", errors.New(results[0])
 	} else {
 		a.log.Info("%s Sent signup confirmation mail to: %s\n", ip, email)
 	}
 
-	return nil, nil
+	return nil, token.String(), nil
 
 }
 

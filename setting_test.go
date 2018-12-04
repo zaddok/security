@@ -2,19 +2,24 @@ package security
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
-const TEST_CASSANDRA_KEYSPACE = "realnews_test"
-const TEST_CASSANDRA_NODE = "127.0.0.1"
-const TEST_GAE_PROJECT_ID = "sis-test-215805"
+func requireEnv(name string, t *testing.T) string {
+	value := os.Getenv(name)
+	if value == "" {
+		t.Fatalf("Environment variable required: %s", name)
+	}
+	return value
+}
 
 // Test settings
 func TestSettings(t *testing.T) {
 
 	/*
-		cluster := gocql.NewCluster(TEST_NODE)
-		cluster.Keyspace = TEST_KEYSPACE
+		cluster := gocql.NewCluster(requireEnv("CASSANDRA_NODE", t))
+		cluster.Keyspace = requireEnv("CASSANDRA_KEYSPACE", t)
 		cluster.ProtoVersion = 4
 		cluster.Timeout = 1 * time.Minute
 		cluster.Consistency = gocql.LocalOne
@@ -27,7 +32,7 @@ func TestSettings(t *testing.T) {
 	host := RandomString(20) + ".test.com"
 	host2 := RandomString(20) + ".test.com"
 
-	s, _, _ := NewGaeSetting(TEST_GAE_PROJECT_ID)
+	s, _, _ := NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
 
 	// Test Put with two different hostnames
 	{
@@ -41,7 +46,7 @@ func TestSettings(t *testing.T) {
 		}
 	}
 
-	s, _, _ = NewGaeSetting(TEST_GAE_PROJECT_ID)
+	s, _, _ = NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
 
 	// Test Get and ensure value for right hostname was returned
 	{

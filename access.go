@@ -5,7 +5,7 @@ import (
 )
 
 type AccessManager interface {
-	Signup(host, email, password, first_name, last_name, ip string) (*[]string, error)
+	Signup(host, email, password, first_name, last_name, ip string) (*[]string, string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
 	Session(host, cookie string) (Session, error)
