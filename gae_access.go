@@ -397,7 +397,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	} else if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
 		return "", "Activation service failed, please try again.", err
-	} else if si.Expiry+maxAge < time.Now().Unix() {
+	} else if si.Expiry+int64(maxAge) < time.Now().Unix() {
 		g.Log().Error("ActivateSignup() called with expired uuid: %d < %d ", si.Expiry, time.Now().Unix())
 		return "", "Invalid activation token", nil
 	}
