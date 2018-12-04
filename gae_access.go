@@ -26,6 +26,27 @@ type GaeAccessManager struct {
 	template *template.Template
 }
 
+type GaeRequestToken struct {
+	Uuid       string
+	PersonUuid string
+	Type       string
+	IP         string
+	Expiry     int64
+	Data       string
+}
+
+type GaePerson struct {
+	Site         string
+	Uuid         string
+	FirstName    string
+	LastName     string
+	Email        string
+	Password     *string
+	Created      int64
+	LastSignin   int64
+	LastSigninIP string
+}
+
 func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
@@ -58,8 +79,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	var results []string
 
 	// Check email does not already exist
-	type RI struct{ Email string }
-	var items []RI
+	var items []GaePerson
 	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
@@ -119,16 +139,9 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	a.log.Info("%s Sign up confirmation token for \"%s\" is \"%s\"", ip, email, token.String())
 
 	//TODO: expiry time set to actual desired expiry time
-	type SI struct {
-		Uuid       string
-		PersonUuid string
-		Type       string
-		IP         string
-		Expiry     int64
-		Data       string
-	}
+
 	k := datastore.NameKey("RequestToken", token.String(), nil)
-	i := SI{Uuid: token.String(), PersonUuid: token.String(), Type: `signup_confirmation`, IP: ip, Expiry: time.Now().Unix(), Data: string(data)}
+	i := GaeRequestToken{Uuid: token.String(), PersonUuid: token.String(), Type: `signup_confirmation`, IP: ip, Expiry: time.Now().Unix(), Data: string(data)}
 	if _, err := a.client.Put(a.ctx, k, &i); err != nil {
 		return nil, err
 	}
@@ -206,13 +219,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 
 func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
 
-	type RI struct {
-		Uuid      string
-		Password  string
-		FirstName string
-		LastName  string
-	}
-	var items []RI
+	var items []GaePerson
 	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
@@ -220,24 +227,21 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		return g.GuestSession(site), "", err
 	}
 	if len(items) > 0 {
-		if items[0].Password == "" {
+		if items[0].Password == nil || *items[0].Password == "" {
 			g.Log().Info("Signin failed. This user account has an empty password field. Email: " + email)
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
-		if !VerifyPassword(items[0].Password, password) {
+		if !VerifyPassword(*items[0].Password, password) {
 			g.Log().Info("Authenticate() Signin failed. User provided password failes to match stored password.")
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
-		type SI struct {
-			LastSignin   int64
-			LastSigninIP string
-		}
 		now := time.Now().Unix()
-		si := &SI{LastSignin: now, LastSigninIP: ip}
+		items[0].LastSignin = now
+		items[0].LastSigninIP = ip
 		k := datastore.NameKey("Person", items[0].Uuid, nil)
-		if _, err := g.client.Put(g.ctx, k, &si); err != nil {
+		if _, err := g.client.Put(g.ctx, k, &items[0]); err != nil {
 			g.Log().Error("Authenticate() Person update Error: %v", err)
 			return g.GuestSession(site), "", err
 		}
@@ -359,17 +363,8 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 		return "", err
 	}
 
-	type SI struct {
-		Site      string
-		Uuid      string
-		FirstName string
-		LastName  string
-		Email     string
-		Password  *string
-		Created   int64
-	}
 	now := time.Now().Unix()
-	si := &SI{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: password, Created: now}
+	si := &GaePerson{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: password, Created: now}
 	k := datastore.NameKey("Person", uuid.String(), nil)
 	if _, err := g.client.Put(g.ctx, k, &si); err != nil {
 		g.Log().Error("AddPerson() Person storage failed. Error: %v", err)
@@ -393,14 +388,14 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		Data   string
 	}
 	k := datastore.NameKey("RequestToken", token, nil)
-	si := new(SI)
+	si := new(GaeRequestToken)
 	err = g.client.Get(g.ctx, k, si)
 	if err == datastore.ErrNoSuchEntity {
 		g.Log().Error("ActivateSignup() called with uuid not in the datastore: " + err.Error())
 		return "", "Invalid activation token", nil
 	} else if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
-		return "", "", err
+		return "", "Activation service failed, please try again.", err
 	} else if si.Expiry < time.Now().Unix() {
 		g.Log().Error("ActivateSignup() called with expired uuid: %d < %d ", si.Expiry, time.Now().Unix())
 		return "", "Invalid activation token", nil
@@ -417,7 +412,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("ActivateSignup() email lookup failure: " + err.Error())
-		return "", "Activation was temporarily offline, please try again.", err
+		return "", "Activation service failed, please try again.", err
 	}
 	if len(items) > 0 {
 		g.Log().Error("ActivateSignup() Email address already exists: %v", err)
