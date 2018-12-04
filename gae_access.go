@@ -243,7 +243,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		}
 
 		if !VerifyPassword(*items[0].Password, password) {
-			g.Log().Info("Authenticate() Signin failed. User provided password failes to match stored password.")
+			g.Log().Info("Authenticate() Signin failed. User provided password failed to match stored password.")
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
