@@ -32,14 +32,20 @@ func TestAccessManager(t *testing.T) {
 	host := RandomString(8) + ".com"
 	first := RandomString(8)
 	last := RandomString(8)
-	email := first + "." + last + "@.test.com"
+	email := first + "." + last + "@tai.io"
 
 	am.Setting().Put(host, "self.signup", "no")
 
+	am.Setting().Put(host, "smtp.hostname", requireEnv("SMTP_HOSTNAME", t))
+	am.Setting().Put(host, "smtp.port", requireEnv("SMTP_PORT", t))
+	am.Setting().Put(host, "smtp.user", requireEnv("SMTP_USER", t))
+	am.Setting().Put(host, "smtp.password", requireEnv("SMTP_PASSWORD", t))
+	am.Setting().Put(host, "support_team.name", requireEnv("SUPPORT_TEAM_NAME", t))
+	am.Setting().Put(host, "support_team.email", requireEnv("SUPPORT_TEAM_EMAIL", t))
+
 	// Test Signup fail
 	{
-		//Signup(host, email, password, first_name, last_name, ip string) (*[]string, error)
-		_, _, err := am.Signup(host, email, "mypassword123", first, last, "127.0.0.1")
+		_, _, err := am.Signup(host, first, last, email, "mypassword123", "127.0.0.1")
 		if err == nil {
 			t.Fatalf("am.Signup() should have failed when self.signup=no")
 		}
@@ -50,13 +56,23 @@ func TestAccessManager(t *testing.T) {
 	// Test Signup success
 	{
 		//Signup(host, email, password, first_name, last_name, ip string) (*[]string, error)
-		_, token, err := am.Signup(host, email, "mypassword123", first, last, "127.0.0.1")
+		_, token, err := am.Signup(host, first, last, email, "mypassword123", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Signup() failed: %v", err)
 		}
 		if token == "" {
 			t.Fatalf("am.Signup() failed: token missing")
 		}
+
+		//ActivateSignup(host, token, ip string)
+		cookie, _, err := am.ActivateSignup(host, token, "127.0.0.1")
+		if err != nil {
+			t.Fatalf("am.ActivateSignup() failed: %v", err)
+		}
+		if cookie == "" {
+			t.Fatalf("am.ActivateSignup() failed to return cookie")
+		}
+
 	}
 
 }
