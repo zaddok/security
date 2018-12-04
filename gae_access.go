@@ -387,6 +387,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		Expiry int64
 		Data   string
 	}
+	maxAge := g.setting.GetInt(site, "activation_token.max_age", 2592000)
 	k := datastore.NameKey("RequestToken", token, nil)
 	si := new(GaeRequestToken)
 	err = g.client.Get(g.ctx, k, si)
@@ -396,7 +397,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	} else if err != nil {
 		g.Log().Error("ActivateSignup() failure: " + err.Error())
 		return "", "Activation service failed, please try again.", err
-	} else if si.Expiry < time.Now().Unix() {
+	} else if si.Expiry+maxAge < time.Now().Unix() {
 		g.Log().Error("ActivateSignup() called with expired uuid: %d < %d ", si.Expiry, time.Now().Unix())
 		return "", "Invalid activation token", nil
 	}
