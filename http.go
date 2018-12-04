@@ -335,9 +335,13 @@ func IpFromRequest(r *http.Request) string {
 	return ip
 }
 
+// Inspect the cookie and IP address of a request and return associated session information
 func LookupSession(r *http.Request, am AccessManager) (Session, error) {
 	cookie, err := r.Cookie("z")
 	if err != nil {
+		if err == http.ErrNoCookie {
+			err = nil
+		}
 		return am.GuestSession(r.Host), err
 	}
 	token := ""
