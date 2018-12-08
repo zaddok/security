@@ -52,20 +52,20 @@ func TestSettings(t *testing.T) {
 	{
 		value := s.Get(host, "s1")
 		if value == nil {
-			t.Fatal("settings.Get() should return \"v1\" not nil.")
+			t.Fatal(fmt.Sprintf("settings.Get(\"%s\",\"s1\") should return \"v1\" not nil.", host))
 		}
 		if *value != "v1" {
-			t.Fatal(fmt.Sprintf("settings.Get() should return \"v1\" not \"%s\".", *value))
+			t.Fatal(fmt.Sprintf("settings.Get(\"%s\",\"s1\") should return \"v1\" not \"%s\".", host, *value))
 		}
 	}
 
 	{
 		value := s.Get(host2, "s1")
 		if value == nil {
-			t.Fatal("settings.Get() should return \"v2\" not nil.")
+			t.Fatal(fmt.Sprintf("settings.Get(\"%s\",\"s1\") should return \"v2\" not nil.", host2))
 		}
 		if *value != "v2" {
-			t.Fatal(fmt.Sprintf("settings.Get() should return \"v2\" not \"%s\".", *value))
+			t.Fatal(fmt.Sprintf("settings.Get(\"%s\",\"s1\") should return \"v2\" not \"%s\".", host2, *value))
 		}
 	}
 

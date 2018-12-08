@@ -159,11 +159,15 @@ func (s *GaeSetting) load() map[string]map[string]string {
 	}
 	var entities []SI
 
-	q := datastore.NewQuery("Setting").Limit(100)
+	q := datastore.NewQuery("Setting").Limit(1000)
 	_, err := s.client.GetAll(s.ctx, q, &entities)
 	if err != nil {
 		// Handle error
+		fmt.Println(err)
 		return nil
+	}
+	if len(entities) == 1000 {
+		fmt.Println("Too many entities in settings table. Settings will not operate reliably.")
 	}
 
 	for _, e := range entities {

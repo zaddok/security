@@ -19,7 +19,8 @@ type AccessManager interface {
 
 // Information about a verified user
 type Person interface {
-	Id() int64
+	Uuid() string
+	Site() string
 	FirstName() string
 	LastName() string
 	Email() string
@@ -33,7 +34,7 @@ type Verification interface {
 
 // Contains information about a currently authenticated user session
 type Session interface {
-	PersonId() int64
+	PersonUuid() string
 	Token() string
 	Site() string
 	FirstName() string
@@ -51,14 +52,15 @@ type NewUserInfo struct {
 }
 
 type person struct {
-	id        int64
+	uuid      string
+	site      string
 	firstName string
 	lastName  string
 	email     string
 }
 
 type session struct {
-	personId      int64
+	personUuid    string
 	token         string
 	site          string
 	firstName     string
@@ -67,8 +69,12 @@ type session struct {
 	authenticated bool
 }
 
-func (p *person) Id() int64 {
-	return p.id
+func (p *person) Uuid() string {
+	return p.uuid
+}
+
+func (p *person) Site() string {
+	return p.site
 }
 
 func (p *person) FirstName() string {
@@ -83,8 +89,8 @@ func (p *person) Email() string {
 	return p.email
 }
 
-func (s *session) PersonId() int64 {
-	return s.personId
+func (s *session) PersonUuid() string {
+	return s.personUuid
 }
 
 func (s *session) Token() string {
