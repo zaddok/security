@@ -12,7 +12,7 @@ func TestAccessManager(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), log)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), log)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

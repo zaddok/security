@@ -58,7 +58,7 @@ type GaeSession struct {
 	Roles      string
 }
 
-func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
+func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
 
@@ -67,6 +67,7 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
 
 	if t, err = t.Parse(emailHtmlTemplates); err != nil {
 		log.Error("Email Template Problem: %s", err)
+		return nil, err, nil, nil
 	}
 
 	return &GaeAccessManager{
@@ -75,7 +76,7 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error) {
 		log:      log,
 		setting:  settings,
 		template: t,
-	}, nil
+	}, nil, client, ctx
 }
 
 func (c *GaeAccessManager) Setting() Setting {
