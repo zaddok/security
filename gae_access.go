@@ -52,6 +52,7 @@ type GaeSession struct {
 	PersonUUID string
 	FirstName  string
 	LastName   string
+	Email      string
 	Created    int64
 	Expiry     int64
 	Roles      string
@@ -293,6 +294,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			site:          site,
 			firstName:     i.FirstName,
 			lastName:      i.LastName,
+			email:         i.Email,
 			authenticated: true,
 		}
 
