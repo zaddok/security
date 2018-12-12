@@ -44,7 +44,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 		AddSafeHeaders(w)
 
 		ip := IpFromRequest(r)
-		session, failure, err := am.Authenticate(r.Host, r.FormValue("signin_email"), r.FormValue("signin_password"), ip)
+		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip)
 		if err != nil || failure != "" || session == nil {
 			am.Log().Error("Error during authentication: %s %s", failure, err)
 			http.Redirect(w, r, "/?e=f", http.StatusTemporaryRedirect)
@@ -75,7 +75,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
-		session, err := am.Invalidate("cookie", r.Host)
+		session, err := am.Invalidate("cookie", HostFromRequest(r))
 		if err != nil {
 			am.Log().Notice("Error displaying 'signout' page: %v", err)
 			w.Write([]byte("Error displaying 'signout' page"))
@@ -142,7 +142,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 		}
 		//p.TermsAndConditions = len(strings.TrimSpace(r.FormValue("terms_and_conditions"))) > 0 ||
 		//	len(strings.TrimSpace(r.FormValue("i_agree"))) > 0
-		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(r.Host, "self.signup", "no")) == "no")
+		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
 		signupRequested := len(r.FormValue("signup")) > 0 || len(r.FormValue("register_firstname")) > 0
 		var signupMessage []string
@@ -189,7 +189,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 				p.Errors = signupMessage
 			} else {
 				ip := IpFromRequest(r)
-				errors, _, err := am.Signup(r.Host, p.FirstName, p.LastName, p.Email, p.Password, ip)
+				errors, _, err := am.Signup(HostFromRequest(r), p.FirstName, p.LastName, p.Email, p.Password, ip)
 				if errors != nil {
 					p.Errors = *errors
 				} else if err != nil {
@@ -259,7 +259,7 @@ func ActivatePage(t *template.Template, am AccessManager, siteName string) func(
 		}
 
 		ip := IpFromRequest(r)
-		cookie, failure, err := am.ActivateSignup(r.Host, token, ip)
+		cookie, failure, err := am.ActivateSignup(HostFromRequest(r), token, ip)
 
 		if len(cookie) > 0 {
 			/*
@@ -286,7 +286,7 @@ func ActivatePage(t *template.Template, am AccessManager, siteName string) func(
 			p.Errors = append(p.Errors, fmt.Sprintf("Activation problem: %s", err))
 		}
 		p.SiteName = siteName
-		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(r.Host, "self.signup", "no")) == "no")
+		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
@@ -295,6 +295,20 @@ func ActivatePage(t *template.Template, am AccessManager, siteName string) func(
 			return
 		}
 	}
+}
+
+func HostFromRequest(r *http.Request) string {
+	host := r.Host
+
+	if strings.Index(host, ":") > 0 {
+		host = host[0:strings.Index(host, ":")]
+	}
+
+	if host == "" {
+		return "localhost"
+	}
+
+	return host
 }
 
 // Extract user IP address from the http request header. Trust proxy or load balancer header information when connection is behind local network device such as proxy or load balancer.
@@ -342,13 +356,13 @@ func LookupSession(r *http.Request, am AccessManager) (Session, error) {
 		if err == http.ErrNoCookie {
 			err = nil
 		}
-		return am.GuestSession(r.Host), err
+		return am.GuestSession(HostFromRequest(r)), err
 	}
 	token := ""
 	if cookie != nil && cookie.Value != "" {
 		token = cookie.Value
 	}
-	return am.Session(r.Host, token)
+	return am.Session(HostFromRequest(r), token)
 }
 
 // Rudimentary checks on email address
