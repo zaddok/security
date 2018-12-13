@@ -14,22 +14,29 @@ var COOKIE_DAYS = 365
 
 func RegisterHttpHandlers() {
 
-	data, berr := base64.StdEncoding.DecodeString(FontAwesomeWebfontTtf)
-	if berr != nil {
-		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
-	}
-	http.HandleFunc("/font/fontawesome-webfont.ttf", BinaryFile(data, 604800))
-	data, berr = base64.StdEncoding.DecodeString(FontAwesomeWebfontEot)
-	if berr != nil {
-		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
-	}
-	http.HandleFunc("/font/fontawesome-webfont.eot", BinaryFile(data, 604800))
-	data, berr = base64.StdEncoding.DecodeString(FontAwesomeWebfontWoff)
-	if berr != nil {
-		panic(fmt.Sprintf("Failure decoding base64 pack. %v", berr))
-	}
-	http.HandleFunc("/font/fontawesome-webfont.woff", BinaryFile(data, 604800))
+	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(DecodeOrPanic(FAregularEOT), 604800))
+	http.HandleFunc("/font/fa-regular-400.ttf", BinaryFile(DecodeOrPanic(FAregularTTF), 604800))
+	http.HandleFunc("/font/fa-regular-400.woff", BinaryFile(DecodeOrPanic(FAregularWOFF), 604800))
+	http.HandleFunc("/font/fa-regular-400.woff2", BinaryFile(DecodeOrPanic(FAregularWOFF2), 604800))
 
+	http.HandleFunc("/font/fa-brands-400.eot", BinaryFile(DecodeOrPanic(FAbrandsEOT), 604800))
+	http.HandleFunc("/font/fa-brands-400.ttf", BinaryFile(DecodeOrPanic(FAbrandsTTF), 604800))
+	http.HandleFunc("/font/fa-brands-400.woff", BinaryFile(DecodeOrPanic(FAbrandsWOFF), 604800))
+	http.HandleFunc("/font/fa-brands-400.woff2", BinaryFile(DecodeOrPanic(FAbrandsWOFF2), 604800))
+
+	http.HandleFunc("/font/fa-solid-400.eot", BinaryFile(DecodeOrPanic(FAsolidEOT), 604800))
+	http.HandleFunc("/font/fa-solid-400.ttf", BinaryFile(DecodeOrPanic(FAsolidTTF), 604800))
+	http.HandleFunc("/font/fa-solid-400.woff", BinaryFile(DecodeOrPanic(FAsolidWOFF), 604800))
+	http.HandleFunc("/font/fa-solid-400.woff2", BinaryFile(DecodeOrPanic(FAsolidWOFF2), 604800))
+
+}
+
+func DecodeOrPanic(data string) []byte {
+	bin, berr := base64.StdEncoding.DecodeString(data)
+	if berr != nil {
+		panic(fmt.Sprintf("Error during base64 decoding of binary data in security package. %v", berr))
+	}
+	return bin
 }
 
 func AddSafeHeaders(w http.ResponseWriter) {
