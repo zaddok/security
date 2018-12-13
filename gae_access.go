@@ -323,7 +323,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
 
 			i.Expiry = newExpiry
-			if _, err := g.client.Put(g.ctx, k, &i); err != nil {
+			if _, err := g.client.Put(g.ctx, k, i); err != nil {
 				g.Log().Error("Session() Session expiry update failed: %v", err)
 				return session, nil
 			}
