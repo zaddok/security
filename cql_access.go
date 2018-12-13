@@ -230,7 +230,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "", uerr
 		}
 
-		token, err2 := g.CreateSession(site, uuid.String(), firstName, lastName, ip)
+		token, err2 := g.CreateSession(site, uuid.String(), firstName, lastName, email, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
@@ -242,6 +242,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			site:          site,
 			firstName:     firstName,
 			lastName:      lastName,
+			email:         email,
 			authenticated: true,
 		}, "", nil
 	}
@@ -259,13 +260,13 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
-		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles from session_token where site=? and uid=?", site, cookie).Iter()
+		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles, email from session_token where site=? and uid=?", site, cookie).Iter()
 
 		var created int64
 		var expires int64
 		var uuid gocql.UUID
-		var firstName, lastName, roles string
-		match := rows.Scan(&firstName, &lastName, &uuid, &created, &expires, &roles)
+		var firstName, lastName, roles, email string
+		match := rows.Scan(&firstName, &lastName, &uuid, &created, &expires, &roles, &email)
 		err := rows.Close()
 		if err != nil {
 			return g.GuestSession(site), err
@@ -280,6 +281,7 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 			site:          site,
 			firstName:     firstName,
 			lastName:      lastName,
+			email:         email,
 			authenticated: true,
 		}
 
@@ -324,6 +326,7 @@ func (g *CqlAccessManager) GuestSession(site string) Session {
 		site:          site,
 		firstName:     "",
 		lastName:      "",
+		email:         "",
 		authenticated: false,
 	}
 }
@@ -378,7 +381,7 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
 
 			if aerr == nil {
-				token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
+				token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)
 				if err2 == nil {
 					return token, "", nil
 				} else {
@@ -396,7 +399,7 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	return "", "Invalid activation token", nil
 }
 
-func (g *CqlAccessManager) CreateSession(site string, person string, firstName string, lastName string, ip string) (string, error) {
+func (g *CqlAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
 	personUuid, perr := gocql.ParseUUID(person)
 	if perr != nil {
 		return "", perr
@@ -405,12 +408,12 @@ func (g *CqlAccessManager) CreateSession(site string, person string, firstName s
 	expiry := g.setting.GetWithDefault(site, "session.expiry", "")
 	if expiry == "" {
 		expiry = "3600"
-		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.\n")
+		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
 	}
 	e, err := strconv.ParseInt(expiry, 10, 64)
 	if err != nil {
 		e = 3600
-		g.Log().Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.\n")
+		g.Log().Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.")
 	}
 
 	token := RandomString(32)
@@ -423,9 +426,9 @@ func (g *CqlAccessManager) CreateSession(site string, person string, firstName s
 	}
 
 	err = g.cql.Query(
-		"insert into session_token (site, person_uuid, uid, roles, expiry, created, first_name, last_name) "+
-			"values(?,?,?,?,?,?,?,?)",
-		site, personUuid, token, roles, expires, now, firstName, lastName).Exec()
+		"insert into session_token (site, person_uuid, uid, roles, expiry, created, first_name, last_name, email) "+
+			"values(?,?,?,?,?,?,?,?,?)",
+		site, personUuid, token, roles, expires, now, firstName, lastName, email).Exec()
 	if err != nil {
 		return "", err
 	}

@@ -11,7 +11,7 @@ type AccessManager interface {
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session
 	Invalidate(host, cookie string) (Session, error)
-	CreateSession(site string, uuid string, firstName string, lastName string, ip string) (string, error)
+	CreateSession(site string, uuid string, firstName string, lastName string, email string, ip string) (string, error)
 	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	Log() log.Log
 	Setting() Setting

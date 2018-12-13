@@ -1,6 +1,7 @@
 package security
 
 import (
+	"os"
 	"testing"
 
 	"github.com/zaddok/log"
@@ -29,7 +30,7 @@ func TestAccessManager(t *testing.T) {
 			return
 		}
 	*/
-	host := RandomString(8) + ".com"
+	host := TestSite
 	first := RandomString(8)
 	last := RandomString(8)
 	email := first + "." + last + "@tai.io"
@@ -75,4 +76,23 @@ func TestAccessManager(t *testing.T) {
 
 	}
 
+}
+
+var TestSite string
+
+func TestMain(m *testing.M) {
+	// setup
+
+	value := os.Getenv("SITE_HOSTNAME")
+	if value == "" {
+		TestSite = RandomString(10) + ".com"
+	} else {
+		TestSite = value
+	}
+	code := m.Run()
+
+	// cleanup
+	// tbc...
+
+	os.Exit(code)
 }

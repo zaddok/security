@@ -48,7 +48,6 @@ type GaePerson struct {
 }
 
 type GaeSession struct {
-	Site       string
 	PersonUUID string
 	FirstName  string
 	LastName   string
@@ -218,11 +217,11 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	}
 	err = smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, to, msg)
 	if err != nil {
-		a.log.Error("%s Send signup confirmation mail failed: %v\n", ip, err)
+		a.log.Error("%s Send signup confirmation mail failed: %v", ip, err)
 		results = append(results, "Sending your signup confirmation mail failed. Please retry shortly.")
 		return &results, "", errors.New(results[0])
 	} else {
-		a.log.Info("%s Sent signup confirmation mail to: %s\n", ip, email)
+		a.log.Info("%s Sent signup confirmation mail to: %s", ip, email)
 	}
 
 	return nil, token.String(), nil
@@ -258,7 +257,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "", err
 		}
 
-		token, err2 := g.CreateSession(site, items[0].Uuid, items[0].FirstName, items[0].LastName, ip)
+		token, err2 := g.CreateSession(site, items[0].Uuid, items[0].FirstName, items[0].LastName, items[0].Email, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
@@ -281,7 +280,8 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 // Request the session information associated the site hostname and cookie in the web request
 func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
-		k := datastore.NameKey("Session", site+"|"+cookie, nil)
+		k := datastore.NameKey("Session", cookie, nil)
+		k.Namespace = site
 		i := new(GaeSession)
 		err := g.client.Get(g.ctx, k, i)
 		if err == datastore.ErrNoSuchEntity || i.Expiry < time.Now().Unix() {
@@ -302,31 +302,28 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
 		if expiry == "" {
 			expiry = "3600"
-			g.log.Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.\n")
+			g.log.Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
 		}
 		e, err := strconv.ParseInt(expiry, 10, 64)
 		if err != nil {
 			e = 3600
-			g.log.Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.\n")
+			g.log.Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.")
 		}
 
 		// Check this user session hasn't hit its maximum hard limit
 		maxAge := g.setting.GetInt(site, "session.max_age", 2592000)
 		newExpiry := time.Now().Add(time.Second * time.Duration(e)).Unix()
 		if i.Created+int64(maxAge) < newExpiry {
-			g.log.Warning("User session hit \"session.max_age\".\n")
+			g.log.Warning("User session hit \"session.max_age\".")
 			return g.GuestSession(site), nil
 		}
 
 		// So "expires" is still in the future... Update the session expiry in the database
 		if newExpiry-i.Expiry > 30 {
-			g.Log().Debug("updating expiry new:  %d old: %d\n", newExpiry, i.Expiry)
+			g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
 
-			type SI struct {
-				Expiry int64
-			}
-			si := &SI{Expiry: newExpiry}
-			if _, err := g.client.Put(g.ctx, k, &si); err != nil {
+			i.Expiry = newExpiry
+			if _, err := g.client.Put(g.ctx, k, &i); err != nil {
 				g.Log().Error("Session() Session expiry update failed: %v", err)
 				return session, nil
 			}
@@ -429,7 +426,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		return "", "", aerr
 	}
 
-	token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, ip)
+	token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)
 	if err2 == nil {
 		return token, "", nil
 	}
@@ -438,7 +435,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	return "", "", err2
 }
 
-func (g *GaeAccessManager) CreateSession(site string, person string, firstName string, lastName string, ip string) (string, error) {
+func (g *GaeAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
 	personUuid, perr := uuid.Parse(person)
 	if perr != nil {
 		return "", perr
@@ -447,12 +444,12 @@ func (g *GaeAccessManager) CreateSession(site string, person string, firstName s
 	expiry := g.setting.GetWithDefault(site, "session.expiry", "")
 	if expiry == "" {
 		expiry = "3600"
-		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.\n")
+		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
 	}
 	e, err := strconv.ParseInt(expiry, 10, 64)
 	if err != nil {
 		e = 3600
-		g.Log().Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.\n")
+		g.Log().Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.")
 	}
 
 	token := RandomString(32)
@@ -464,8 +461,9 @@ func (g *GaeAccessManager) CreateSession(site string, person string, firstName s
 		return "", err
 	}
 
-	ri := &GaeSession{Site: site, PersonUUID: personUuid.String(), FirstName: firstName, LastName: lastName, Created: now, Expiry: expires, Roles: roles}
-	k := datastore.NameKey("Session", site+"|"+token, nil)
+	ri := &GaeSession{PersonUUID: personUuid.String(), FirstName: firstName, LastName: lastName, Email: email, Created: now, Expiry: expires, Roles: roles}
+	k := datastore.NameKey("Session", token, nil)
+	k.Namespace = site
 	if _, err := g.client.Put(g.ctx, k, ri); err != nil {
 		return "", err
 	}
