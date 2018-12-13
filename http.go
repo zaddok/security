@@ -24,10 +24,10 @@ func RegisterHttpHandlers() {
 	http.HandleFunc("/font/fa-brands-400.woff", BinaryFile(DecodeOrPanic(FAbrandsWOFF), 604800))
 	http.HandleFunc("/font/fa-brands-400.woff2", BinaryFile(DecodeOrPanic(FAbrandsWOFF2), 604800))
 
-	http.HandleFunc("/font/fa-solid-400.eot", BinaryFile(DecodeOrPanic(FAsolidEOT), 604800))
-	http.HandleFunc("/font/fa-solid-400.ttf", BinaryFile(DecodeOrPanic(FAsolidTTF), 604800))
-	http.HandleFunc("/font/fa-solid-400.woff", BinaryFile(DecodeOrPanic(FAsolidWOFF), 604800))
-	http.HandleFunc("/font/fa-solid-400.woff2", BinaryFile(DecodeOrPanic(FAsolidWOFF2), 604800))
+	http.HandleFunc("/font/fa-solid-900.eot", BinaryFile(DecodeOrPanic(FAsolidEOT), 604800))
+	http.HandleFunc("/font/fa-solid-900.ttf", BinaryFile(DecodeOrPanic(FAsolidTTF), 604800))
+	http.HandleFunc("/font/fa-solid-900.woff", BinaryFile(DecodeOrPanic(FAsolidWOFF), 604800))
+	http.HandleFunc("/font/fa-solid-900.woff2", BinaryFile(DecodeOrPanic(FAsolidWOFF2), 604800))
 
 }
 
