@@ -1,4 +1,4 @@
-module github.com/zaddok/security
+module git.tai.io/zadok/security
 
 require (
 	cloud.google.com/go v0.30.0
