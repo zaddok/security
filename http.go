@@ -14,20 +14,17 @@ var COOKIE_DAYS = 365
 
 func RegisterHttpHandlers() {
 
-	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(DecodeOrPanic(FAregularEOT), 604800))
-	http.HandleFunc("/font/fa-regular-400.ttf", BinaryFile(DecodeOrPanic(FAregularTTF), 604800))
-	http.HandleFunc("/font/fa-regular-400.woff", BinaryFile(DecodeOrPanic(FAregularWOFF), 604800))
-	http.HandleFunc("/font/fa-regular-400.woff2", BinaryFile(DecodeOrPanic(FAregularWOFF2), 604800))
+	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(&FAregularEOT, 604800))
+	http.HandleFunc("/font/fa-regular-400.ttf", BinaryFile(&FAregularTTF, 604800))
+	http.HandleFunc("/font/fa-regular-400.woff", BinaryFile(&FAregularWOFF, 604800))
 
-	http.HandleFunc("/font/fa-brands-400.eot", BinaryFile(DecodeOrPanic(FAbrandsEOT), 604800))
-	http.HandleFunc("/font/fa-brands-400.ttf", BinaryFile(DecodeOrPanic(FAbrandsTTF), 604800))
-	http.HandleFunc("/font/fa-brands-400.woff", BinaryFile(DecodeOrPanic(FAbrandsWOFF), 604800))
-	http.HandleFunc("/font/fa-brands-400.woff2", BinaryFile(DecodeOrPanic(FAbrandsWOFF2), 604800))
+	http.HandleFunc("/font/fa-brands-400.eot", BinaryFile(&FAbrandsEOT, 604800))
+	http.HandleFunc("/font/fa-brands-400.ttf", BinaryFile(&FAbrandsTTF, 604800))
+	http.HandleFunc("/font/fa-brands-400.woff", BinaryFile(&FAbrandsWOFF, 604800))
 
-	http.HandleFunc("/font/fa-solid-900.eot", BinaryFile(DecodeOrPanic(FAsolidEOT), 604800))
-	http.HandleFunc("/font/fa-solid-900.ttf", BinaryFile(DecodeOrPanic(FAsolidTTF), 604800))
-	http.HandleFunc("/font/fa-solid-900.woff", BinaryFile(DecodeOrPanic(FAsolidWOFF), 604800))
-	http.HandleFunc("/font/fa-solid-900.woff2", BinaryFile(DecodeOrPanic(FAsolidWOFF2), 604800))
+	http.HandleFunc("/font/fa-solid-900.eot", BinaryFile(&FAsolidEOT, 604800))
+	http.HandleFunc("/font/fa-solid-900.ttf", BinaryFile(&FAsolidTTF, 604800))
+	http.HandleFunc("/font/fa-solid-900.woff", BinaryFile(&FAsolidWOFF, 604800))
 
 }
 

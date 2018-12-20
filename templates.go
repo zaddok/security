@@ -9,12 +9,12 @@ import (
 )
 
 // Serve the contents of a binary file back to the web browser
-func BinaryFile(data []byte, cacheTime int) func(w http.ResponseWriter, r *http.Request) {
+func BinaryFile(data *[]byte, cacheTime int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d,s-maxage=%d,no-transform,public", cacheTime, cacheTime/10))
 		w.Header().Set("Content-type", "application/octent-stream")
-		w.Header().Set("Content-length", fmt.Sprintf("%d", len(data)))
-		w.Write(data)
+		w.Header().Set("Content-length", fmt.Sprintf("%d", len(*data)))
+		w.Write(*data)
 	}
 }
 
