@@ -180,6 +180,12 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 		}
 		//p.TermsAndConditions = len(strings.TrimSpace(r.FormValue("terms_and_conditions"))) > 0 ||
 		//	len(strings.TrimSpace(r.FormValue("i_agree"))) > 0
+		selfSignup := strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no"))
+		if selfSignup != "yes" && selfSignup != "no" {
+			selfSignup = "no"
+			am.Setting().Put(HostFromRequest(r), "self.signup", selfSignup)
+			am.Log().Warning("Setting default self.signup setting to no on host %s", HostFromRequest(r))
+		}
 		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
 		signupRequested := len(r.FormValue("signup")) > 0 || len(r.FormValue("register_firstname")) > 0
