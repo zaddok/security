@@ -36,26 +36,77 @@ type GaeRequestToken struct {
 }
 
 type GaePerson struct {
-	Site         string
 	Uuid         string
 	FirstName    string
 	LastName     string
 	Email        string
 	Password     *string
-	Created      int64
-	LastSignin   int64
+	Created      *time.Time
+	LastSignin   *time.Time
 	LastSigninIP string
 	NameKey      string
+	Site         string `datastore:"-"`
+}
+
+func (p GaePerson) GetUuid() string {
+	return p.Uuid
+}
+
+func (p GaePerson) GetFirstName() string {
+	return p.FirstName
+}
+
+func (p GaePerson) GetLastName() string {
+	return p.LastName
+}
+
+func (p GaePerson) GetSite() string {
+	return p.Site
+}
+
+func (p GaePerson) GetEmail() string {
+	return p.Email
 }
 
 type GaeSession struct {
-	PersonUUID string
-	FirstName  string
-	LastName   string
-	Email      string
-	Created    int64
-	Expiry     int64
-	Roles      string
+	PersonUUID    string
+	FirstName     string
+	LastName      string
+	Email         string
+	Created       int64
+	Expiry        int64
+	Roles         string
+	Authenticated bool
+	Token         string `datastore:"-"`
+	Site          string `datastore:"-"`
+}
+
+func (s *GaeSession) GetPersonUuid() string {
+	return s.PersonUUID
+}
+
+func (s *GaeSession) GetToken() string {
+	return s.Token
+}
+
+func (s *GaeSession) GetSite() string {
+	return s.Site
+}
+
+func (s *GaeSession) GetFirstName() string {
+	return s.FirstName
+}
+
+func (s *GaeSession) GetLastName() string {
+	return s.LastName
+}
+
+func (s *GaeSession) GetEmail() string {
+	return s.Email
+}
+
+func (s *GaeSession) IsAuthenticated() bool {
+	return s.Authenticated
 }
 
 func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
@@ -250,8 +301,8 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
-		now := time.Now().Unix()
-		items[0].LastSignin = now
+		now := time.Now()
+		items[0].LastSignin = &now
 		items[0].LastSigninIP = ip
 		k := datastore.NameKey("Person", items[0].Uuid, nil)
 		k.Namespace = site
@@ -266,13 +317,14 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "", err2
 		}
 
-		return &session{
-			personUuid:    items[0].Uuid,
-			token:         token,
-			site:          site,
-			firstName:     items[0].FirstName,
-			lastName:      items[0].LastName,
-			authenticated: true,
+		return &GaeSession{
+			PersonUUID:    items[0].Uuid,
+			Token:         token,
+			Site:          site,
+			FirstName:     items[0].FirstName,
+			LastName:      items[0].Email,
+			Email:         items[0].FirstName,
+			Authenticated: true,
 		}, "", nil
 	}
 
@@ -282,7 +334,25 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 }
 
 func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
-	return nil, nil
+	firstname = strings.TrimSpace(firstname)
+	lastname = strings.TrimSpace(lastname)
+	namekey := strings.ToLower(firstname + "|" + lastname)
+
+	var items []GaePerson
+	q := datastore.NewQuery("Person").Namespace(site).Filter("NameKey =", namekey).Limit(2)
+	_, err := g.client.GetAll(g.ctx, q, &items)
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, nil
+	}
+	if len(items) > 1 {
+		return nil, errors.New("Multiple accounts have this first and last name")
+	}
+
+	items[0].Site = site
+	return items[0], nil
 }
 
 // Request the session information associated the site hostname and cookie in the web request
@@ -295,7 +365,10 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 	if err != nil {
 		return nil, err
 	}
-	puuid := person.Uuid()
+	puuid := ""
+	if person != nil {
+		puuid = person.GetUuid()
+	}
 	if person == nil {
 
 		uuid, err := uuid.NewUUID()
@@ -303,12 +376,13 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 			return nil, err
 		}
 		person := &GaePerson{
-			Site:      site,
 			Uuid:      uuid.String(),
+			Site:      site,
 			FirstName: firstname,
 			LastName:  lastname,
 			NameKey:   strings.ToLower(firstname + "|" + lastname),
-			Created:   now.Unix()}
+			Created:   &now,
+		}
 		k := datastore.NameKey("Person", uuid.String(), nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, person); err != nil {
@@ -319,14 +393,13 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 	}
 
 	token := RandomString(32)
-	session := &session{
-		personUuid:    puuid,
-		token:         token,
-		site:          site,
-		firstName:     firstname,
-		lastName:      lastname,
-		email:         "",
-		authenticated: true,
+	session := &GaeSession{
+		PersonUUID:    puuid,
+		Token:         token,
+		Site:          site,
+		FirstName:     firstname,
+		LastName:      lastname,
+		Authenticated: true,
 	}
 
 	return session, nil
@@ -345,13 +418,13 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			return g.GuestSession(site), err
 		}
 
-		session := &session{
-			token:         cookie,
-			site:          site,
-			firstName:     i.FirstName,
-			lastName:      i.LastName,
-			email:         i.Email,
-			authenticated: true,
+		session := &GaeSession{
+			Token:         cookie,
+			Site:          site,
+			FirstName:     i.FirstName,
+			LastName:      i.LastName,
+			Email:         i.Email,
+			Authenticated: true,
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -396,12 +469,12 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 }
 
 func (g *GaeAccessManager) GuestSession(site string) Session {
-	return &session{
-		token:         "",
-		site:          site,
-		firstName:     "",
-		lastName:      "",
-		authenticated: false,
+	return &GaeSession{
+		Token:         "",
+		Site:          site,
+		FirstName:     "",
+		LastName:      "",
+		Authenticated: false,
 	}
 }
 
@@ -423,16 +496,16 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 		return "", err
 	}
 
-	now := time.Now().Unix()
+	now := time.Now()
 	si := &GaePerson{
-		Site:      site,
 		Uuid:      uuid.String(),
+		Site:      site,
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,
 		Password:  password,
 		NameKey:   strings.ToLower(firstName + "|" + lastName),
-		Created:   now,
+		Created:   &now,
 	}
 	k := datastore.NameKey("Person", uuid.String(), nil)
 	k.Namespace = site
@@ -573,4 +646,30 @@ func (g *GaeAccessManager) personRoleString(site string, uuid string) (string, e
 	}
 
 	return b.String(), err
+}
+
+func (am *GaeAccessManager) WipeDatastore(namespace string) error {
+
+	for {
+		q := datastore.NewQuery("").Namespace(namespace).KeysOnly().Limit(20)
+		keys, err := am.client.GetAll(am.ctx, q, nil)
+		if err != nil {
+			return err
+		}
+
+		err = am.client.DeleteMulti(am.ctx, keys)
+		if err != nil {
+			return err
+		}
+		for _, k := range keys {
+			fmt.Printf("   key: %v\n", k)
+		}
+
+		if len(keys) == 0 {
+			break
+		}
+		fmt.Printf("keys deleted: %d\n", len(keys))
+	}
+
+	return nil
 }

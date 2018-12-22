@@ -64,7 +64,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 
 		cookie := &http.Cookie{
 			Name:     "z",
-			Value:    session.Token(),
+			Value:    session.GetToken(),
 			Path:     "/",
 			Secure:   false,
 			HttpOnly: true,
@@ -89,7 +89,7 @@ func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWri
 		// wipe cookie
 		cookie := &http.Cookie{
 			Name:     "z",
-			Value:    session.Token(),
+			Value:    session.GetToken(),
 			Path:     "/",
 			Expires:  time.Now().Add(time.Minute * 60 * 24 * -356),
 			Secure:   false,
@@ -98,7 +98,7 @@ func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWri
 		}
 		http.SetCookie(w, cookie)
 		if err != nil && session != nil && session.IsAuthenticated() {
-			am.Log().Info("Signout from %s %s", session.FirstName(), session.LastName())
+			am.Log().Info("Signout from %s %s", session.GetFirstName(), session.GetLastName())
 		}
 		http.Redirect(w, r, "/?e=s", http.StatusTemporaryRedirect)
 	}

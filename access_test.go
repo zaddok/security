@@ -1,11 +1,44 @@
 package security
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
 	"github.com/zaddok/log"
 )
+
+// Test access manager
+func TestSystemSessionManagement(t *testing.T) {
+
+	log := log.NewStdoutLogDebug()
+	defer log.Close()
+
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), log)
+	if err != nil {
+		t.Fatalf("NewGaeAccessManager() failed: %v", err)
+	}
+	//user := am.GuestSession(TestSite)
+
+	s1, err := am.GetSystemSession(TestSite, "Google Sample", "Connector")
+	if err != nil {
+		t.Fatalf("am.GetSystemSession() failed: %v", err)
+	}
+	if s1.GetFirstName() != "Google Sample" {
+		t.Fatalf("am.GetSystemSession() has incorrect first name storage")
+	}
+	if s1.GetLastName() != "Connector" {
+		t.Fatalf("am.GetSystemSession() has incorrect first name storage")
+	}
+
+	s2, err := am.GetSystemSession(TestSite, "Google Sample", "Connector")
+	if err != nil {
+		t.Fatalf("am.GetSystemSession() failed: %v", err)
+	}
+	if s1.GetPersonUuid() != s2.GetPersonUuid() {
+		t.Fatalf("am.GetSystemSession() did not remember uuid of person. Namespace: " + TestSite)
+	}
+}
 
 // Test access manager
 func TestAccessManager(t *testing.T) {
@@ -92,7 +125,17 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// cleanup
-	// tbc...
+
+	// If we used a random keyspace, we want to go ahead and
+	// wipe any left behind data
+	if os.Getenv("SITE_HOSTNAME") == "" && os.Getenv("GAE_PROJECT_ID") != "" {
+		am, _, _, _ := NewGaeAccessManager(os.Getenv("GAE_PROJECT_ID"), log.NewStdoutLogDebug())
+		err := am.WipeDatastore(TestSite)
+		if err != nil {
+			fmt.Println("Failed to cleanup datastore:", err)
+		}
+
+	}
 
 	os.Exit(code)
 }

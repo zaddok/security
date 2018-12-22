@@ -237,13 +237,13 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		}
 
 		i.Close()
-		return &session{
-			token:         token,
-			site:          site,
-			firstName:     firstName,
-			lastName:      lastName,
-			email:         email,
-			authenticated: true,
+		return &CqlSession{
+			Token:         token,
+			Site:          site,
+			FirstName:     firstName,
+			LastName:      lastName,
+			Email:         email,
+			Authenticated: true,
 		}, "", nil
 	}
 
@@ -285,13 +285,13 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 			return g.GuestSession(site), nil
 		}
 		//user.Id = &uuid
-		session := &session{
-			token:         cookie,
-			site:          site,
-			firstName:     firstName,
-			lastName:      lastName,
-			email:         email,
-			authenticated: true,
+		session := &CqlSession{
+			Token:         cookie,
+			Site:          site,
+			FirstName:     firstName,
+			LastName:      lastName,
+			Email:         email,
+			Authenticated: true,
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -330,13 +330,13 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 }
 
 func (g *CqlAccessManager) GuestSession(site string) Session {
-	return &session{
-		token:         "",
-		site:          site,
-		firstName:     "",
-		lastName:      "",
-		email:         "",
-		authenticated: false,
+	return &CqlSession{
+		Token:         "",
+		Site:          site,
+		FirstName:     "",
+		LastName:      "",
+		Email:         "",
+		Authenticated: false,
 	}
 }
 
@@ -473,4 +473,49 @@ func cqlPersonRoleString(cql *gocql.Session, site string, uuid string) (string, 
 	err := i.Close()
 
 	return b.String(), err
+}
+
+func (am *CqlAccessManager) WipeDatastore(namespace string) error {
+	return errors.New("Unimeplemented")
+}
+
+type CqlSession struct {
+	PersonUUID    string
+	FirstName     string
+	LastName      string
+	Email         string
+	Created       int64
+	Expiry        int64
+	Roles         string
+	Authenticated bool
+	Token         string
+	Site          string
+}
+
+func (s *CqlSession) GetPersonUuid() string {
+	return s.PersonUUID
+}
+
+func (s *CqlSession) GetToken() string {
+	return s.Token
+}
+
+func (s *CqlSession) GetSite() string {
+	return s.Site
+}
+
+func (s *CqlSession) GetFirstName() string {
+	return s.FirstName
+}
+
+func (s *CqlSession) GetLastName() string {
+	return s.LastName
+}
+
+func (s *CqlSession) GetEmail() string {
+	return s.Email
+}
+
+func (s *CqlSession) IsAuthenticated() bool {
+	return s.Authenticated
 }

@@ -17,15 +17,16 @@ type AccessManager interface {
 	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	Log() log.Log
 	Setting() Setting
+	WipeDatastore(namespace string) error
 }
 
 // Information about a verified user
 type Person interface {
-	Uuid() string
-	Site() string
-	FirstName() string
-	LastName() string
-	Email() string
+	GetUuid() string
+	GetSite() string
+	GetFirstName() string
+	GetLastName() string
+	GetEmail() string
 }
 
 // Encapsulates an as yet unverified request. i.e. Account creation.
@@ -36,12 +37,12 @@ type Verification interface {
 
 // Contains information about a currently authenticated user session
 type Session interface {
-	PersonUuid() string
-	Token() string
-	Site() string
-	FirstName() string
-	LastName() string
-	Email() string
+	GetPersonUuid() string
+	GetToken() string
+	GetSite() string
+	GetFirstName() string
+	GetLastName() string
+	GetEmail() string
 	IsAuthenticated() bool
 }
 
@@ -51,72 +52,6 @@ type NewUserInfo struct {
 	LastName  string  `json:"last_name"`
 	Email     string  `json:"email"`
 	Password  *string `json:"password"`
-}
-
-type person struct {
-	uuid      string
-	site      string
-	firstName string
-	lastName  string
-	email     string
-}
-
-type session struct {
-	personUuid    string
-	token         string
-	site          string
-	firstName     string
-	lastName      string
-	email         string
-	authenticated bool
-}
-
-func (p *person) Uuid() string {
-	return p.uuid
-}
-
-func (p *person) Site() string {
-	return p.site
-}
-
-func (p *person) FirstName() string {
-	return p.firstName
-}
-
-func (p *person) LastName() string {
-	return p.lastName
-}
-
-func (p *person) Email() string {
-	return p.email
-}
-
-func (s *session) PersonUuid() string {
-	return s.personUuid
-}
-
-func (s *session) Token() string {
-	return s.token
-}
-
-func (s *session) Site() string {
-	return s.site
-}
-
-func (s *session) FirstName() string {
-	return s.firstName
-}
-
-func (s *session) LastName() string {
-	return s.lastName
-}
-
-func (s *session) Email() string {
-	return s.email
-}
-
-func (s *session) IsAuthenticated() bool {
-	return s.authenticated
 }
 
 const emailHtmlTemplates string = `
