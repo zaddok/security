@@ -143,7 +143,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 
 	// Check email does not already exist
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
 		return nil, "", err
@@ -284,7 +284,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
 
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("Authenticate() Person lookup Error: %v", err)
@@ -550,7 +550,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 
 	// Do one last final double check an account does not exist with this email address
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", i.Email).Limit(1)
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("ActivateSignup() email lookup failure: " + err.Error())
