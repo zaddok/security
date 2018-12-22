@@ -314,7 +314,7 @@ var ForgotTemplate = `
 <h3>Forgot Password</h3>
 
 <label for="signin_username">
-<input type="text" name="signin_email" id="signin_email" value='{{.SigninEmail}}' placeholder="Email address"/>
+<input type="text" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
 <p>Request an email that contains a password reset link.</p>
@@ -324,6 +324,10 @@ var ForgotTemplate = `
 </label>
 
 </form>
+
+<script type="text/javascript">
+	document.getElementById('forgot_email').focus();
+</script>
 
 </div>
 {{template "security_footer" .}}
