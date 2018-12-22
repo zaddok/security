@@ -1,4 +1,7 @@
 go.sum
+*.swp
+*.tmp
+*.log
 setup.sh
 bin/
 pkg/

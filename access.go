@@ -6,6 +6,8 @@ import (
 
 type AccessManager interface {
 	Signup(host, first_name, last_name, email, password, ip string) (*[]string, string, error)
+	GetSystemSession(host, firstname, lastname string) (Session, error)
+	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
 	Session(host, cookie string) (Session, error)

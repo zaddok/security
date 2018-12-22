@@ -45,6 +45,7 @@ type GaePerson struct {
 	Created      int64
 	LastSignin   int64
 	LastSigninIP string
+	NameKey      string
 }
 
 type GaeSession struct {
@@ -91,7 +92,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 
 	// Check email does not already exist
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
 		return nil, "", err
@@ -152,6 +153,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	//TODO: expiry time set to actual desired expiry time
 
 	k := datastore.NameKey("RequestToken", token.String(), nil)
+	k.Namespace = site
 	i := GaeRequestToken{Uuid: token.String(), PersonUuid: token.String(), Type: `signup_confirmation`, IP: ip, Expiry: time.Now().Unix(), Data: string(data)}
 	if _, err := a.client.Put(a.ctx, k, &i); err != nil {
 		return nil, "", err
@@ -231,7 +233,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
 
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("Authenticate() Person lookup Error: %v", err)
@@ -252,6 +254,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		items[0].LastSignin = now
 		items[0].LastSigninIP = ip
 		k := datastore.NameKey("Person", items[0].Uuid, nil)
+		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, &items[0]); err != nil {
 			g.Log().Error("Authenticate() Person update Error: %v", err)
 			return g.GuestSession(site), "", err
@@ -264,6 +267,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		}
 
 		return &session{
+			personUuid:    items[0].Uuid,
 			token:         token,
 			site:          site,
 			firstName:     items[0].FirstName,
@@ -275,6 +279,57 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	// User lookup failed
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
 	return g.GuestSession(site), "Invalid email address or password.", nil
+}
+
+func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
+	return nil, nil
+}
+
+// Request the session information associated the site hostname and cookie in the web request
+func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
+	now := time.Now()
+	firstname = strings.TrimSpace(firstname)
+	lastname = strings.TrimSpace(lastname)
+
+	person, err := g.GetPersonByFirstNameLastName(site, firstname, lastname)
+	if err != nil {
+		return nil, err
+	}
+	puuid := person.Uuid()
+	if person == nil {
+
+		uuid, err := uuid.NewUUID()
+		if err != nil {
+			return nil, err
+		}
+		person := &GaePerson{
+			Site:      site,
+			Uuid:      uuid.String(),
+			FirstName: firstname,
+			LastName:  lastname,
+			NameKey:   strings.ToLower(firstname + "|" + lastname),
+			Created:   now.Unix()}
+		k := datastore.NameKey("Person", uuid.String(), nil)
+		k.Namespace = site
+		if _, err := g.client.Put(g.ctx, k, person); err != nil {
+			g.Log().Error("GetSystemSession() Person creation failed. Error: %v", err)
+			return nil, err
+		}
+		puuid = uuid.String()
+	}
+
+	token := RandomString(32)
+	session := &session{
+		personUuid:    puuid,
+		token:         token,
+		site:          site,
+		firstName:     firstname,
+		lastName:      lastname,
+		email:         "",
+		authenticated: true,
+	}
+
+	return session, nil
 }
 
 // Request the session information associated the site hostname and cookie in the web request
@@ -320,7 +375,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 
 		// So "expires" is still in the future... Update the session expiry in the database
 		if newExpiry-i.Expiry > 30 {
-			g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
+			//g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
 
 			i.Expiry = newExpiry
 			if _, err := g.client.Put(g.ctx, k, i); err != nil {
@@ -360,6 +415,8 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 
 // Password must already be hashed
 func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
+	firstName = strings.TrimSpace(firstName)
+	lastName = strings.TrimSpace(lastName)
 
 	uuid, err := uuid.NewUUID()
 	if err != nil {
@@ -367,8 +424,18 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 	}
 
 	now := time.Now().Unix()
-	si := &GaePerson{Site: site, Uuid: uuid.String(), FirstName: firstName, LastName: lastName, Email: email, Password: password, Created: now}
+	si := &GaePerson{
+		Site:      site,
+		Uuid:      uuid.String(),
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Password:  password,
+		NameKey:   strings.ToLower(firstName + "|" + lastName),
+		Created:   now,
+	}
 	k := datastore.NameKey("Person", uuid.String(), nil)
+	k.Namespace = site
 	if _, err := g.client.Put(g.ctx, k, si); err != nil {
 		g.Log().Error("AddPerson() Person storage failed. Error: %v", err)
 		return "", err
@@ -392,6 +459,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	}
 	maxAge := g.setting.GetInt(site, "activation_token.max_age", 2592000)
 	k := datastore.NameKey("RequestToken", token, nil)
+	k.Namespace = site
 	si := new(GaeRequestToken)
 	err = g.client.Get(g.ctx, k, si)
 	if err == datastore.ErrNoSuchEntity {
@@ -409,7 +477,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 
 	// Do one last final double check an account does not exist with this email address
 	var items []GaePerson
-	q := datastore.NewQuery("Person").Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Site =", site).Filter("Email = ", i.Email).Limit(1)
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		g.Log().Error("ActivateSignup() email lookup failure: " + err.Error())
@@ -483,7 +551,7 @@ func (g *GaeAccessManager) personRoleString(site string, uuid string) (string, e
 		Uid      string
 	}
 	var items []RI
-	q := datastore.NewQuery("Role").Filter("PersonUUID =", uuid).Limit(100)
+	q := datastore.NewQuery("Role").Namespace(site).Filter("PersonUUID =", uuid).Limit(100)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		return "", err
