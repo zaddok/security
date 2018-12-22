@@ -248,9 +248,9 @@ var SignupTemplate = `
 
 </div>
 
+{{if .AllowSignup}}
 <div id="signup_box">
 
-{{if .AllowSignup}}
 <form method="post" action="/signup" id="signup">
 <h3>Sign up</h3>
 
@@ -281,8 +281,8 @@ var SignupTemplate = `
  </div>
 
 </form>
-{{end}}
 </div>
+{{end}}
 
 <script type="text/javascript">
 if(document.getElementById('signin_email').value!="") {
