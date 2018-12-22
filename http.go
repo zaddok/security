@@ -275,6 +275,10 @@ func ForgotPage(t *template.Template, am AccessManager, siteName string) func(w 
 		p := &Page{}
 		p.SiteName = siteName
 
+		if r.FormValue("signin_email") != "" {
+			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
+		}
+
 		err = t.ExecuteTemplate(w, "forgot_password_page", p)
 		if err != nil {
 			am.Log().Notice("Error displaying 'forgot' page: %v", err)
