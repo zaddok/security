@@ -44,7 +44,7 @@ func AddSafeHeaders(w http.ResponseWriter) {
 	w.Header().Set("Strict-Transport-Security", "max-age=2592000; includeSubDomains")
 }
 
-func SigninPage(t *template.Template, am AccessManager, siteName string) func(w http.ResponseWriter, r *http.Request) {
+func SigninPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -63,6 +63,8 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 			//return
 
 			p := &SignupPageData{}
+			p.SiteName = siteName
+			p.SiteDescription = siteDescription
 			p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 			p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 			p.Email = strings.TrimSpace(r.FormValue("email"))
@@ -77,7 +79,6 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 			if failure != "" {
 				p.Errors = append(p.Errors, failure)
 			}
-			p.SiteName = siteName
 			p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
 			err = t.ExecuteTemplate(w, "signin_page", p)
@@ -110,7 +111,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName string) func(w 
 	}
 }
 
-func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
+func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		session, err := am.Invalidate("cookie", HostFromRequest(r))
@@ -139,21 +140,22 @@ func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWri
 }
 
 type SignupPageData struct {
-	SiteName    string
-	SigninEmail string
-	FirstName   string
-	LastName    string
-	Email       string
-	Password    string
-	Password2   string
-	Referer     string
-	AllowSignup bool
-	Errors      []string
-	Infos       []string
-	Successes   []string
+	SiteName        string
+	SiteDescription string
+	SigninEmail     string
+	FirstName       string
+	LastName        string
+	Email           string
+	Password        string
+	Password2       string
+	Referer         string
+	AllowSignup     bool
+	Errors          []string
+	Infos           []string
+	Successes       []string
 }
 
-func SignupPage(t *template.Template, am AccessManager, siteName string) func(w http.ResponseWriter, r *http.Request) {
+func SignupPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		am.Log().Debug("Singup page")
@@ -170,6 +172,8 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 		}
 
 		p := &SignupPageData{}
+		p.SiteName = siteName
+		p.SiteDescription = siteDescription
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 		p.Email = strings.TrimSpace(r.FormValue("email"))
@@ -248,7 +252,6 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 				}
 			}
 		}
-		p.SiteName = siteName
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
@@ -259,7 +262,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName string) func(w 
 	}
 }
 
-func ForgotPage(t *template.Template, am AccessManager, siteName string) func(w http.ResponseWriter, r *http.Request) {
+func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		am.Log().Debug("Forgot password page")
@@ -294,9 +297,11 @@ func ForgotPage(t *template.Template, am AccessManager, siteName string) func(w 
 	}
 }
 
-func ActivatePage(t *template.Template, am AccessManager, siteName string) func(w http.ResponseWriter, r *http.Request) {
+func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := &SignupPageData{}
+		p.SiteName = siteName
+		p.SiteDescription = siteDescription
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/activate/") {
@@ -333,7 +338,6 @@ func ActivatePage(t *template.Template, am AccessManager, siteName string) func(
 		if err != nil {
 			p.Errors = append(p.Errors, fmt.Sprintf("Activation problem: %s", err))
 		}
-		p.SiteName = siteName
 		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
