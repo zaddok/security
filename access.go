@@ -103,7 +103,8 @@ var SecurityHeader = `
 		<meta charset="utf-8">
 		<meta property="og:site_name" content="{{.SiteName}}"/>
 		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
-		<meta name="viewport" content="maximum-scale=1">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
 		<title>Signup &mdash; {{.SiteName}}</title>
 		<link rel="stylesheet" type="text/css" href="/style.css" />
 		<style type="text/css">
@@ -286,9 +287,9 @@ var SignupTemplate = `
 
 <script type="text/javascript">
 if(document.getElementById('signin_email').value!="") {
-    document.getElementById('signin_password').focus();
+	 document.getElementById('signin_password').focus();
 } else {
-    document.getElementById('signin_email').focus();
+	document.getElementById('signin_email').focus();
 }
 </script>
 
