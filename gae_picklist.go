@@ -135,7 +135,6 @@ func (s *GaePicklistStore) AddPicklistItem(site, picklist, key, value, descripti
 
 // Reload settings from cache if cache has expired
 func (s *GaePicklistStore) refreshCache(site string) error {
-	fmt.Printf("refreshCache(\"%s\")\n", site)
 	if s.picklists == nil || s.picklists[site] == nil || s.expires.Before(time.Now()) {
 		if s.picklists == nil {
 			s.picklists = make(map[string]map[string]map[string]PicklistItem)
@@ -154,7 +153,6 @@ func (s *GaePicklistStore) refreshCache(site string) error {
 
 // Lookup all settings from the database
 func (s *GaePicklistStore) load(site string) (map[string]map[string]PicklistItem, error) {
-	fmt.Printf("load(\"%s\")\n", site)
 	all := make(map[string]map[string]PicklistItem)
 
 	var items []*GaePicklistItem
@@ -168,9 +166,7 @@ func (s *GaePicklistStore) load(site string) (map[string]map[string]PicklistItem
 		fmt.Println("Too many entities in settings table. Settings will not operate reliably.")
 	}
 
-	fmt.Println(len(items))
 	for _, e := range items {
-		fmt.Println(e)
 		_, exists := all[e.Picklist]
 		if !exists {
 			all[e.Picklist] = make(map[string]PicklistItem)
