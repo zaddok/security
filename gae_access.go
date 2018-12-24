@@ -19,11 +19,12 @@ import (
 )
 
 type GaeAccessManager struct {
-	client   *datastore.Client
-	ctx      context.Context
-	log      log.Log
-	setting  Setting
-	template *template.Template
+	client        *datastore.Client
+	ctx           context.Context
+	log           log.Log
+	setting       Setting
+	picklistStore PicklistStore
+	template      *template.Template
 }
 
 type GaeRequestToken struct {
@@ -121,17 +122,24 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *
 		return nil, err, nil, nil
 	}
 
+	picklistStore := NewGaePicklistStore(projectId, client, ctx)
+
 	return &GaeAccessManager{
-		client:   client,
-		ctx:      ctx,
-		log:      log,
-		setting:  settings,
-		template: t,
+		client:        client,
+		ctx:           ctx,
+		log:           log,
+		setting:       settings,
+		picklistStore: picklistStore,
+		template:      t,
 	}, nil, client, ctx
 }
 
 func (c *GaeAccessManager) Setting() Setting {
 	return c.setting
+}
+
+func (c *GaeAccessManager) PicklistStore() PicklistStore {
+	return c.picklistStore
 }
 
 func (c *GaeAccessManager) Log() log.Log {

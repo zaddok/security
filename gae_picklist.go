@@ -41,19 +41,12 @@ func (pi *GaePicklistItem) IsDeprecated() bool {
 	return pi.Deprecated
 }
 
-func NewGaePicklistStore(projectID string) (PicklistStore, *datastore.Client, context.Context) {
-	ctx := context.Background()
-
-	client, err := datastore.NewClient(ctx, projectID)
-	if err != nil {
-		fmt.Printf("Failed to create client: %v", err)
-	}
-
+func NewGaePicklistStore(projectID string, client *datastore.Client, ctx context.Context) PicklistStore {
 	ps := &GaePicklistStore{
 		client: client,
 		ctx:    ctx,
 	}
-	return ps, client, ctx
+	return ps
 }
 
 func (s *GaePicklistStore) GetPicklists(site string) (map[string]map[string]PicklistItem, error) {

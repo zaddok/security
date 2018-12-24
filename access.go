@@ -17,6 +17,7 @@ type AccessManager interface {
 	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	Log() log.Log
 	Setting() Setting
+	PicklistStore() PicklistStore
 	WipeDatastore(namespace string) error
 }
 

@@ -18,10 +18,11 @@ import (
 )
 
 type CqlAccessManager struct {
-	cql      *gocql.Session
-	log      log.Log
-	setting  Setting
-	template *template.Template
+	cql           *gocql.Session
+	log           log.Log
+	setting       Setting
+	picklistStore PicklistStore
+	template      *template.Template
 }
 
 func NewCqlAccessManager(cql *gocql.Session, log log.Log) (AccessManager, error) {
@@ -54,15 +55,20 @@ func NewCqlAccessManager(cql *gocql.Session, log log.Log) (AccessManager, error)
 	*/
 
 	return &CqlAccessManager{
-		cql:      cql,
-		log:      log,
-		setting:  settings,
-		template: t,
+		cql:           cql,
+		log:           log,
+		setting:       settings,
+		picklistStore: nil, //TODO
+		template:      t,
 	}, nil
 }
 
 func (c *CqlAccessManager) Setting() Setting {
 	return c.setting
+}
+
+func (c *CqlAccessManager) PicklistStore() PicklistStore {
+	return c.picklistStore
 }
 
 func (c *CqlAccessManager) Log() log.Log {
