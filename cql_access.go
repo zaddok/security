@@ -211,6 +211,27 @@ func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, 
 
 }
 
+func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
+
+	var actualPassword string
+	var firstName string
+	var lastName string
+	var uuid gocql.UUID
+	i := a.cql.Query("select uuid, password, first_name, last_name from person where site=? and email=?", site, email).Iter()
+	if i.Scan(&uuid, &actualPassword, &firstName, &lastName) {
+		if actualPassword == "" {
+			a.Log().Info("Forgot Password Request ignored for account with an empty password field. Email: " + email)
+			return "", nil
+		}
+		// Found email address and it is valid, so lets send an email
+
+		return "", errors.New("Unimplemented")
+	}
+
+	a.Log().Info("Forgot Password Request ignored for unknown email address: " + email)
+	return "", nil
+}
+
 func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
 
 	var actualPassword string

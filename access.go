@@ -9,6 +9,7 @@ type AccessManager interface {
 	GetSystemSession(host, firstname, lastname string) (Session, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
+	ForgotPasswordRequest(host, email, ip string) (string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session
@@ -80,6 +81,7 @@ This URL will expire in 24 hours. If you don't want an account to be setup, feel
 free to simply ignore this email.
 </p>
 {{end}}
+
 {{define "signup_confirmation_text"}}
 Dear {{.FirstName}} {{.LastName}}
 
@@ -93,6 +95,48 @@ details are all correct.
 
 This URL will expire in 24 hours. If you don't want an account to be setup, feel
 free to simply ignore this email.
+{{end}}
+
+{{define "lost_password_html"}}
+<p>
+Dear {{.FirstName}} {{.LastName}},
+</p>
+
+<p>
+We received a request to reset the password for your account, if this request
+was initiated by you, then you can go ahead and reset your password at the
+link below. This link will expire in 24 hours.
+</p>
+
+<p>
+<b>Name:</b> {{.FirstName}} {{.LastName}}<br/>
+<b>Email:</b> {{.Email}}
+<p>
+
+<p>
+<a href="{{.BaseURL}}/reset/{{.Token}}">{{.BaseURL}}/reset/{{.Token}}</a>
+</p>
+
+<p>
+If you did not initiate this password reset request, no action is required,
+simply ignore this email.
+</p>
+{{end}}
+
+{{define "lost_password_text"}}
+Dear {{.FirstName}} {{.LastName}}
+
+We received a request to reset the password for your account, if this request
+was initiated by you, then you can go ahead and reset your password at the
+link below. This link will expire in 24 hours.
+
+  Name: {{.FirstName}} {{.LastName}}
+  Email: {{.Email}}
+
+  {{.BaseURL}}/reset/{{.Token}}
+
+If you did not initiate this password reset request, no action is required,
+simply ignore this email.
 {{end}}
 `
 

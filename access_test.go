@@ -109,6 +109,26 @@ func TestAccessManager(t *testing.T) {
 
 	}
 
+	// Test Forgot Password email request
+	{
+		token, err := am.ForgotPasswordRequest(host, email, "127.0.0.1")
+		if err != nil {
+			t.Fatalf("am.ForgotPasswordRequest() failed, when it should have succeded: %v", err)
+		}
+		if token == "" {
+			t.Fatalf("am.ForgotPasswordRequest() should have returned a token")
+		}
+
+		token, err = am.ForgotPasswordRequest(host, "fake.email@example.com", "127.0.0.1")
+		if err != nil {
+			t.Fatalf("am.ForgotPasswordRequest() failed, when it should have succeded: %v", err)
+		}
+		if token != "" {
+			t.Fatalf("am.ForgotPasswordRequest() should have not have returned a token")
+		}
+
+	}
+
 }
 
 var TestSite string

@@ -286,7 +286,103 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	}
 
 	return nil, token.String(), nil
+}
 
+func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
+
+	var items []GaePerson
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
+	_, err := a.client.GetAll(a.ctx, q, &items)
+	if err != nil {
+		a.Log().Error("ForgotPasswordRequest() Person lookup Error: %v", err)
+		return "", err
+	}
+	if len(items) == 0 {
+		a.Log().Info("Forgot Password Request ignored for unknown email address: " + email)
+		return "", nil
+	}
+	if items[0].Password == nil || *items[0].Password == "" {
+		a.Log().Info("Forgot Password Request ignored for account with an empty password field. Email: " + email)
+		return "", nil
+	}
+
+	token, err := uuid.NewUUID()
+	if err != nil {
+		return "", err
+	}
+
+	smtpHostname := a.setting.GetWithDefault(site, "smtp.hostname", "")
+	smtpPassword := a.setting.GetWithDefault(site, "smtp.password", "")
+	smtpPort := a.setting.GetWithDefault(site, "smtp.port", "")
+	smtpUser := a.setting.GetWithDefault(site, "smtp.user", "")
+	supportName := a.setting.GetWithDefault(site, "support_team.name", "")
+	supportEmail := a.setting.GetWithDefault(site, "support_team.email", "")
+	baseUrl := a.setting.GetWithDefault(site, "base.url", "")
+
+	type Page struct {
+		Site      string
+		BaseURL   string
+		Uuid      string
+		FirstName string
+		LastName  string
+		Email     string
+		Token     string
+	}
+	p := &Page{}
+	p.Site = site
+	p.Email = email
+	p.Uuid = token.String()
+	p.Token = token.String()
+	p.LastName = items[0].FirstName
+	p.FirstName = items[0].LastName
+	if baseUrl == "" {
+		p.BaseURL = "http://" + site
+	} else {
+		p.BaseURL = baseUrl
+	}
+
+	var w bytes.Buffer
+	boundary := RandomString(20)
+	w.Write([]byte(fmt.Sprintf("Subject: Lost password request\r\n")))
+	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
+	w.Write([]byte(fmt.Sprintf("To: %s\r\n", email)))
+	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
+	w.Write([]byte(fmt.Sprintf("Content-type: multipart/alternative; charset=UTF-8; boundary=%s\r\n", boundary)))
+	w.Write([]byte("MIME-version: 1.0\r\n\r\n"))
+	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
+	w.Write([]byte("Content-Type: text/plain; charset=utf-8; format=flowed\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	w.Write([]byte("Content-Disposition: inline\r\n"))
+	err = a.template.ExecuteTemplate(&w, "lost_password_text", p)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("Error rendering template \"lost_password_text\": %v", err))
+	}
+	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	w.Write([]byte("Content-Type: text/html; charset=utf-8\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
+	w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
+	var h bytes.Buffer
+	err = a.template.ExecuteTemplate(&w, "lost_password_html", p)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("Error rendering template \"lost_password_html\": %v", err))
+	}
+	w.Write([]byte(base64.StdEncoding.EncodeToString(h.Bytes())))
+	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
+	to := []string{email}
+	msg := w.Bytes()
+	var auth smtp.Auth
+	if smtpUser != "" && smtpPassword != "" {
+		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHostname)
+	}
+	err = smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, to, msg)
+	if err != nil {
+		a.log.Error("%s Sending lost password email failed: %v", ip, err)
+		return "", err
+	}
+
+	a.log.Info("%s Sent signup confirmation mail to: %s", ip, email)
+	return token.String(), nil
 }
 
 func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
