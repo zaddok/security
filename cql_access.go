@@ -285,12 +285,20 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
 
-func (g *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
+func (am *CqlAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
 	return nil, errors.New("unimplemented")
 }
 
 // Request the session information associated the site hostname and cookie in the web request
-func (g *CqlAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
+func (am *CqlAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
 	return nil, errors.New("unimplemented")
 }
 

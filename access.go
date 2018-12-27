@@ -19,6 +19,8 @@ type AccessManager interface {
 	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
+	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
+	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
 	WipeDatastore(namespace string) error
 }
 

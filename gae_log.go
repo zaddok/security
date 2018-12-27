@@ -26,21 +26,58 @@ import (
 	"time"
 )
 
+type LogCollection interface {
+	GetUuid() string
+	GetComponent() string
+	GetBegan() *time.Time
+	GetCompleted() *time.Time
+	GetPersonUuid() string
+}
+
+type LogEntry interface {
+	GetUuid() string
+	GetLogUuid() string
+	GetRecorded() time.Time
+	GetComponent() string
+	GetLevel() string
+	GetMessage() string
+}
+
 type DatastoreLog struct {
 	client    *datastore.Client
 	ctx       context.Context
 	uuid      string
 	component string
-	entry     *GaeLogEntryCollection
+	entry     *GaeLogCollection
 	user      Session
 }
 
-type GaeLogEntryCollection struct {
+type GaeLogCollection struct {
 	Uuid       string
 	Component  string
 	Began      *time.Time
 	Completed  *time.Time
 	PersonUuid string
+}
+
+func (lec *GaeLogCollection) GetUuid() string {
+	return lec.Uuid
+}
+
+func (lec *GaeLogCollection) GetComponent() string {
+	return lec.Component
+}
+
+func (lec *GaeLogCollection) GetBegan() *time.Time {
+	return lec.Began
+}
+
+func (lec *GaeLogCollection) GetCompleted() *time.Time {
+	return lec.Completed
+}
+
+func (lec *GaeLogCollection) GetPersonUuid() string {
+	return lec.Uuid
 }
 
 type GaeLogEntry struct {
@@ -52,6 +89,30 @@ type GaeLogEntry struct {
 	Message   string
 }
 
+func (le *GaeLogEntry) GetUuid() string {
+	return le.Uuid
+}
+
+func (le *GaeLogEntry) GetLogUuid() string {
+	return le.LogUuid
+}
+
+func (le *GaeLogEntry) GetRecorded() time.Time {
+	return le.Recorded
+}
+
+func (le *GaeLogEntry) GetComponent() string {
+	return le.Component
+}
+
+func (le *GaeLogEntry) GetLevel() string {
+	return le.Level
+}
+
+func (le *GaeLogEntry) GetMessage() string {
+	return le.Message
+}
+
 func NewDatastoreLog(component string, user Session, client *datastore.Client, ctx context.Context) (log.Log, string, error) {
 	cuuid, err := uuid.NewRandom()
 	if err != nil {
@@ -59,9 +120,9 @@ func NewDatastoreLog(component string, user Session, client *datastore.Client, c
 	}
 
 	now := time.Now()
-	entry := &GaeLogEntryCollection{cuuid.String(), component, &now, nil, user.GetPersonUuid()}
+	entry := &GaeLogCollection{cuuid.String(), component, &now, nil, user.GetPersonUuid()}
 
-	k := datastore.NameKey("LogEntryCollection", cuuid.String(), nil)
+	k := datastore.NameKey("LogCollection", cuuid.String(), nil)
 	k.Namespace = user.GetSite()
 	if _, err := client.Put(ctx, k, entry); err != nil {
 		return nil, "", err
@@ -74,7 +135,7 @@ func NewDatastoreLog(component string, user Session, client *datastore.Client, c
 
 func (l *DatastoreLog) Close() {
 
-	k := datastore.NameKey("LogEntryCollection", l.uuid, nil)
+	k := datastore.NameKey("LogCollection", l.uuid, nil)
 	k.Namespace = l.user.GetSite()
 
 	now := time.Now()

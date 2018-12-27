@@ -16,6 +16,7 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/google/uuid"
 	"github.com/zaddok/log"
+	"google.golang.org/api/iterator"
 )
 
 type GaeAccessManager struct {
@@ -435,6 +436,42 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	// User lookup failed
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
 	return g.GuestSession(site), "Invalid email address or password.", nil
+}
+
+func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {
+	var items []LogCollection
+
+	q := datastore.NewQuery("LogCollection").Namespace(requestor.GetSite()).Order("-Began").Limit(200)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeLogCollection)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
+	var items []LogEntry
+
+	q := datastore.NewQuery("LogEntry").Namespace(requestor.GetSite()).Order("-Recorded").Limit(10000)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeLogEntry)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
 }
 
 func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
