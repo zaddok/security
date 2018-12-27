@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -73,6 +74,33 @@ func (s *GaePicklistStore) GetPicklist(site, picklist string) (map[string]Pickli
 	value, exists := sitePicklists[strings.ToLower(picklist)]
 	if exists {
 		return value, nil
+	}
+
+	return nil, nil
+}
+
+// Lookup a configuration setting. Loads from database only if cache has expired.
+func (s *GaePicklistStore) GetPicklistOrdered(site, picklist string) ([]PicklistItem, error) {
+	err := s.refreshCache(site)
+	if err != nil {
+		return nil, err
+	}
+
+	sitePicklists, exists := s.picklists[site]
+	if !exists {
+		return nil, nil
+	}
+
+	if value, exists := sitePicklists[strings.ToLower(picklist)]; exists {
+		results := make([]PicklistItem, 0, len(value))
+		for _, v := range value {
+			results = append(results, v)
+		}
+		sort.Slice(results, func(i, j int) bool {
+			return results[j].GetValue() > results[i].GetValue()
+		})
+
+		return results, nil
 	}
 
 	return nil, nil

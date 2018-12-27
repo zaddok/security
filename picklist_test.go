@@ -60,6 +60,26 @@ func TestPicklistStore(t *testing.T) {
 	}
 
 	{
+		err := s.AddPicklistItem(host, "sex", "U", "Unspecified", "Description of Unspecified")
+		pkl, err := s.GetPicklistOrdered(host, "sex") // F, M, U
+		if err != nil {
+			t.Fatalf("GetPicklist() failed: %v", err)
+		}
+		if pkl == nil || len(pkl) != 3 {
+			t.Fatal(fmt.Sprintf("GetPicklist(\"%s\",\"sex\") contains %d items, should contain 2", host, len(pkl)))
+		}
+		if pkl[0].GetKey() != "f" {
+			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"F\" first, but got %s", host, pkl[0].GetKey()))
+		}
+		if pkl[1].GetValue() != "Male" {
+			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"Male\" second, but got %s", host, pkl[1].GetValue()))
+		}
+		if pkl[2].GetKey() != "u" {
+			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"U\" third, but got %s", host, pkl[2].GetKey()))
+		}
+	}
+
+	{
 		item, err := s.GetPicklistItem(host, "sex", "F")
 		if err != nil {
 			t.Fatalf("GetPicklistItem() failed: %v", err)
