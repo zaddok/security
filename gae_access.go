@@ -427,8 +427,8 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			Token:         token,
 			Site:          site,
 			FirstName:     items[0].FirstName,
-			LastName:      items[0].Email,
-			Email:         items[0].FirstName,
+			LastName:      items[0].LastName,
+			Email:         items[0].Email,
 			Authenticated: true,
 		}, "", nil
 	}
