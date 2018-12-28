@@ -150,7 +150,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"bertha", "bert", "birdie", "bertie"},
 	{"bertram", "bert"},
 	{"bess", "bessie"},
-	{"beth", "betsy", "betty", "elizabeth"},
+	{"beth", "betsy", "betty", "elizabeth", "bethany"},
 	{"bethena", "beth", "thaney"},
 	{"beverly", "beverley", "bev"},
 	{"bezaleel", "zeely"},
