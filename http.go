@@ -27,6 +27,10 @@ func RegisterHttpHandlers() {
 	http.HandleFunc("/font/fa-solid-900.ttf", BinaryFile(&FAsolidTTF, 604800))
 	http.HandleFunc("/font/fa-solid-900.woff", BinaryFile(&FAsolidWOFF, 604800))
 
+	http.HandleFunc("/font/materialicons.eot", BinaryFile(&materialIconsEot, 604800))
+	http.HandleFunc("/font/materialicons.ttf", BinaryFile(&materialIconsTtf, 604800))
+	http.HandleFunc("/font/materialicons.woff", BinaryFile(&materialIconsWoff, 604800))
+
 }
 
 func DecodeOrPanic(data string) []byte {
