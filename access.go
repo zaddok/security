@@ -6,16 +6,18 @@ import (
 
 type AccessManager interface {
 	Signup(host, first_name, last_name, email, password, ip string) (*[]string, string, error)
-	GetSystemSession(host, firstname, lastname string) (Session, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
+	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
 	ForgotPasswordRequest(host, email, ip string) (string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
+
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session
 	Invalidate(host, cookie string) (Session, error)
 	CreateSession(site string, uuid string, firstName string, lastName string, email string, ip string) (string, error)
-	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
+	GetSystemSession(host, firstname, lastname string) (Session, error)
+
 	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
