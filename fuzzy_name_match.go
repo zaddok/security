@@ -2,13 +2,12 @@ package security
 
 var FuzzyNameMatch [][]string = [][]string{
 	{"aaron", "erin", "ronnie", "ron"},
-	{"abbie", "abby", "abigail"},
 	{"abe", "abraham", "abram"},
 	{"abednego", "bedney"},
 	{"abel", "ebbie", "ab", "abe", "eb"},
 	{"abiel", "ab"},
 	{"abigail", "abby", "abbie", "abie"},
-	{"abigail", "nabby", "abby", "gail"},
+	{"abigail", "abbie", "abby", "abie", "abbey", "abbi", "abi", "gail", "gayle"},
 	{"abijah", "ab", "bige"},
 	{"abner", "ab"},
 	{"abraham", "ab", "abe"},
