@@ -2,7 +2,6 @@ package security
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -56,7 +55,7 @@ func (s *GaePicklistStore) GetPicklists(site string) (map[string]map[string]Pick
 		return nil, err
 	}
 
-	return nil, errors.New("Unimeplmented")
+	return s.picklists[site], nil
 }
 
 // Lookup a configuration setting. Loads from database only if cache has expired.

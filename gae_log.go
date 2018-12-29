@@ -84,9 +84,9 @@ type GaeLogEntry struct {
 	Uuid      string
 	LogUuid   string
 	Recorded  time.Time
-	Component string
-	Level     string
-	Message   string
+	Component string `datastore:",noindex"`
+	Level     string `datastore:",noindex"`
+	Message   string `datastore:",noindex"`
 }
 
 func (le *GaeLogEntry) GetUuid() string {
