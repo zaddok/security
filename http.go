@@ -34,7 +34,12 @@ func RegisterHttpHandlers() {
 func BinaryFile(data *[]byte, cacheTime int) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", fmt.Sprintf("max-age=%d,s-maxage=%d,no-transform,public", cacheTime, cacheTime/10))
-		w.Header().Set("Content-type", "application/octent-stream")
+		path := strings.ToLower(r.URL.Path[1:])
+		if strings.HasSuffix(path, ".svg") {
+			w.Header().Set("Content-type", "image/svg+xml")
+		} else {
+			w.Header().Set("Content-type", "application/octent-stream")
+		}
 		w.Header().Set("Content-length", fmt.Sprintf("%d", len(*data)))
 		w.Write(*data)
 	}
