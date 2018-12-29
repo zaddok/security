@@ -205,3 +205,122 @@ func CheckEmail(email string) string {
 	}
 	return ""
 }
+
+var SecurityHeader = `
+{{define "security_header"}}
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta charset="utf-8">
+		<meta property="og:site_name" content="{{.SiteName}}"/>
+		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<title>Signup &mdash; {{.SiteName}}</title>
+		<link rel="stylesheet" type="text/css" href="/style.css" />
+		<style type="text/css">
+			@font-face {
+				font-family: 'FontAwesomeSolid';
+				src: url('/font/fa-solid-900.eot');
+				src: url('/font/fa-solid-900.eot?#iefix')
+				format('embedded-opentype'), url('/font/fa-solid-900.woff')
+				format('woff'), url('/font/fa-solid-900.ttf') format('truetype');
+				font-weight: normal;
+				font-style: normal
+			}
+		body {
+			margin-left: auto;
+			margin-right: auto;
+			max-width: 30em;
+			background: #fafafa;
+		}
+		form {
+			padding: 0;
+			margin: 0;
+		}
+		#signin_box input[type=text],
+		#signup_box input[type=text] {
+			margin-bottom: 0.4em;
+			font-size: 1em;
+			border: 1px solid #e8e8e8;
+			width: 100%;
+			padding: 0.56em;
+			background: #fcfcfc;
+		}
+		input[type=submit] {
+			background: #3898f8;
+			border: 0px;
+			padding: 0.6em;
+			border-radius: 0.35em;
+			-webkit-border-radius: 0.35em;
+			-moz-border-radius: 0.35em;
+			color: white;
+			font-weight: bold;
+			width: 100%;
+			margin-top: 0.15em;
+		}
+		#signin_box input[type=password],
+		#signup_box input[type=password] {
+			margin-bottom: 0.4em;
+			font-size: 1em;
+			border: 1px solid #e8e8e8;
+			width: 100%;
+			padding: 0.56em;
+			background: #fcfcfc;
+		}
+		#signin_box h2 {
+			text-align: center;
+			margin-top: 0.4em;
+			margin-bottom: 0.6em;
+		}
+		#signin_box h3,
+		#signup_box h3 {
+			margin-top: 0;
+			margin-bottom: 0.2em;
+		}
+		#signin_box p,
+		#signup_box p {
+			margin-top: 0.2em;
+			margin-bottom: 0.4em;
+			padding: 0;
+		}
+		#signin_box {
+			margin-top: 2em;
+		}
+		#signin_box,
+		#signup_box {
+			margin-bottom: 1.5em;
+			padding: 1em 2.5em 1em 2.5em;
+			border: 1px solid #e6e6e6;
+			background: #fff;
+		}
+
+		div.error { border: 1px solid #C99; background: #FCC; color: #633; }
+		div.info { border: 1px solid #bbe; background: #ddf; color: #558; }
+		div.success { border: 1px solid #aFcA80; color: #4F8A10; background-color: #DFF2BF; }
+		div.warning { border: 1px solid #e4e4c8; color: #aa2; background-color: #ffffd0; }
+		div.error, div.info, div.success, div.warning { padding: 0.4em 1em 0.3em 0.7em; margin-bottom: 1em; clear: both; }
+		div.error::before { font-family: FontAwesomeSolid; content: "\f057\00a0\00a0"; opacity: 0.7; float: left; color: #633; padding-top: 0.03em; }
+		div.info:before { font-family: FontAwesomeSolid; content: "\f05a\00a0\00a0"; opacity: 0.5; float: left; color: #336; padding-top: 0.1em; }
+		div.success::before { font-family: FontAwesomeSolid; content: "\f00c\00a0\00a0"; opacity: 0.7; float: left; color: #4F8A10; padding-top: 0.1em; }
+		div.warning::before { font-family: FontAwesomeSolid; content: "\f071\00a0\00a0"; opacity: 0.5; float: left; color: #aa2; padding-top: 0.1em; }
+		.error ul,
+		.warning ul { padding: 0 0 0 2em; margin: 0; }
+		.error p,
+		.success p,
+		.warning p,
+		.info p { padding: 0 0 0 1.6em; margin: 0; }
+		.error ul li,
+		.success ul li,
+		.warning ul li,
+		.info ul li { padding: 0; margin: 0; list-style-type: none; }
+	</style>
+</head>
+<body class="signin">
+{{end}}
+
+
+{{define "security_footer"}}
+</body></html>
+{{end}}
+`

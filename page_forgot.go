@@ -39,3 +39,41 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		}
 	}
 }
+
+var ForgotTemplate = `
+{{define "forgot_password_page"}}
+{{template "security_header" .}}
+
+{{if .Successes}}<div class="success">{{if eq 1 (len .Successes)}}<p>{{index .Successes 0}}</p>{{else}}<ul>{{range .Successes}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
+{{if .Errors}}<div class="error">{{if eq 1 (len .Errors)}}<p>{{index .Errors 0}}</p>{{else}}<ul>{{range .Errors}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
+{{if .Infos}}<div class="info">{{if eq 1 (len .Infos) }}<p>{{index .Infos 0}}</p>{{else}}<ul>{{range .Infos}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
+
+<div id="signin_box">
+
+<div id="site_banner">
+	<h2>{{.SiteName}}</h2>
+</div>
+
+<form method="post" action="/forgot/" id="forgot">
+<h3>Forgot Password</h3>
+
+<label for="signin_username">
+<input type="text" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
+</label>
+
+<p>Request an email that contains a password reset link.</p>
+
+<label for="signin_reset">
+	<input type="submit" name="signin_reset" value="Reset Password"/>
+</label>
+
+</form>
+
+<script type="text/javascript">
+	document.getElementById('forgot_email').focus();
+</script>
+
+</div>
+{{template "security_footer" .}}
+{{end}}
+`
