@@ -275,7 +275,7 @@ var SecurityHeader = `
 				color: white;
 				font-size: 1em;
 				color: #ddd;
-				margin-top: 0.8em;
+				margin-top: 1.2em;
 			}
 			#signin_box,
 			#signup_box {
@@ -312,9 +312,9 @@ var SecurityHeader = `
 				width: 100%;
 				padding: 0.56em;
 			}
-			#signin_box p, #signup_box p {
-				text-align:right;
-				margin-bottom: 1.5em;
+			#signin_box p.forgot,
+			#signup_box p.forgot {
+				text-align: right;
 			}
 			p > a {
 				color: #ccc;

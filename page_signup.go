@@ -154,7 +154,7 @@ var SignupTemplate = `
 
 <label for="signin_password">
 <input type="password" name="signin_password" id="signin_password" value="{{.Password}}" placeholder="Password"/></span>
-<p><a href="/forgot/">Forgot your password?</a></p>
+<p class="forgot"><a href="/forgot/">Forgot your password?</a></p>
 
 	<input type="submit" name="signin" value="Sign in"/>
 </label>
