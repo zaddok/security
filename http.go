@@ -253,20 +253,29 @@ var SecurityHeader = `
 			#signin_box h2 {
 				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 				text-align: center;
-				margin-top: 0.4em;
+				margin-top: 0em;
 				margin-bottom: 0.6em;
+				color: white;
 			}
 			#signin_box h3,
 			#signup_box h3 {
 				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 				margin-top: 0;
-				margin-bottom: 0.2em;
+				margin-bottom: 1.5em;
+				color: white;
+				text-align: center;
+				font-weight: 200;
+				letter-spacing: 0.02em;
 			}
 			#signin_box p,
 			#signup_box p {
-				margin-top: 0.2em;
-				margin-bottom: 0.4em;
-				padding: 0;
+				text-align: left;
+				margin-bottom: 1.5em;
+				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+				color: white;
+				font-size: 1em;
+				color: #ddd;
+				margin-top: 0.8em;
 			}
 			#signin_box,
 			#signup_box {

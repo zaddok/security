@@ -55,13 +55,13 @@ var ForgotTemplate = `
 </div>
 
 <form method="post" action="/forgot/" id="forgot">
-<h3>Forgot Password</h3>
+<h3>Request Password Reset Email</h3>
 
 <label for="signin_username">
-<input type="text" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
+<input type="email" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
-<p>Request an email that contains a password reset link.</p>
+<p>We can send you an email that contains a password reset link.</p>
 
 <label for="signin_reset">
 	<input type="submit" name="signin_reset" value="Reset Password"/>
