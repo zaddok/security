@@ -251,12 +251,14 @@ var SecurityHeader = `
 			}
 
 			#signin_box h2 {
+				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 				text-align: center;
 				margin-top: 0.4em;
 				margin-bottom: 0.6em;
 			}
 			#signin_box h3,
 			#signup_box h3 {
+				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 				margin-top: 0;
 				margin-bottom: 0.2em;
 			}

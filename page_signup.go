@@ -149,16 +149,17 @@ var SignupTemplate = `
 <h3>Sign in</h3>
 
 <label for="signin_username">
-<input type="text" name="signin_email" id="signin_email" value='{{.SigninEmail}}' placeholder="Email address"/>
+<input type="email" name="signin_email" id="signin_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
 <label for="signin_password">
 <input type="password" name="signin_password" id="signin_password" value="{{.Password}}" placeholder="Password"/></span>
+<p><a href="/forgot/">Forgot your password?</a></p>
+
 	<input type="submit" name="signin" value="Sign in"/>
 </label>
 
 
-<p><a href="/forgot/">Forgot your password?</a></p>
 
 </form>
 
