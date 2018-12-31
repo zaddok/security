@@ -332,25 +332,34 @@ var SecurityHeader = `
 			background: #933;
 		}
 
-		div.error { border: 1px solid #C99; background: #FCC; color: #633; }
+		div.error, div.info, div.success, div.warning {
+			padding: 0.4em 1em 0.3em 0.7em;
+			margin-bottom: 1em;
+			clear: both;
+		}
 		div.info { border: 1px solid #bbe; background: #ddf; color: #558; }
 		div.success { border: 1px solid #aFcA80; color: #4F8A10; background-color: #DFF2BF; }
 		div.warning { border: 1px solid #e4e4c8; color: #aa2; background-color: #ffffd0; }
-		div.error, div.info, div.success, div.warning { padding: 0.4em 1em 0.3em 0.7em; margin-bottom: 1em; clear: both; }
-		div.error::before { font-family: FontAwesomeSolid; content: "\f057\00a0\00a0"; opacity: 0.7; float: left; color: #633; padding-top: 0.03em; }
-		div.info:before { font-family: FontAwesomeSolid; content: "\f05a\00a0\00a0"; opacity: 0.5; float: left; color: #336; padding-top: 0.1em; }
-		div.success::before { font-family: FontAwesomeSolid; content: "\f00c\00a0\00a0"; opacity: 0.7; float: left; color: #4F8A10; padding-top: 0.1em; }
-		div.warning::before { font-family: FontAwesomeSolid; content: "\f071\00a0\00a0"; opacity: 0.5; float: left; color: #aa2; padding-top: 0.1em; }
-		.error ul,
-		.warning ul { padding: 0 0 0 2em; margin: 0; }
-		.error p,
-		.success p,
-		.warning p,
-		.info p { padding: 0 0 0 1.6em; margin: 0; }
-		.error ul li,
-		.success ul li,
-		.warning ul li,
-		.info ul li { padding: 0; margin: 0; list-style-type: none; }
+		div.error { border: 1px solid #C99; background: #FCC; color: #633; }
+		div.info::before, div.success::before, div.warning::before, div.error::before {
+			font-family: FontAwesomeSolid;
+			opacity: 0.45;
+			float: left;
+		}
+		div.error::before { content: "\f057\00a0\00a0"; opacity: 0.45; color: #933; }
+		div.info:before { content: "\f05a\00a0\00a0"; opacity: 0.4; color: #339; }
+		div.success::before { content: "\f00c\00a0\00a0"; opacity: 0.7; color: #4F8A10; }
+		div.warning::before { content: "\f071\00a0\00a0"; opacity: 0.5; color: #aa2; }
+		div.error ul,
+		div.warning ul { padding: 0 0 0 2em; margin: 0; }
+		div.error p,
+		div.success p,
+		div.warning p,
+		div.info p { padding: 0 0 0 1.6em; margin: 0; }
+		div.error ul li,
+		div.success ul li,
+		div.warning ul li,
+		div.info ul li { padding: 0; margin: 0; list-style-type: none; }
 	</style>
 </head>
 <body class="signin">
