@@ -224,7 +224,7 @@ var SecurityHeader = `
 		<meta property="og:site_name" content="{{.SiteName}}"/>
 		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
 		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 		<title>Signin &mdash; {{.SiteName}}</title>
 		<style type="text/css">
 			@font-face {
