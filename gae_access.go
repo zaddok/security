@@ -397,9 +397,6 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if throttled, _ := g.throttle.IsThrottled(email); throttled {
 		return g.GuestSession(site), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
 	}
-	if throttled, _ := g.throttle.IsThrottled(ip); throttled {
-		return g.GuestSession(site), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
-	}
 
 	var items []GaePerson
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
@@ -449,6 +446,13 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	}
 
 	// User lookup failed
+	if throttled, _ := g.throttle.IsThrottled(ip); throttled {
+		// An invalid email address was entered. If this occurs too many times, stop reporting
+		// back the normal "Invalid email address or password" message prevent the signin form
+		// revealing to a bot that this email address/password combination is invalid.
+		return g.GuestSession(site), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
+	}
+
 	g.throttle.Increment(ip)
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
 	return g.GuestSession(site), "Invalid email address or password.", nil
