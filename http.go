@@ -37,6 +37,10 @@ func BinaryFile(data *[]byte, cacheTime int) func(w http.ResponseWriter, r *http
 		path := strings.ToLower(r.URL.Path[1:])
 		if strings.HasSuffix(path, ".svg") {
 			w.Header().Set("Content-type", "image/svg+xml")
+		} else if strings.HasSuffix(path, ".jpg") {
+			w.Header().Set("Content-type", "image/jpg")
+		} else if strings.HasSuffix(path, ".css") {
+			w.Header().Set("Content-type", "text/css")
 		} else {
 			w.Header().Set("Content-type", "application/octent-stream")
 		}
@@ -221,8 +225,7 @@ var SecurityHeader = `
 		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Signup &mdash; {{.SiteName}}</title>
-		<link rel="stylesheet" type="text/css" href="/style.css" />
+		<title>Signin &mdash; {{.SiteName}}</title>
 		<style type="text/css">
 			@font-face {
 				font-family: 'FontAwesomeSolid';
