@@ -24,6 +24,7 @@ type GaeAccessManager struct {
 	ctx           context.Context
 	log           log.Log
 	setting       Setting
+	throttle      Throttle
 	picklistStore PicklistStore
 	template      *template.Template
 }
@@ -114,6 +115,7 @@ func (s *GaeSession) IsAuthenticated() bool {
 func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
+	throttle := NewGaeThrottle(settings, client, ctx)
 
 	t := template.New("api")
 	var err error
@@ -130,6 +132,7 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *
 		ctx:           ctx,
 		log:           log,
 		setting:       settings,
+		throttle:      throttle,
 		picklistStore: picklistStore,
 		template:      t,
 	}, nil, client, ctx
@@ -387,21 +390,34 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 }
 
 func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
+	if email == "" {
+		return g.GuestSession(site), "Invalid email address or password.", nil
+	}
+	email = strings.ToLower(strings.TrimSpace(email))
+	if throttled, _ := g.throttle.IsThrottled(email); throttled {
+		return g.GuestSession(site), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
+	}
+	if throttled, _ := g.throttle.IsThrottled(ip); throttled {
+		return g.GuestSession(site), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
+	}
 
 	var items []GaePerson
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
+		g.throttle.Increment(ip)
 		g.Log().Error("Authenticate() Person lookup Error: %v", err)
 		return g.GuestSession(site), "", err
 	}
 	if len(items) > 0 {
 		if items[0].Password == nil || *items[0].Password == "" {
+			g.throttle.Increment(email)
 			g.Log().Info("Signin failed. This user account has an empty password field. Email: " + email)
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
 		if !VerifyPassword(*items[0].Password, password) {
+			g.throttle.Increment(email)
 			g.Log().Info("Authenticate() Signin failed. User provided password failed to match stored password.")
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
