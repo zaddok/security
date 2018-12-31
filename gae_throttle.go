@@ -50,11 +50,12 @@ func (t *GaeThrottle) IsThrottled(key string) (bool, error) {
 	if item.Attempts <= t.Attempts {
 		return false, nil
 	}
+	// Max attempts hit
 
-	// Attemts hit limit, are we witin the lockout period or not?
 	now := time.Now().Unix()
-	if item.Updated < now+t.Lockout {
-		// We had a recent update within the lockout period
+
+	if item.Updated+t.Lockout > now {
+		// We are within the lockout period
 		return true, nil
 	}
 

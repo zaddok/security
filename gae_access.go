@@ -405,7 +405,6 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
-		g.throttle.Increment(ip)
 		g.Log().Error("Authenticate() Person lookup Error: %v", err)
 		return g.GuestSession(site), "", err
 	}
@@ -450,6 +449,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	}
 
 	// User lookup failed
+	g.throttle.Increment(ip)
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
