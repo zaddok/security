@@ -236,71 +236,98 @@ var SecurityHeader = `
 				font-weight: normal;
 				font-style: normal
 			}
-		body {
-			margin-left: auto;
-			margin-right: auto;
-			max-width: 30em;
-			background: #fafafa;
+
+			body {
+				background: #fafafa;
+				background-repeat: no-repeat;
+				background-position: center;
+				-webkit-background-size: cover;
+				-moz-background-size: cover;
+				-o-background-size: cover;
+				background-size: cover;
+				margin-left: auto;
+				margin-right: auto;
+				max-width: 24em;
+			}
+
+			#signin_box h2 {
+				text-align: center;
+				margin-top: 0.4em;
+				margin-bottom: 0.6em;
+			}
+			#signin_box h3,
+			#signup_box h3 {
+				margin-top: 0;
+				margin-bottom: 0.2em;
+			}
+			#signin_box p,
+			#signup_box p {
+				margin-top: 0.2em;
+				margin-bottom: 0.4em;
+				padding: 0;
+			}
+			#signin_box,
+			#signup_box {
+				margin-bottom: 1.5em;
+				padding: 1em 2.5em 1em 2.5em;
+				border: 1px solid #e6e6e6;
+				background: #fff;
+			}
+			form {
+				padding: 0;
+				margin: 0;
+			}
+			body > div#signin_box {
+				margin-top: 2em;
+			}
+			body > div#signin_box,
+			body > div#signup_box {
+				border: 0px;
+				max-width: 20em;
+				background-color: rgba(30,30,30,0.85);
+				border-radius: 0.5em;
+				margin-bottom: 1.5em;
+				padding: 1.5em 2.0em 1.5em 2.0em;
+			}
+
+			#signin_box input[type=text], #signup_box input[type=text],
+			#signin_box input[type=email], #signup_box input[type=email],
+			#signin_box input[type=password], #signup input[type=password] {
+				border: 1px solid rgba(0, 0, 0, 0.23);
+				border-radius: 0.5em;
+				background: rgba(93, 93, 93, 0.41);
+				margin-bottom: 0.4em;
+				font-size: 1em;
+				width: 100%;
+				padding: 0.56em;
+			}
+			#signin_box p, #signup_box p {
+				text-align:right;
+				margin-bottom: 1.5em;
+			}
+			p > a {
+				color: #ccc;
+				font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+				font-size: 0.8em;
+			}
+			#signup_box input[type=submit], #signin_box input[type=submit] {
+				background: #a44;
+				border: 0px;
+				font-size: 1em;
+				padding: 0.6em;
+				border-radius: 0.35em;
+				-webkit-border-radius: 0.35em;
+				-moz-border-radius: 0.35em;
+				color: white;
+				font-weight: 400;
+				width: 100%;
+				margin-top: 0.15em;
+				-webkit-appearance: none;
+				-moz-appearance: none;
 		}
-		form {
-			padding: 0;
-			margin: 0;
-		}
-		#signin_box input[type=text], #signup_box input[type=text],
-		#signin_box input[type=email], #signup_box input[type=email] {
-			margin-bottom: 0.4em;
-			font-size: 1em;
-			border: 1px solid #e8e8e8;
-			width: 100%;
-			padding: 0.56em;
-			background: #fcfcfc;
-		}
-		input[type=submit] {
-			background: #3898f8;
-			border: 0px;
-			padding: 0.6em;
-			border-radius: 0.35em;
-			-webkit-border-radius: 0.35em;
-			-moz-border-radius: 0.35em;
-			color: white;
-			font-weight: bold;
-			width: 100%;
-			margin-top: 0.15em;
-		}
-		#signin_box input[type=password],
-		#signup_box input[type=password] {
-			margin-bottom: 0.4em;
-			font-size: 1em;
-			border: 1px solid #e8e8e8;
-			width: 100%;
-			padding: 0.56em;
-			background: #fcfcfc;
-		}
-		#signin_box h2 {
-			text-align: center;
-			margin-top: 0.4em;
-			margin-bottom: 0.6em;
-		}
-		#signin_box h3,
-		#signup_box h3 {
-			margin-top: 0;
-			margin-bottom: 0.2em;
-		}
-		#signin_box p,
-		#signup_box p {
-			margin-top: 0.2em;
-			margin-bottom: 0.4em;
-			padding: 0;
-		}
-		#signin_box {
-			margin-top: 2em;
-		}
-		#signin_box,
-		#signup_box {
-			margin-bottom: 1.5em;
-			padding: 1em 2.5em 1em 2.5em;
-			border: 1px solid #e6e6e6;
-			background: #fff;
+		#signup_box input[type=submit]:hover,
+		#signin_box input[type=submit]:hover {
+			background: #933;
 		}
 
 		div.error { border: 1px solid #C99; background: #FCC; color: #633; }
