@@ -246,8 +246,8 @@ var SecurityHeader = `
 			padding: 0;
 			margin: 0;
 		}
-		#signin_box input[type=text],
-		#signup_box input[type=text] {
+		#signin_box input[type=text], #signup_box input[type=text],
+		#signin_box input[type=email], #signup_box input[type=email] {
 			margin-bottom: 0.4em;
 			font-size: 1em;
 			border: 1px solid #e8e8e8;
