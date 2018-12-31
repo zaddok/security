@@ -71,20 +71,22 @@ func (t *GaeThrottle) Increment(key string) error {
 	err := t.client.Get(t.ctx, k, &item)
 
 	now := time.Now().Unix()
-	item.Updated = now
 
 	if err != nil && err != datastore.ErrNoSuchEntity {
 		return err
 	}
 	if err == datastore.ErrNoSuchEntity {
 		item.Attempts = 1
+		item.Updated = now
 	} else {
 		if item.Updated < now-t.Window {
 			// Last hit is dated longer than the window period, reset counter
 			item.Attempts = 1
+			item.Updated = now
 		} else {
 			// Last hit is dated within the window period, increment counter
 			item.Attempts = item.Attempts + 1
+			item.Updated = now
 		}
 	}
 
