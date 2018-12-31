@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 )
@@ -10,7 +11,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		AddSafeHeaders(w)
 		am.Log().Debug("Forgot password page")
 
-		_, err := LookupSession(r, am)
+		session, err := LookupSession(r, am)
 		if err != nil {
 			am.Log().Notice("Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
@@ -36,6 +37,13 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			am.Log().Notice("Error displaying 'forgot' page: %v", err)
 			w.Write([]byte("Error displaying 'forgot' page"))
 			return
+		}
+
+		token, err := am.ForgotPasswordRequest(session.GetSite(), r.FormValue("signin_email"), IpFromRequest(r))
+		if err != nil {
+			fmt.Println("Forgot password request failed:", err)
+		} else {
+			fmt.Println("Forgot password request successs:", token, r.FormValue("signin_email"))
 		}
 	}
 }
