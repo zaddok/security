@@ -315,6 +315,7 @@ var SecurityHeader = `
 			#signin_box p.forgot,
 			#signup_box p.forgot {
 				text-align: right;
+				margin: 0 0 1.6em 0;
 			}
 			p > a {
 				color: #ccc;
