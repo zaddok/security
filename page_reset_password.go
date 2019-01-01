@@ -36,6 +36,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		p := &Page{}
 		p.SiteName = siteName
 		p.SigninDescription = siteDescription
+		p.Token = token
 
 		// Form has been submitted with new password
 		if r.FormValue("new_password1") != "" || r.FormValue("new_password2") != "" {
@@ -66,10 +67,6 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 					fmt.Println("Password reset failure", err)
 				}
 			}
-		}
-
-		if r.FormValue("new_password2") != "" {
-			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
 		}
 
 		err = t.ExecuteTemplate(w, "reset_password_page", p)
