@@ -10,6 +10,7 @@ type AccessManager interface {
 	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
 	ForgotPasswordRequest(host, email, ip string) (string, error)
+	ResetPassword(host, token, password, ip string) (bool, string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
 
 	Session(host, cookie string) (Session, error)
@@ -118,7 +119,7 @@ link below. This link will expire in 24 hours.
 <p>
 
 <p>
-<a href="{{.BaseURL}}/reset/{{.Token}}">{{.BaseURL}}/reset/{{.Token}}</a>
+<a href="{{.BaseURL}}/reset.password/{{.Token}}">{{.BaseURL}}/reset.password/{{.Token}}</a>
 </p>
 
 <p>
@@ -137,7 +138,7 @@ link below. This link will expire in 24 hours.
   Name: {{.FirstName}} {{.LastName}}
   Email: {{.Email}}
 
-  {{.BaseURL}}/reset/{{.Token}}
+  {{.BaseURL}}/reset.password/{{.Token}}
 
 If you did not initiate this password reset request, no action is required,
 simply ignore this email.

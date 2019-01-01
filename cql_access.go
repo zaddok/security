@@ -443,6 +443,10 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	return "", "Invalid activation token", nil
 }
 
+func (g *CqlAccessManager) ResetPassword(site, token, password, ip string) (bool, string, error) {
+	return false, "Unimplemented", nil
+}
+
 func (g *CqlAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
 	personUuid, perr := gocql.ParseUUID(person)
 	if perr != nil {

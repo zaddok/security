@@ -94,8 +94,8 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 				signupMessage = append(signupMessage, "Please specify your desired password.")
 			} else if len(p.Password) < 6 {
 				signupMessage = append(signupMessage, "Please specify a password with at least 6 characters.")
-			} else if len(p.Password) > 200 {
-				signupMessage = append(signupMessage, "Password must be less than 200 characters.")
+			} else if len(p.Password) > 100 {
+				signupMessage = append(signupMessage, "Password must be less than 100 characters.")
 			} else if len(p.Password2) < 1 {
 				signupMessage = append(signupMessage, "Please re-enter your password.")
 			} else if p.Password != p.Password2 {

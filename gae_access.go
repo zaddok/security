@@ -345,6 +345,15 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		p.BaseURL = baseUrl
 	}
 
+	//TODO: Treat expiry correctly
+
+	k := datastore.NameKey("RequestToken", token.String(), nil)
+	k.Namespace = site
+	i := GaeRequestToken{Uuid: token.String(), PersonUuid: items[0].Uuid, Type: `password_reset`, IP: ip, Expiry: time.Now().Unix(), Data: ""}
+	if _, err := a.client.Put(a.ctx, k, &i); err != nil {
+		return "Unable to process password reset request. Please try again.", err
+	}
+
 	var w bytes.Buffer
 	boundary := RandomString(20)
 	w.Write([]byte(fmt.Sprintf("Subject: Lost password request\r\n")))
@@ -687,10 +696,6 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	}
 
 	// Lookup the request token for the account creation request details
-	type SI struct {
-		Expiry int64
-		Data   string
-	}
 	maxAge := g.setting.GetInt(site, "activation_token.max_age", 2592000)
 	k := datastore.NameKey("RequestToken", token, nil)
 	k.Namespace = site
@@ -735,6 +740,49 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 
 	g.Log().Error("addPerson() createSession() failure: " + err2.Error())
 	return "", "", err2
+}
+
+func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool, string, error) {
+	// Check the token is a valid uuid
+	_, err := uuid.Parse(token)
+	if err != nil {
+		g.Log().Error("ResetPassword() called with invalid uuid: " + err.Error())
+		return false, "Invalid password reset token", nil
+	}
+
+	// Lookup the request token for the forgot password request details
+	maxAge := g.setting.GetInt(site, "password_reset_token.max_age", 93600)
+	k := datastore.NameKey("RequestToken", token, nil)
+	k.Namespace = site
+	si := new(GaeRequestToken)
+	err = g.client.Get(g.ctx, k, si)
+	if err == datastore.ErrNoSuchEntity {
+		g.Log().Error("ResetPassword() called with uuid not in the datastore: " + err.Error())
+		return false, "Invalid reset password token", nil
+	} else if err != nil {
+		g.Log().Error("ResetPassword() failure: " + err.Error())
+		return false, "Password reset service failed, please try again.", err
+	} else if si.Expiry+int64(maxAge) < time.Now().Unix() {
+		g.Log().Error("ResetPassword() called with expired uuid: %d < %d ", si.Expiry, time.Now().Unix())
+		return false, "This password reset link has expired.", nil
+	}
+
+	// Do one last final double check an account does not exist with this email address
+	var person GaePerson
+	k = datastore.NameKey("Person", token, nil)
+	k.Namespace = site
+	err = g.client.Get(g.ctx, k, &person)
+	if err == datastore.ErrNoSuchEntity {
+		g.Log().Error("ResetPassword() person lookup by uuid failed: " + err.Error())
+		return false, "Reset password service failed, please try again.", err
+	} else if err != nil {
+		g.Log().Error("ResetPassword() email lookup failure: " + err.Error())
+		return false, "Reset password service failed, please try again.", err
+	}
+	person.Password = HashPassword(password)
+	_, err = g.client.Put(g.ctx, k, &person)
+
+	return true, "Your password has been reset", nil
 }
 
 func (g *GaeAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
