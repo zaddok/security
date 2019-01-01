@@ -769,7 +769,7 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 
 	// Do one last final double check an account does not exist with this email address
 	var person GaePerson
-	k = datastore.NameKey("Person", token, nil)
+	k = datastore.NameKey("Person", si.PersonUuid, nil)
 	k.Namespace = site
 	err = g.client.Get(g.ctx, k, &person)
 	if err == datastore.ErrNoSuchEntity {
