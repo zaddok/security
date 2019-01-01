@@ -337,15 +337,13 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	p.Email = email
 	p.Uuid = token.String()
 	p.Token = token.String()
-	p.LastName = items[0].FirstName
-	p.FirstName = items[0].LastName
+	p.FirstName = items[0].FirstName
+	p.LastName = items[0].LastName
 	if baseUrl == "" {
 		p.BaseURL = "http://" + site
 	} else {
 		p.BaseURL = baseUrl
 	}
-
-	//TODO: Treat expiry correctly
 
 	k := datastore.NameKey("RequestToken", token.String(), nil)
 	k.Namespace = site
