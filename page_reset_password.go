@@ -13,7 +13,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/reset.password/") {
-			token = token[10:]
+			token = token[16:]
 		}
 		if len(token) > 0 && token[len(token)-1] == '/' {
 			token = token[0 : len(token)-1]
