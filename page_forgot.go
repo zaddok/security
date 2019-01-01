@@ -69,7 +69,7 @@ var ForgotTemplate = `
 <input type="email" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
-<p>We can send you an email that contains a password reset link.</p>
+<p>Enter your email address so that we can send you an email containing a password reset link.</p>
 
 <label for="signin_reset">
 	<input type="submit" name="signin_reset" value="Reset Password"/>
