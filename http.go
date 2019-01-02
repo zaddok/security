@@ -371,7 +371,7 @@ var SecurityHeader = `
 		div.success ul li,
 		div.warning ul li,
 		div.info ul li { padding: 0; margin: 0; list-style-type: none; }
-{{.SupplimentalCss}}
+{{.SupplimentalCss | safe}}
 	</style>
 </head>
 <body class="signin">
