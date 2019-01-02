@@ -20,6 +20,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		type Page struct {
 			SiteName        string
+			SiteDescription string
 			SigninEmail     string
 			SupplimentalCss string
 			Errors          []string

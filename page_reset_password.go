@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCs string) func(w http.ResponseWriter, r *http.Request) {
+func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
