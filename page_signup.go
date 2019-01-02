@@ -11,6 +11,7 @@ type SignupPageData struct {
 	SiteName        string
 	SiteDescription string
 	SigninEmail     string
+	SupplimentalCss string
 	FirstName       string
 	LastName        string
 	Email           string
@@ -23,7 +24,7 @@ type SignupPageData struct {
 	Successes       []string
 }
 
-func SignupPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func SignupPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		am.Log().Debug("Singup page")
@@ -42,6 +43,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p := &SignupPageData{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
+		p.SupplimentalCss = supplimentalCss
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 		p.Email = strings.TrimSpace(r.FormValue("email"))

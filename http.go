@@ -310,6 +310,7 @@ var SecurityHeader = `
 				margin-bottom: 0.4em;
 				font-size: 1em;
 				width: 100%;
+				color: white;
 				padding: 0.56em;
 			}
 			#signin_box p.forgot,
@@ -370,6 +371,7 @@ var SecurityHeader = `
 		div.success ul li,
 		div.warning ul li,
 		div.info ul li { padding: 0; margin: 0; list-style-type: none; }
+{{.SupplimentalCss}}
 	</style>
 </head>
 <body class="signin">

@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := &SignupPageData{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
+		p.SupplimentalCss = supplimentalCss
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/activate/") {

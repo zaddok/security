@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCs string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -28,6 +28,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		type Page struct {
 			SiteName          string
 			SigninDescription string
+			SupplimentalCss   string
 			Token             string
 			Errors            []string
 			Infos             []string
@@ -36,6 +37,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		p := &Page{}
 		p.SiteName = siteName
 		p.SigninDescription = siteDescription
+		p.SupplimentalCss = supplimentalCss
 		p.Token = token
 
 		// Form has been submitted with new password

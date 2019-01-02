@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		am.Log().Debug("Forgot password page")
@@ -19,14 +19,17 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		}
 
 		type Page struct {
-			SiteName    string
-			SigninEmail string
-			Errors      []string
-			Infos       []string
-			Successes   []string
+			SiteName        string
+			SigninEmail     string
+			SupplimentalCss string
+			Errors          []string
+			Infos           []string
+			Successes       []string
 		}
 		p := &Page{}
 		p.SiteName = siteName
+		p.SiteDescription = siteDescription
+		p.SupplimentalCss = supplimentalCss
 
 		if r.FormValue("signin_email") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
