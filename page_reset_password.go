@@ -28,7 +28,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		type Page struct {
 			SiteName          string
 			SigninDescription string
-			SupplimentalCss   template.HTML
+			SupplimentalCss   string
 			Token             string
 			Errors            []string
 			Infos             []string
@@ -37,7 +37,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		p := &Page{}
 		p.SiteName = siteName
 		p.SigninDescription = siteDescription
-		p.SupplimentalCss = template.HTML(supplimentalCss)
+		p.SupplimentalCss = supplimentalCss
 		p.Token = token
 
 		// Form has been submitted with new password

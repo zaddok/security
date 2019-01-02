@@ -12,7 +12,7 @@ func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescript
 		p := &SignupPageData{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
-		p.SupplimentalCss = template.HTML(supplimentalCss)
+		p.SupplimentalCss = supplimentalCss
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/activate/") {

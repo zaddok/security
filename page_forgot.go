@@ -22,7 +22,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			SiteName        string
 			SiteDescription string
 			SigninEmail     string
-			SupplimentalCss template.HTML
+			SupplimentalCss string
 			Errors          []string
 			Infos           []string
 			Successes       []string
@@ -30,7 +30,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p := &Page{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
-		p.SupplimentalCss = template.HTML(supplimentalCss)
+		p.SupplimentalCss = supplimentalCss
 
 		if r.FormValue("signin_email") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
