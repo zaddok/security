@@ -486,7 +486,7 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
 	var items []LogEntry
 
-	q := datastore.NewQuery("LogEntry").Namespace(requestor.GetSite()).Order("-Recorded").Limit(10000)
+	q := datastore.NewQuery("LogEntry").Namespace(requestor.GetSite()).Filter("LogUuid =", uuid).Order("-Recorded").Limit(10000)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaeLogEntry)
