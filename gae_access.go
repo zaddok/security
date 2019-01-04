@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/smtp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -483,6 +484,64 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 	return items[:], nil
 }
 
+func (am *GaeAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error) {
+	var items []EntityAudit
+
+	q := datastore.NewQuery("EntityAudit").Namespace(requestor.GetSite()).Filter("EntityUuid =", uuid).Limit(10000)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeEntityAudit)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		return items[j].GetDate().Before(items[i].GetDate())
+	})
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error {
+	i := GaeEntityAudit{
+		Date:       time.Now(),
+		EntityUuid: entityUuid,
+		Attribute:  attribute,
+		OldValue:   oldValue,
+		NewValue:   newValue,
+		PersonUuid: requestor.GetPersonUuid(),
+	}
+
+	k := datastore.IncompleteKey("EntityAudit", nil)
+	k.Namespace = requestor.GetSite()
+
+	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (am *GaeAccessManager) BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error {
+	var keys []*datastore.Key
+	var e *GaeEntityAuditLogCollection = ec.(*GaeEntityAuditLogCollection)
+
+	for range e.Items {
+		key := datastore.IncompleteKey("EntityAudit", nil)
+		key.Namespace = requestor.GetSite()
+		keys = append(keys, key)
+	}
+
+	if _, err := am.client.PutMulti(am.ctx, keys, e.Items); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
 	var items []LogEntry
 
@@ -606,9 +665,9 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 
 	token := RandomString(32)
 	session := &GaeSession{
+		Site:          site,
 		PersonUUID:    puuid,
 		Token:         token,
-		Site:          site,
 		FirstName:     firstname,
 		LastName:      lastname,
 		Authenticated: true,
@@ -631,8 +690,9 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		}
 
 		session := &GaeSession{
-			Token:         cookie,
 			Site:          site,
+			PersonUUID:    i.PersonUUID,
+			Token:         cookie,
 			FirstName:     i.FirstName,
 			LastName:      i.LastName,
 			Email:         i.Email,

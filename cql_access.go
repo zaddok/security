@@ -293,6 +293,18 @@ func (am *CqlAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error {
+	return errors.New("Unimplemented")
+}
+
+func (am *CqlAccessManager) BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error {
+	return errors.New("Unimplemented")
+}
+
 func (am *CqlAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
 	return nil, errors.New("unimplemented")
 }

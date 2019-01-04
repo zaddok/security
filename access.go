@@ -1,6 +1,8 @@
 package security
 
 import (
+	"time"
+
 	"github.com/zaddok/log"
 )
 
@@ -28,8 +30,13 @@ type AccessManager interface {
 	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
+
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
+	GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error)
+	UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error
+	BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error
+
 	WipeDatastore(namespace string) error
 }
 
@@ -65,6 +72,31 @@ type NewUserInfo struct {
 	LastName  string  `json:"last_name"`
 	Email     string  `json:"email"`
 	Password  *string `json:"password"`
+}
+
+// EntityAudit represents information about who changed the value
+// of an attribute, how it was changed, and when it was changed.
+// It is anticipated that this object type enables display of log messages in the form:
+//
+// {{Date}}: {{Person Name}} updated {{Attribute}} from {{Old value}} to {{new value}}
+//
+// This will perform well only on entities that are not continually changing, i.e. Personal
+// detais of user accounts, contact details, etc...
+type EntityAudit interface {
+	GetDate() time.Time
+	GetEntityUuid() string
+	GetAttribute() string
+	GetOldValue() string
+	GetNewValue() string
+	GetPersonUuid() string
+}
+
+// EntityAuditLogCollection defines an interface used by the BulkUpdateEntityAuditLog() function.
+// It facilitates collecting together multiple updates to be persisted in one operation.
+type EntityAuditLogCollection interface {
+	SetEntityUuidPersonUuid(entityUuid, personUuid string)
+	AddItem(attribute, oldValue, newValue string)
+	HasUpdates() bool
 }
 
 const emailHtmlTemplates string = `

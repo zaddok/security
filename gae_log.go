@@ -18,12 +18,15 @@
 package security
 
 import (
-	"cloud.google.com/go/datastore"
 	"context"
+	"errors"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/zaddok/log"
-	"time"
+
+	"cloud.google.com/go/datastore"
 )
 
 type LogCollection interface {
@@ -189,4 +192,67 @@ func (l *DatastoreLog) Warning(format string, a ...interface{}) error {
 
 func (l *DatastoreLog) Error(format string, a ...interface{}) error {
 	return l.doLog("ERROR", fmt.Sprintf(format, a...))
+}
+
+type GaeEntityAudit struct {
+	Date       time.Time
+	EntityUuid string
+	Attribute  string
+	OldValue   string
+	NewValue   string
+	PersonUuid string
+}
+
+func (e *GaeEntityAudit) GetDate() time.Time {
+	return e.Date
+}
+
+func (e *GaeEntityAudit) GetEntityUuid() string {
+	return e.EntityUuid
+}
+
+func (e *GaeEntityAudit) GetAttribute() string {
+	return e.Attribute
+}
+
+func (e *GaeEntityAudit) GetOldValue() string {
+	return e.OldValue
+}
+
+func (e *GaeEntityAudit) GetNewValue() string {
+	return e.NewValue
+}
+
+func (e *GaeEntityAudit) GetPersonUuid() string {
+	return e.PersonUuid
+}
+
+type GaeEntityAuditLogCollection struct {
+	EntityUuid string
+	PersonUuid string
+	Date       time.Time
+	Items      []GaeEntityAudit
+}
+
+func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, personUuid string) {
+	if entityUuid == "" {
+		panic(errors.New("Entity UUID must not be empty"))
+	}
+	if personUuid == "" {
+		panic(errors.New("Person UUID must not be empty"))
+	}
+	ec.EntityUuid = entityUuid
+	ec.PersonUuid = personUuid
+	ec.Date = time.Now()
+}
+
+func (ec *GaeEntityAuditLogCollection) AddItem(attribute, oldValue, newValue string) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, ec.PersonUuid})
+}
+
+func (ec *GaeEntityAuditLogCollection) HasUpdates() bool {
+	return len(ec.Items) > 0
 }
