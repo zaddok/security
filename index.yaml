@@ -1,0 +1,7 @@
+indexes:
+
+- kind: LogEntry
+  properties:
+  - name: LogUuid
+  - name: Recorded
+
