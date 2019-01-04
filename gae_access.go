@@ -501,6 +501,50 @@ func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 	return items[:], nil
 }
 
+func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
+	k := datastore.NameKey("Person", uuid, nil)
+	k.Namespace = requestor.GetSite()
+	i := new(GaePerson)
+	err := am.client.Get(am.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return i, nil
+}
+
+func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
+	var items []Person
+
+	q := datastore.NewQuery("Person").Namespace(requestor.GetSite()).Limit(2000)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaePerson)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		e.Site = requestor.GetSite()
+		items = append(items, e)
+	}
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) UpdatePerson(person *Person, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *GaeAccessManager) SearchPeople(keyword string, requestor Session) ([]Person, error) {
+	return am.GetPeople(requestor)
+}
+
 func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
 	firstname = strings.TrimSpace(firstname)
 	lastname = strings.TrimSpace(lastname)
@@ -658,6 +702,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
 	firstName = strings.TrimSpace(firstName)
 	lastName = strings.TrimSpace(lastName)
+	email = strings.ToLower(strings.TrimSpace(email))
 
 	uuid, err := uuid.NewUUID()
 	if err != nil {

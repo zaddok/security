@@ -293,6 +293,26 @@ func (am *CqlAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetPeople(requestor Session) ([]Person, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) UpdatePerson(person *Person, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) DeletePerson(uuid string, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) SearchPeople(keyword string, requestor Session) ([]Person, error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
 	return nil, errors.New("unimplemented")
 }

@@ -6,12 +6,18 @@ import (
 
 type AccessManager interface {
 	Signup(host, first_name, last_name, email, password, ip string) (*[]string, string, error)
-	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
-	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
 	ForgotPasswordRequest(host, email, ip string) (string, error)
 	ResetPassword(host, token, password, ip string) (bool, string, error)
 	Authenticate(host, email, password, ip string) (Session, string, error)
+
+	GetPerson(uuid string, requestor Session) (Person, error)
+	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
+	GetPeople(requestor Session) ([]Person, error)
+	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
+	UpdatePerson(person *Person, updator Session) error
+	DeletePerson(uuid string, updator Session) error
+	SearchPeople(keyword string, requestor Session) ([]Person, error)
 
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session

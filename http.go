@@ -88,7 +88,7 @@ func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err
 		err,
 		""})
 	if err != nil {
-		fmt.Println("Error occurred while executing ShowError(). We wanted to show this error: %v", err)
+		fmt.Printf("Error occurred while executing ShowError(). We wanted to show this error: %v\n", err)
 		panic(fmt.Sprintf("Error displaying error page: %v", err))
 	}
 }
