@@ -7,5 +7,5 @@ type Setting interface {
 	GetWithDefault(site, name, defaultValue string) string
 	GetInt(site, name string, defaultValue int) int
 	Put(site, name, value string) error
-	List(site string) map[string]map[string]string
+	List(site string) map[string]string
 }

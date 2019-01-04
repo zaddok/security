@@ -120,21 +120,19 @@ func (s *GaeSetting) Put(site, name, value string) error {
 }
 
 // Return all configuration settings. Loads from database only if cache has expired.
-func (s *GaeSetting) List(site string) map[string]map[string]string {
-	all := make(map[string]map[string]string)
+func (s *GaeSetting) List(site string) map[string]string {
+	all := make(map[string]string)
 
 	s.refreshCache()
 
+	if _, exists := s.sites[site]; !exists {
+		return all
+	}
+
 	// Return a copy of the settings map so it can't be altered
 	// by the receiving function
-	for site, m := range s.sites {
-		for k, v := range m {
-			_, exists := all[site]
-			if !exists {
-				all[site] = make(map[string]string)
-			}
-			all[site][k] = v
-		}
+	for k, v := range s.sites[site] {
+		all[k] = v
 	}
 
 	return all
