@@ -47,6 +47,7 @@ type Person interface {
 	GetFirstName() string
 	GetLastName() string
 	GetEmail() string
+	GetDisplayName() string
 }
 
 // Encapsulates an as yet unverified request. i.e. Account creation.

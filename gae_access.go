@@ -64,6 +64,10 @@ func (p GaePerson) GetLastName() string {
 	return p.LastName
 }
 
+func (p GaePerson) GetDisplayName() string {
+	return p.FirstName + " " + p.LastName
+}
+
 func (p GaePerson) GetSite() string {
 	return p.Site
 }
