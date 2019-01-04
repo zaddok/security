@@ -596,7 +596,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) UpdatePerson(person *Person, updator Session) error {
+func (am *GaeAccessManager) UpdatePerson(firstName, lastName, email, password string, updator Session) error {
 	return errors.New("unimplemented")
 }
 

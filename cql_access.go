@@ -313,7 +313,7 @@ func (am *CqlAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return nil, errors.New("unimplemented")
 }
 
-func (am *CqlAccessManager) UpdatePerson(person *Person, updator Session) error {
+func (am *CqlAccessManager) UpdatePerson(firstName, lastName, email, password string, updator Session) error {
 	return errors.New("unimplemented")
 }
 
