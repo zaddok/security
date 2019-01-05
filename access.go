@@ -101,6 +101,37 @@ type EntityAuditLogCollection interface {
 	HasUpdates() bool
 }
 
+type EntityAuditGroup struct {
+	Person Person
+	Date   time.Time
+	Items  []EntityAudit
+}
+
+func DivideEntityGroups(items []EntityAudit) []*EntityAuditGroup {
+	var groups []*EntityAuditGroup
+	var group *EntityAuditGroup = nil
+
+	for _, item := range items {
+		if group == nil {
+			group = new(EntityAuditGroup)
+			groups = append(groups, group)
+			group.Date = item.GetDate()
+			group.Items = append(group.Items, item)
+			continue
+		}
+		if item.GetDate().Unix() != group.Date.Unix() {
+			group = new(EntityAuditGroup)
+			groups = append(groups, group)
+			group.Date = item.GetDate()
+			group.Items = append(group.Items, item)
+			continue
+		}
+		group.Items = append(group.Items, item)
+	}
+
+	return groups[:]
+}
+
 const emailHtmlTemplates string = `
 {{define "signup_confirmation_html"}}
 <p>
