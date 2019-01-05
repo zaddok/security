@@ -344,34 +344,45 @@ var SecurityHeader = `
 			background: #933;
 		}
 
-		div.error, div.info, div.success, div.warning {
-			padding: 0.4em 1em 0.3em 0.7em;
-			margin-bottom: 1em;
+		div.feedback {
+			padding: 0.4em 1em 0.4em 0.7em;
+			margin: 1em 0em 1em 0em;
 			clear: both;
+			background: #b9deff;
+			border-radius: 0.6em;
+			border: 1px solid #a9ceef;
 		}
-		div.info { border: 1px solid #bbe; background: #ddf; color: #558; }
-		div.success { border: 1px solid #aFcA80; color: #4F8A10; background-color: #DFF2BF; }
-		div.warning { border: 1px solid #e4e4c8; color: #aa2; background-color: #ffffd0; }
-		div.error { border: 1px solid #C99; background: #FCC; color: #633; }
-		div.info::before, div.success::before, div.warning::before, div.error::before {
+		div.feedback::before {
+			float:left;
+			display: inline-block;
 			font-family: FontAwesomeSolid;
-			opacity: 0.45;
-			float: left;
+			opacity 0.45;
+			margin-top: -0.05em;
+			font-size: 1.2em;
+			content: '\f06a';
 		}
-		div.error::before { content: "\f057\00a0\00a0"; opacity: 0.45; color: #933; }
-		div.info:before { content: "\f05a\00a0\00a0"; opacity: 0.4; color: #339; }
-		div.success::before { content: "\f00c\00a0\00a0"; opacity: 0.7; color: #4F8A10; }
-		div.warning::before { content: "\f071\00a0\00a0"; opacity: 0.5; color: #aa2; }
-		div.error ul,
-		div.warning ul { padding: 0 0 0 2em; margin: 0; }
-		div.error p,
-		div.success p,
-		div.warning p,
-		div.info p { padding: 0 0 0 1.6em; margin: 0; }
-		div.error ul li,
-		div.success ul li,
-		div.warning ul li,
-		div.info ul li { padding: 0; margin: 0; list-style-type: none; }
+		div.feedback ul, div.feedback p {
+			margin: 0 0 0 2em;
+			padding: 0;
+			opacity: 0.7;
+		}
+		div.feedback ul li {
+			list-style-type: none;
+		}
+
+		div.info { color: #024; }
+		div.info::before { color: #68c; content: '\f05a' }
+
+		div.warning, div.warning::before { color: #420; background: #ffdeb9; border-color: #efcea9; }
+		div.warning::before { content: '\f071'; color: #a86; }
+
+		div.error, div.error::before { color: #400; background: #ffb9b9; border-color: #efa9a9; }
+		div.error::before { color: #844; opacity: 0.7;}
+
+		div.success, div.success::before { color: #041; background: #b9ffde; border-color: #aec; }
+		div.success::before { content: '\f058'; color: #7b6; opacity: 0.7; }
+
+
 {{.SupplimentalCss | safe}}
 	</style>
 </head>
