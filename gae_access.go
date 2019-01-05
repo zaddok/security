@@ -620,6 +620,10 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, passw
 		bulk.AddItem("Email", i.Email, email)
 		i.Email = email
 	}
+	if len(password) > 0 {
+		bulk.AddItem("Password", "", "")
+		i.Password = HashPassword(password)
+	}
 	if bulk.HasUpdates() {
 		if err = am.BulkUpdateEntityAuditLog(bulk, updator); err != nil {
 			am.Log().Error("UpdatePerson() failed. Error: %v", err)
