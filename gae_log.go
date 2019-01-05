@@ -253,6 +253,21 @@ func (ec *GaeEntityAuditLogCollection) AddItem(attribute, oldValue, newValue str
 	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, ec.PersonUuid})
 }
 
+func (ec *GaeEntityAuditLogCollection) AddDateItem(attribute string, oldValue, newValue *time.Time) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddDateItem() called piror to SetEntityUuidPersonUuid()."))
+	}
+	ov := ""
+	nv := ""
+	if oldValue != nil {
+		ov = oldValue.Format("2006-01-02 15:04.05")
+	}
+	if newValue != nil {
+		nv = newValue.Format("2006-01-02 15:04.05")
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, ov, nv, ec.PersonUuid})
+}
+
 func (ec *GaeEntityAuditLogCollection) HasUpdates() bool {
 	return len(ec.Items) > 0
 }

@@ -97,6 +97,7 @@ type EntityAudit interface {
 type EntityAuditLogCollection interface {
 	SetEntityUuidPersonUuid(entityUuid, personUuid string)
 	AddItem(attribute, oldValue, newValue string)
+	AddDateItem(attribute string, oldValue, newValue *time.Time)
 	HasUpdates() bool
 }
 
