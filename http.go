@@ -351,6 +351,7 @@ var SecurityHeader = `
 			background: #b9deff;
 			border-radius: 0.6em;
 			border: 1px solid #a9ceef;
+			font-family: "Helvetica Neue", Helvetica, sans-serif;
 		}
 		div.feedback::before {
 			float:left;
