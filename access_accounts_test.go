@@ -46,8 +46,9 @@ func TestAccountManagement(t *testing.T) {
 	}
 
 	// Test Create Anoter account
+	var uuid string
 	{
-		_, err := am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", HashPassword("abc123--"))
+		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", HashPassword("abc123--"))
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -58,6 +59,30 @@ func TestAccountManagement(t *testing.T) {
 		if len(people) != 2 {
 			t.Fatalf("am.GetPeople() should return two results, not %d", len(people))
 		}
+	}
+
+	// Test updating an account
+	{
+		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "abc123--", "127.0.0.1")
+		if err != nil {
+			t.Fatalf("am.Session() failed: %v", err)
+		}
+		//session, err := am.Session(TestSite, cookie)
+		//if err != nil {
+		//	t.Fatalf("am.Session() failed: %v", err)
+		//}
+		person, err := am.GetPerson(uuid, session)
+		if err != nil {
+			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+
+		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "", session)
+		if err != nil {
+			t.Fatalf("am.UpdatePerson() failed: %v", err)
+		}
+		//if len(people) != 2 {
+		//	t.Fatalf("am.GetPeople() should return two results, not %d", len(people))
+		//}
 	}
 
 }

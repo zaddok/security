@@ -596,8 +596,41 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) UpdatePerson(firstName, lastName, email, password string, updator Session) error {
-	return errors.New("unimplemented")
+func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, password string, updator Session) error {
+	k := datastore.NameKey("Person", uuid, nil)
+	k.Namespace = updator.GetSite()
+	i := new(GaePerson)
+	err := am.client.Get(am.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity {
+		return errors.New("Person not found.")
+	} else if err != nil {
+		return err
+	}
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid())
+	if firstName != i.FirstName {
+		bulk.AddItem("FirstName", i.FirstName, firstName)
+		i.FirstName = firstName
+	}
+	if lastName != i.LastName {
+		bulk.AddItem("LastName", i.LastName, lastName)
+		i.LastName = lastName
+	}
+	if email != i.Email {
+		bulk.AddItem("Email", i.Email, email)
+		i.Email = email
+	}
+	if bulk.HasUpdates() {
+		if err = am.BulkUpdateEntityAuditLog(bulk, updator); err != nil {
+			am.Log().Error("UpdatePerson() failed. Error: %v", err)
+			return err
+		}
+		if _, err := am.client.Put(am.ctx, k, i); err != nil {
+			am.Log().Error("UpdatePerson() failed. Error: %v", err)
+			return err
+		}
+	}
+	return nil
 }
 
 func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {

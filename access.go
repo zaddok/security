@@ -17,7 +17,7 @@ type AccessManager interface {
 	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
 	GetPeople(requestor Session) ([]Person, error)
 	AddPerson(site, firstName, lastName, email string, password *string) (string, error)
-	UpdatePerson(firstName, lastName, email, password string, updator Session) error
+	UpdatePerson(uuid, firstName, lastName, email, password string, updator Session) error
 	DeletePerson(uuid string, updator Session) error
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
 
