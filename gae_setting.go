@@ -50,6 +50,16 @@ func (s *GaeSetting) Get(site, name string) *string {
 	return nil
 }
 
+func (s *GaeSetting) GetList(site string, key string) []string {
+	content := s.Get(site, key)
+	var fields []string
+	if content != nil && strings.TrimSpace(*content) != "" {
+		fields = strings.Split(strings.TrimSpace(*content), ";")
+	}
+	//TODO: trim space?
+	return fields[:]
+}
+
 // Lookup a configuration setting. Loads from database only if cache has expired.
 func (s *GaeSetting) GetWithDefault(site, name string, defaultValue string) string {
 	s.refreshCache()
