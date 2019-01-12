@@ -229,6 +229,17 @@ func (e *GaeEntityAudit) GetValueType() string {
 	return e.ValueType
 }
 
+func (e *GaeEntityAudit) IsPicklistType() bool {
+	if e.ValueType == "bool" ||
+		e.ValueType == "int64" ||
+		e.ValueType == "int" ||
+		e.ValueType == "" ||
+		e.ValueType == "date" {
+		return false
+	}
+	return true
+}
+
 func (e *GaeEntityAudit) GetPersonUuid() string {
 	return e.PersonUuid
 }

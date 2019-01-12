@@ -93,6 +93,8 @@ type EntityAudit interface {
 	GetValueType() string
 	GetPersonUuid() string
 	GetPersonName() string
+
+	IsPicklistType() bool
 }
 
 // EntityAuditLogCollection defines an interface used by the BulkUpdateEntityAuditLog() function.
