@@ -160,6 +160,37 @@ func (s *GaePicklistStore) AddPicklistItem(site, picklist, key, value, descripti
 	return nil
 }
 
+// Store a configuration setting. Stores in cache, and flushes through to database.
+func (s *GaePicklistStore) AddPicklistItemDeprecated(site, picklist, key, value, description string) error {
+	picklist = strings.ToLower(picklist)
+	key = strings.ToLower(key)
+
+	k := datastore.NameKey("PicklistItem", picklist+"|"+key, nil)
+	k.Namespace = site
+	i := &GaePicklistItem{Picklist: picklist, Key: key, Value: value, Description: description, Deprecated: true}
+	if _, err := s.client.Put(s.ctx, k, i); err != nil {
+		return err
+	}
+
+	// Get the sites full picklists set
+	if s.picklists == nil {
+		s.picklists = make(map[string]map[string]map[string]PicklistItem)
+	}
+	_, exists := s.picklists[site]
+	if !exists {
+		s.picklists[site] = make(map[string]map[string]PicklistItem)
+	}
+
+	_, exists = s.picklists[site][picklist]
+	if !exists {
+		s.picklists[site][picklist] = make(map[string]PicklistItem)
+	}
+
+	s.picklists[site][picklist][key] = i
+
+	return nil
+}
+
 // Reload settings from cache if cache has expired
 func (s *GaePicklistStore) refreshCache(site string) error {
 	if s.picklists == nil || s.picklists[site] == nil || s.expires.Before(time.Now()) {
