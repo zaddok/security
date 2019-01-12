@@ -233,6 +233,7 @@ func (e *GaeEntityAudit) IsPicklistType() bool {
 	if e.ValueType == "bool" ||
 		e.ValueType == "int64" ||
 		e.ValueType == "int" ||
+		e.ValueType == "string" ||
 		e.ValueType == "" ||
 		e.ValueType == "date" {
 		return false
