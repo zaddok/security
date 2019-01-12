@@ -50,7 +50,7 @@ func TestEntityAudit(t *testing.T) {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
 
-		err = am.UpdateEntityAuditLog(entityUuid, "FirstName", "", "Matthew", session)
+		err = am.UpdateEntityAuditLog(entityUuid, "FirstName", "", "Matthew", "string", session)
 		if err != nil {
 			t.Fatalf("am.UpdateEntityAuditLog() failed: %v", err)
 		}
@@ -67,7 +67,7 @@ func TestEntityAudit(t *testing.T) {
 		}
 
 		bulk := &GaeEntityAuditLogCollection{}
-		bulk.SetEntityUuidPersonUuid(entityUuid, session.GetPersonUuid())
+		bulk.SetEntityUuidPersonUuid(entityUuid, session.GetPersonUuid(), session.GetDisplayName())
 		bulk.AddItem("FirstName", "Stacy", "Jenny")
 		bulk.AddItem("LastName", "Smith", "Smithe")
 		bulk.AddItem("Phone", "01234", "03456")

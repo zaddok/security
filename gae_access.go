@@ -109,6 +109,10 @@ func (s *GaeSession) GetLastName() string {
 	return s.LastName
 }
 
+func (s *GaeSession) GetDisplayName() string {
+	return s.FirstName + " " + s.LastName
+}
+
 func (s *GaeSession) GetEmail() string {
 	return s.Email
 }
@@ -510,14 +514,16 @@ func (am *GaeAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error {
+func (am *GaeAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue, valueType string, requestor Session) error {
 	i := GaeEntityAudit{
 		Date:       time.Now(),
 		EntityUuid: entityUuid,
 		Attribute:  attribute,
 		OldValue:   oldValue,
 		NewValue:   newValue,
+		ValueType:  valueType,
 		PersonUuid: requestor.GetPersonUuid(),
+		PersonName: requestor.GetDisplayName(),
 	}
 
 	k := datastore.IncompleteKey("EntityAudit", nil)
@@ -607,7 +613,7 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, passw
 		return err
 	}
 	bulk := &GaeEntityAuditLogCollection{}
-	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid())
+	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid(), updator.GetDisplayName())
 	if firstName != i.FirstName {
 		bulk.AddItem("FirstName", i.FirstName, firstName)
 		i.FirstName = firstName

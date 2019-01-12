@@ -200,7 +200,9 @@ type GaeEntityAudit struct {
 	Attribute  string
 	OldValue   string
 	NewValue   string
+	ValueType  string
 	PersonUuid string
+	PersonName string
 }
 
 func (e *GaeEntityAudit) GetDate() time.Time {
@@ -223,18 +225,27 @@ func (e *GaeEntityAudit) GetNewValue() string {
 	return e.NewValue
 }
 
+func (e *GaeEntityAudit) GetValueType() string {
+	return e.ValueType
+}
+
 func (e *GaeEntityAudit) GetPersonUuid() string {
 	return e.PersonUuid
+}
+
+func (e *GaeEntityAudit) GetPersonName() string {
+	return e.PersonName
 }
 
 type GaeEntityAuditLogCollection struct {
 	EntityUuid string
 	PersonUuid string
+	PersonName string
 	Date       time.Time
 	Items      []GaeEntityAudit
 }
 
-func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, personUuid string) {
+func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, personUuid, personName string) {
 	if entityUuid == "" {
 		panic(errors.New("Entity UUID must not be empty"))
 	}
@@ -243,6 +254,7 @@ func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, perso
 	}
 	ec.EntityUuid = entityUuid
 	ec.PersonUuid = personUuid
+	ec.PersonName = personName
 	ec.Date = time.Now()
 }
 
@@ -250,21 +262,28 @@ func (ec *GaeEntityAuditLogCollection) AddItem(attribute, oldValue, newValue str
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
 		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
 	}
-	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, ec.PersonUuid})
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, "string", ec.PersonUuid, ec.PersonName})
+}
+
+func (ec *GaeEntityAuditLogCollection) AddPicklistItem(attribute, oldValue, newValue, picklistType string) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, picklistType, ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) AddIntItem(attribute string, oldValue, newValue int64) {
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
 		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
 	}
-	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), ec.PersonUuid})
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), "int64", ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) AddBoolItem(attribute string, oldValue, newValue bool) {
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
 		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
 	}
-	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), ec.PersonUuid})
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), "bool", ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) AddDateItem(attribute string, oldValue, newValue *time.Time) {
@@ -279,7 +298,7 @@ func (ec *GaeEntityAuditLogCollection) AddDateItem(attribute string, oldValue, n
 	if newValue != nil {
 		nv = newValue.Format("2006-01-02 15:04.05")
 	}
-	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, ov, nv, ec.PersonUuid})
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, ov, nv, "date", ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) HasUpdates() bool {

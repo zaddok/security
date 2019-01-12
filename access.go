@@ -34,7 +34,7 @@ type AccessManager interface {
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
 	GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error)
-	UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error
+	UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue, valueType string, requestor Session) error
 	BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error
 
 	WipeDatastore(namespace string) error
@@ -63,6 +63,7 @@ type Session interface {
 	GetSite() string
 	GetFirstName() string
 	GetLastName() string
+	GetDisplayName() string
 	GetEmail() string
 	IsAuthenticated() bool
 }
@@ -89,15 +90,20 @@ type EntityAudit interface {
 	GetAttribute() string
 	GetOldValue() string
 	GetNewValue() string
+	GetValueType() string
 	GetPersonUuid() string
+	GetPersonName() string
 }
 
 // EntityAuditLogCollection defines an interface used by the BulkUpdateEntityAuditLog() function.
 // It facilitates collecting together multiple updates to be persisted in one operation.
 type EntityAuditLogCollection interface {
-	SetEntityUuidPersonUuid(entityUuid, personUuid string)
+	SetEntityUuidPersonUuid(entityUuid, personUuid, personName string)
 	AddItem(attribute, oldValue, newValue string)
+	AddIntItem(attribute string, oldValue, newValue int64)
 	AddDateItem(attribute string, oldValue, newValue *time.Time)
+	AddBoolItem(attribute string, oldValue, newValue bool)
+	AddPicklistItem(attribute string, oldValue, newValue, valueType string)
 	HasUpdates() bool
 }
 

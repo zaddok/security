@@ -297,7 +297,7 @@ func (am *CqlAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([
 	return nil, errors.New("unimplemented")
 }
 
-func (am *CqlAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue string, requestor Session) error {
+func (am *CqlAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue, valueType string, requestor Session) error {
 	return errors.New("Unimplemented")
 }
 
@@ -581,6 +581,10 @@ func (s *CqlSession) GetFirstName() string {
 
 func (s *CqlSession) GetLastName() string {
 	return s.LastName
+}
+
+func (s *CqlSession) GetDisplayName() string {
+	return s.FirstName + " " + s.LastName
 }
 
 func (s *CqlSession) GetEmail() string {
