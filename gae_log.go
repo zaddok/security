@@ -230,7 +230,6 @@ func (e *GaeEntityAudit) GetValueType() string {
 }
 
 func (e *GaeEntityAudit) GetActionType() string {
-	fmt.Printf("/%s/%s/\n", e.OldValue, e.NewValue)
 	if e.OldValue != "" && e.NewValue != "" {
 		return "update"
 	}
