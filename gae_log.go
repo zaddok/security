@@ -229,6 +229,19 @@ func (e *GaeEntityAudit) GetValueType() string {
 	return e.ValueType
 }
 
+func (e *GaeEntityAudit) GetActionType() string {
+	if e.OldValue != "" && e.NewValue != "" {
+		return "update"
+	}
+	if e.OldValue == "" && e.NewValue != "" {
+		return "add"
+	}
+	if e.OldValue != "" && e.NewValue == "" {
+		return "delete"
+	}
+	return "other"
+}
+
 func (e *GaeEntityAudit) IsPicklistType() bool {
 	if e.ValueType == "bool" ||
 		e.ValueType == "int64" ||
