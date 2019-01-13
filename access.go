@@ -104,6 +104,7 @@ type EntityAuditLogCollection interface {
 	SetEntityUuidPersonUuid(entityUuid, personUuid, personName string)
 	AddItem(attribute, oldValue, newValue string)
 	AddIntItem(attribute string, oldValue, newValue int64)
+	AddMoneyItem(attribute string, oldValue, newValue int64)
 	AddDateItem(attribute string, oldValue, newValue *time.Time)
 	AddBoolItem(attribute string, oldValue, newValue bool)
 	AddPicklistItem(attribute string, oldValue, newValue, valueType string)

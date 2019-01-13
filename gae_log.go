@@ -247,6 +247,7 @@ func (e *GaeEntityAudit) IsPicklistType() bool {
 		e.ValueType == "int64" ||
 		e.ValueType == "int" ||
 		e.ValueType == "string" ||
+		e.ValueType == "money" ||
 		e.ValueType == "" ||
 		e.ValueType == "date" {
 		return false
@@ -299,9 +300,16 @@ func (ec *GaeEntityAuditLogCollection) AddPicklistItem(attribute, oldValue, newV
 
 func (ec *GaeEntityAuditLogCollection) AddIntItem(attribute string, oldValue, newValue int64) {
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
-		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
+		panic(errors.New("GaeEntityAuditLogCollection.AddIntItem() called piror to SetEntityUuidPersonUuid()."))
 	}
 	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), "int64", ec.PersonUuid, ec.PersonName})
+}
+
+func (ec *GaeEntityAuditLogCollection) AddMoneyItem(attribute string, oldValue, newValue int64) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddMoneyItem() called piror to SetEntityUuidPersonUuid()."))
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("$%0.2f", (float64(oldValue) / 100.0)), fmt.Sprintf("$%0.2f", (float64(newValue) / 100.0)), "money", ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) AddBoolItem(attribute string, oldValue, newValue bool) {
