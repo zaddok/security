@@ -46,6 +46,7 @@ type LogEntry interface {
 	GetMessage() string
 }
 type SystemLog interface {
+	GetIP() string
 	GetUuid() string
 	GetRecorded() time.Time
 	GetComponent() string

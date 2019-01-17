@@ -50,6 +50,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		SignupTemplate,
 		settingsTemplate,
 		settingEditTemplate,
+		systemlogTemplate,
 	} {
 		var err error
 		st, err = st.Parse(page)
@@ -67,6 +68,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/reset.password/", ResetPasswordPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
 
 	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(&FAregularEOT, 604800))
