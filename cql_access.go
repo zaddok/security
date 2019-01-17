@@ -419,7 +419,7 @@ func (g *CqlAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
-func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
+func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email string, password *string, ip string) (string, error) {
 
 	uuid := gocql.TimeUUID()
 	rows := g.cql.Query("insert into person (site, uuid, first_name, last_name, email, password, created) values(?,?,?,?,?,?,?)",
@@ -458,7 +458,7 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 			return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
 		} else {
 
-			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
+			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password, ip)
 
 			if aerr == nil {
 				token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)

@@ -44,6 +44,15 @@ var systemlogTemplate = `
 {{template "admin_header" .}}
 
 <style type="text/css">
+table#system_log tr.debug td {
+	color: #aaa;
+}
+table#system_log tr.warning td {
+	color: #c88;
+}
+table#system_log tr.auth td {
+	color: #c88;
+}
 </style>
 
 <h1 style="text-align:center; margin-bottom: 1.5em">System Log</h1>
@@ -58,7 +67,7 @@ var systemlogTemplate = `
 		<th>Message</th>
 	</tr>
 	{{range .Entries}}
-	<tr>
+	<tr class="{{.GetLevel}} {{.GetComponent}}">
 		<td>{{.GetRecorded}}</td>
 		<td>{{.GetIP}}</td>
 		<td>{{.GetLevel}}</td>

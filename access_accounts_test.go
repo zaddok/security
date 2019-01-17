@@ -21,7 +21,7 @@ func TestAccountManagement(t *testing.T) {
 
 	// Test Create account
 	{
-		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", HashPassword("abc123--"))
+		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", HashPassword("abc123--"), "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -49,7 +49,7 @@ func TestAccountManagement(t *testing.T) {
 	// Test Create Anoter account
 	var uuid string
 	{
-		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", HashPassword("abc123--"))
+		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", HashPassword("abc123--"), "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}

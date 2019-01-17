@@ -32,7 +32,7 @@ func TestEntityAudit(t *testing.T) {
 	var entityUuid string
 
 	{
-		personUuid, err := am.AddPerson(TestSite, "Stacy", "Jones", "Stacy.Jones@test.com", HashPassword("abc123--"))
+		personUuid, err := am.AddPerson(TestSite, "Stacy", "Jones", "Stacy.Jones@test.com", HashPassword("abc123--"), "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -45,7 +45,7 @@ func TestEntityAudit(t *testing.T) {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
 
-		entityUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", HashPassword("abc123--"))
+		entityUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", HashPassword("abc123--"), "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}

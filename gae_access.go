@@ -423,7 +423,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 	email = strings.ToLower(strings.TrimSpace(email))
 	if throttled, _ := g.throttle.IsThrottled(email); throttled {
-		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
+		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
 	}
 
@@ -437,13 +437,13 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if len(items) > 0 {
 		if items[0].Password == nil || *items[0].Password == "" {
 			g.throttle.Increment(email)
-			g.Log().Info("Signin failed. This user account has an empty password field. Email: " + email)
+			syslog.Add(`auth`, ip, `warn`, fmt.Sprintf("Authentication for '%s' blocked. Account has no password.", email))
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
 		if !VerifyPassword(*items[0].Password, password) {
 			g.throttle.Increment(email)
-			g.Log().Info("Authenticate() Signin failed. User provided password failed to match stored password.")
+			syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
@@ -462,7 +462,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
 		}
-		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication success for '%s'", email))
+		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
 		return &GaeSession{
 			PersonUUID:    items[0].Uuid,
@@ -485,7 +485,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	}
 
 	g.throttle.Increment(ip)
-	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
+	syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication for '%s' failed. Email address not registered on this site.", email))
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
 func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
@@ -838,7 +838,10 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 }
 
 // Password must already be hashed
-func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string) (string, error) {
+func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string, ip string) (string, error) {
+	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
+	defer syslog.Put()
+
 	firstName = strings.TrimSpace(firstName)
 	lastName = strings.TrimSpace(lastName)
 	email = strings.ToLower(strings.TrimSpace(email))
@@ -865,11 +868,15 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 		g.Log().Error("AddPerson() Person storage failed. Error: %v", err)
 		return "", err
 	}
+	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("New user account created '%s','%s','%s'", firstName, lastName, email))
 
 	return uuid.String(), nil
 }
 
 func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, string, error) {
+	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
+	defer syslog.Put()
+
 	// Check the token is a valid uuid
 	_, err := uuid.Parse(token)
 	if err != nil {
@@ -909,11 +916,12 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
 	}
 
-	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password)
+	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password, ip)
 	if aerr != nil {
 		g.Log().Error("addPerson() failure: " + aerr.Error())
 		return "", "", aerr
 	}
+	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("New user account activated '%s','%s','%s'", i.FirstName, i.LastName, i.Email))
 
 	token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)
 	if err2 == nil {

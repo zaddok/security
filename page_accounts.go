@@ -135,7 +135,7 @@ func createAccountWithFormValues(am AccessManager, session Session, r *http.Requ
 		if password != "" {
 			pw = &password
 		}
-		_, err := am.AddPerson(session.GetSite(), firstName, lastName, email, pw)
+		_, err := am.AddPerson(session.GetSite(), firstName, lastName, email, pw, IpFromRequest(r))
 		return warnings, err
 	} else {
 		return warnings, nil
