@@ -175,6 +175,12 @@ div.picklist_menu ul li {
 div.picklist_menu ul {
 	padding-left: 0;
 }
+
+body {
+	background: url(/grey.png);
+	background-size: 16em auto;
+	background-repeat: repeat-y;
+}
 </style>
 
 
@@ -189,6 +195,12 @@ div.picklist_menu ul {
 <div class="picklist_items">
 <h2>{{.Picklist}}</h2>
 <table>
+<tr>
+	<th>Code</th>
+	<th>Name</th>
+	<th>Description</th>
+	<th>Deprecated</th>
+</tr>
 {{range .PicklistItems}}
 <tr>
 	<td>{{.Key}}</td>
@@ -205,13 +217,14 @@ div.picklist_menu ul {
 <div class="modal-content">
   <div class="modal-header">
     <span class="close">&times;</span>
-    <h2>Add System Setting</h2>
+    <h2>Add Picklist Item</h2>
   </div>
   <form method="post">
 	<div class="modal-body">
 	<table>
-	<tr><th>Key</th><td><input type="text" name="key" placeholder="setting.key"/></td></tr>
-	<tr><th>Value</th><td><input type="text" name="value" placeholder="value"/></td></tr>
+	<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
+	<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
+	<tr><th>Description</th><td><textarea name="description" class="description"/></td></tr>
 	</table>
 	</div>
   <div class="modal-footer">
