@@ -14,7 +14,7 @@ import (
 var COOKIE_DAYS = 365
 
 // Register pages specific to the security package
-func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessManager, defaultTimezone *time.Location, log log.Log) error {
+func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
 
 	st := template.New("page")
 	fm := template.FuncMap{
@@ -55,7 +55,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		st, err = st.Parse(page)
 		if err != nil {
 			log.Error("Failed parsing security template %d. %v", i, err)
-			return err
+			return nil, err
 		}
 	}
 
@@ -85,7 +85,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/font/materialicons.ttf", BinaryFile(&materialIconsTtf, 604800))
 	http.HandleFunc("/font/materialicons.woff", BinaryFile(&materialIconsWoff, 604800))
 
-	return nil
+	return st, nil
 }
 
 var firsts map[string]bool
