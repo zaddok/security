@@ -222,9 +222,9 @@ body {
   <form method="post">
 	<div class="modal-body">
 	<table>
-	<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
-	<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
-	<tr><th>Description</th><td><textarea name="description" class="description"/></td></tr>
+		<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
+		<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
+		<tr><th>Description</th><td><textarea name="description" class="description"/></td></tr>
 	</table>
 	</div>
   <div class="modal-footer">
