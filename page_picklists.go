@@ -20,6 +20,13 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		}
 		AddSafeHeaders(w)
 
+		path := r.URL.Path[1:]
+		parts := strings.Split(path, "/")
+		picklistName := parts[len(parts)-1]
+		if picklistName == "picklist" {
+			picklistName = ""
+		}
+
 		key := strings.TrimSpace(r.FormValue("key"))
 		value := strings.TrimSpace(r.FormValue("value"))
 		if key != "" {
@@ -96,7 +103,9 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return p.Picklists[j] > p.Picklists[i]
 		})
 
-		picklistName := p.Picklists[0]
+		if picklistName == "" {
+			picklistName = p.Picklists[0]
+		}
 		p.Picklist = picklistName
 		p.Title = []string{"Picklists", picklistName}
 
@@ -161,7 +170,7 @@ div.picklist_menu {
 }
 div.picklist_menu ul li {
 	list-style: none;
-	padding-bottom: 0.2em;
+	padding-bottom: 0.3em;
 }
 div.picklist_menu ul {
 	padding-left: 0;
