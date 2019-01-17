@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -73,6 +74,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			Session         Session
 			Query           string
 			Accounts        []Person
+			CustomRoleTypes []RoleType
 		}
 
 		err = r.ParseForm()
@@ -94,8 +96,18 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		sort.Slice(accounts, func(i, j int) bool {
 			return accounts[j].GetFirstName() > accounts[i].GetFirstName()
 		})
+		p := &Page{
+			siteName,
+			siteDescription,
+			supplimentalCss,
+			[]string{"Accounts"},
+			session,
+			q,
+			accounts,
+			am.GetCustomRoleTypes(),
+		}
 
-		Render(r, w, t, "accounts", &Page{siteName, siteDescription, supplimentalCss, []string{"Accounts"}, session, q, accounts})
+		Render(r, w, t, "accounts", p)
 	}
 }
 
@@ -114,6 +126,7 @@ func createAccountWithFormValues(am AccessManager, session Session, r *http.Requ
 	lastName := r.FormValue("last_name")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
+	roles := ""
 
 	if firstName == "" {
 		warnings = append(warnings, "Please specify a first name.")
@@ -130,12 +143,27 @@ func createAccountWithFormValues(am AccessManager, session Session, r *http.Requ
 		}
 	}
 
+	for i := 1; i < 6; i++ {
+		uid := fmt.Sprintf("s%d", i)
+		if r.FormValue(uid) != "" {
+			roles = roles + uid + ":"
+		}
+	}
+	for _, i := range am.GetCustomRoleTypes() {
+		if r.FormValue(i.GetUid()) != "" {
+			roles = roles + i.GetUid() + ":"
+		}
+	}
+	if roles != "" {
+		roles = roles[0 : len(roles)-1]
+	}
+
 	if len(warnings) == 0 {
 		var pw *string = nil
 		if password != "" {
 			pw = &password
 		}
-		_, err := am.AddPerson(session.GetSite(), firstName, lastName, email, pw, IpFromRequest(r))
+		_, err := am.AddPerson(session.GetSite(), firstName, lastName, email, roles, pw, IpFromRequest(r))
 		return warnings, err
 	} else {
 		return warnings, nil
@@ -238,6 +266,36 @@ var accountCreateTemplate = `
 	</tr>
 
 	<tr><td>&nbsp;</td><td></td></tr>
+
+	<tr>
+		<th>Administrator</th>
+		<td><input type="checkbox" name="s1" value="s1"> View administrative area</td>
+	</tr>
+	<tr>
+		<th>System Settings</th>
+		<td><input type="checkbox" name="s2" value="s2"> Manage System settings</td>
+	</tr>
+	<tr>
+		<th>Accounts</th>
+		<td><input type="checkbox" name="s3" value="s3"> Manage Accounts</td>
+	</tr>
+	<tr>
+		<th>Picklists</th>
+		<td><input type="checkbox" name="s4" value="s4"> Manage Picklists</td>
+	</tr>
+
+	<tr><td>&nbsp;</td><td></td></tr>
+
+{{range .CustomRoleTypes}}
+	<tr>
+		<th>{{.Name}}</th>
+		<td><input type="checkbox" name="{{.Uid}}" value="{{.Uid}}"/> {{.Description}}</td>
+	</tr>
+{{end}}
+
+	<tr><td>&nbsp;</td><td></td></tr>
+
+
 
 	<tr><td></td><td><input type="submit" value="Create Account"></td></tr>
 </table>

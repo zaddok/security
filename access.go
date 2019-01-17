@@ -16,20 +16,22 @@ type AccessManager interface {
 	GetPerson(uuid string, requestor Session) (Person, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error)
 	GetPeople(requestor Session) ([]Person, error)
-	AddPerson(site, firstName, lastName, email string, password *string, ip string) (string, error)
-	UpdatePerson(uuid, firstName, lastName, email, password string, updator Session) error
+	AddPerson(site, firstName, lastName, email, roles string, password *string, ip string) (string, error)
+	UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error
 	DeletePerson(uuid string, updator Session) error
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
 
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session
 	Invalidate(host, cookie string) (Session, error)
-	CreateSession(site string, uuid string, firstName string, lastName string, email string, ip string) (string, error)
 	GetSystemSession(host, firstname, lastname string) (Session, error)
 
 	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
+
+	GetCustomRoleTypes() []RoleType
+	AddCustomRoleType(uid, name, description string)
 
 	GetRecentSystemLog(requestor Session) ([]SystemLog, error)
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
@@ -49,6 +51,8 @@ type Person interface {
 	GetLastName() string
 	GetEmail() string
 	GetDisplayName() string
+	GetRoles() []string
+	HasRole(uid string) bool
 }
 
 // Encapsulates an as yet unverified request. i.e. Account creation.
@@ -67,6 +71,13 @@ type Session interface {
 	GetDisplayName() string
 	GetEmail() string
 	IsAuthenticated() bool
+	HasRole(uid string) bool
+}
+
+type RoleType interface {
+	GetUid() string
+	GetName() string
+	GetDescription() string
 }
 
 type NewUserInfo struct {

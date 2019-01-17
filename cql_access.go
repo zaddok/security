@@ -23,6 +23,40 @@ type CqlAccessManager struct {
 	setting       Setting
 	picklistStore PicklistStore
 	template      *template.Template
+	roleTypes     []*CqlRoleType
+}
+
+func (am *CqlAccessManager) GetCustomRoleTypes() []RoleType {
+	r := make([]RoleType, len(am.roleTypes), len(am.roleTypes))
+	for i, rt := range am.roleTypes {
+		r[i] = rt
+	}
+	return r
+}
+
+func (am *CqlAccessManager) AddCustomRoleType(uid, name, description string) {
+	if uid == "" {
+		return
+	}
+	am.roleTypes = append(am.roleTypes, &CqlRoleType{Uid: uid, Name: name, Description: description})
+}
+
+type CqlRoleType struct {
+	Uid         string
+	Name        string
+	Description string
+}
+
+func (r *CqlRoleType) GetUid() string {
+	return r.Uid
+}
+
+func (r *CqlRoleType) GetName() string {
+	return r.Name
+}
+
+func (r *CqlRoleType) GetDescription() string {
+	return r.Description
 }
 
 func NewCqlAccessManager(cql *gocql.Session, log log.Log) (AccessManager, error) {
@@ -237,9 +271,10 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	var actualPassword string
 	var firstName string
 	var lastName string
+	var roles string
 	var uuid gocql.UUID
-	i := g.cql.Query("select uuid, password, first_name, last_name from person where site=? and email=?", site, email).Iter()
-	if i.Scan(&uuid, &actualPassword, &firstName, &lastName) {
+	i := g.cql.Query("select uuid, password, first_name, last_name, roles from person where site=? and email=?", site, email).Iter()
+	if i.Scan(&uuid, &actualPassword, &firstName, &lastName, &roles) {
 
 		if actualPassword == "" {
 			g.Log().Info("Signin failed. This user account has an empty password field. Email: " + email)
@@ -257,21 +292,27 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "", uerr
 		}
 
-		token, err2 := g.CreateSession(site, uuid.String(), firstName, lastName, email, ip)
+		token, err2 := g.createSession(site, uuid.String(), firstName, lastName, email, roles, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
 		}
 
 		i.Close()
-		return &CqlSession{
+
+		session := &CqlSession{
 			Token:         token,
 			Site:          site,
 			FirstName:     firstName,
 			LastName:      lastName,
 			Email:         email,
+			Roles:         roles,
 			Authenticated: true,
-		}, "", nil
+		}
+		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+			session.RoleMap[v] = true
+		}
+		return session, "", nil
 	}
 
 	err := i.Close()
@@ -317,7 +358,7 @@ func (am *CqlAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return nil, errors.New("unimplemented")
 }
 
-func (am *CqlAccessManager) UpdatePerson(uuid, firstName, lastName, email, password string, updator Session) error {
+func (am *CqlAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
 	return errors.New("unimplemented")
 }
 
@@ -362,7 +403,12 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 			FirstName:     firstName,
 			LastName:      lastName,
 			Email:         email,
+			Roles:         roles,
 			Authenticated: true,
+			RoleMap:       make(map[string]bool),
+		}
+		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+			session.RoleMap[v] = true
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -408,6 +454,8 @@ func (g *CqlAccessManager) GuestSession(site string) Session {
 		LastName:      "",
 		Email:         "",
 		Authenticated: false,
+		Roles:         "",
+		RoleMap:       make(map[string]bool),
 	}
 }
 
@@ -419,11 +467,11 @@ func (g *CqlAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
-func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email string, password *string, ip string) (string, error) {
+func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string) (string, error) {
 
 	uuid := gocql.TimeUUID()
-	rows := g.cql.Query("insert into person (site, uuid, first_name, last_name, email, password, created) values(?,?,?,?,?,?,?)",
-		site, uuid, firstName, lastName, email, password, NowMilliseconds()).Iter()
+	rows := g.cql.Query("insert into person (site, uuid, first_name, last_name, email, roles, password, created) values(?,?,?,?,?,?,?)",
+		site, uuid, firstName, lastName, email, roles, password, NowMilliseconds()).Iter()
 	err := rows.Close()
 	if err != nil {
 		return "", err
@@ -458,10 +506,12 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 			return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
 		} else {
 
-			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password, ip)
+			// We dont allow default roles from NewUserInfo at this point. Should we?
+			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip)
 
 			if aerr == nil {
-				token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)
+				// No default roles provided via NewUserInfo, should we allow this?
+				token, err2 := g.createSession(site, uuid, i.FirstName, i.LastName, i.Email, "", ip)
 				if err2 == nil {
 					return token, "", nil
 				} else {
@@ -483,7 +533,7 @@ func (g *CqlAccessManager) ResetPassword(site, token, password, ip string) (bool
 	return false, "Unimplemented", nil
 }
 
-func (g *CqlAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
+func (g *CqlAccessManager) createSession(site, person, firstName, lastName, email, roles, ip string) (string, error) {
 	personUuid, perr := gocql.ParseUUID(person)
 	if perr != nil {
 		return "", perr
@@ -503,7 +553,6 @@ func (g *CqlAccessManager) CreateSession(site string, person string, firstName s
 	token := RandomString(32)
 	now := time.Now().Unix()
 	expires := e + now
-	roles, err := cqlPersonRoleString(g.cql, site, person)
 
 	if err != nil {
 		return "", err
@@ -523,33 +572,6 @@ func (g *CqlAccessManager) CreateSession(site string, person string, firstName s
 	return token, err
 }
 
-func cqlPersonRoleString(cql *gocql.Session, site string, uuid string) (string, error) {
-	var role string
-	var resource string
-	var uid string
-	var b bytes.Buffer
-
-	//TODO: Fix cql allow filtering
-	i := cql.Query("select role, resource, uid from role where person_uuid=? allow filtering", uuid).Iter()
-	for i.Scan(&role, &resource, &uid) {
-		if b.Len() > 0 {
-			b.WriteString("|")
-		}
-		if resource != "#" {
-			b.WriteString(role)
-			b.WriteString(":")
-			b.WriteString(resource)
-			b.WriteString(":")
-			b.WriteString(uid)
-		} else {
-			b.WriteString(role)
-		}
-	}
-	err := i.Close()
-
-	return b.String(), err
-}
-
 func (am *CqlAccessManager) WipeDatastore(namespace string) error {
 	return errors.New("Unimeplemented")
 }
@@ -565,6 +587,7 @@ type CqlSession struct {
 	Authenticated bool
 	Token         string
 	Site          string
+	RoleMap       map[string]bool `datastore:"-"`
 }
 
 func (s *CqlSession) GetPersonUuid() string {
@@ -597,4 +620,9 @@ func (s *CqlSession) GetEmail() string {
 
 func (s *CqlSession) IsAuthenticated() bool {
 	return s.Authenticated
+}
+
+func (s *CqlSession) HasRole(uid string) bool {
+	_, found := s.RoleMap[uid]
+	return found
 }

@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -23,7 +24,6 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		path := r.URL.Path[1:]
 		parts := strings.Split(path, "/")
 		uuid := parts[len(parts)-1]
-		//uuid, err := gocql.ParseUUID(parts[len(parts)-1])
 
 		var person Person = nil
 
@@ -78,6 +78,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 			Email           string
 			Query           string
 			Feedback        []string
+			CustomRoleTypes []RoleType
 		}
 
 		p := &Page{
@@ -86,11 +87,10 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 			Title:           []string{person.GetDisplayName(), "Accounts"},
 			Session:         session,
 			Person:          person,
-			FirstName:       person.GetFirstName(),
-			LastName:        person.GetLastName(),
-			Email:           person.GetEmail(),
 			Query:           r.FormValue("q"),
 		}
+
+		p.CustomRoleTypes = am.GetCustomRoleTypes()
 
 		if r.Method == "POST" {
 			feedback, err := updateAccountWithFormValues(am, person, session, r)
@@ -127,6 +127,7 @@ func updateAccountWithFormValues(am AccessManager, person Person, session Sessio
 	lastName := r.FormValue("last_name")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
+	roles := ""
 
 	if firstName == "" {
 		warnings = append(warnings, "Please specify a first name.")
@@ -143,8 +144,23 @@ func updateAccountWithFormValues(am AccessManager, person Person, session Sessio
 		}
 	}
 
+	for i := 1; i < 6; i++ {
+		uid := fmt.Sprintf("s%d", i)
+		if r.FormValue(uid) != "" {
+			roles = roles + uid + ":"
+		}
+	}
+	for _, i := range am.GetCustomRoleTypes() {
+		if r.FormValue(i.GetUid()) != "" {
+			roles = roles + i.GetUid() + ":"
+		}
+	}
+	if roles != "" {
+		roles = roles[0 : len(roles)-1]
+	}
+
 	if len(warnings) == 0 {
-		return warnings, am.UpdatePerson(person.GetUuid(), firstName, lastName, email, password, session)
+		return warnings, am.UpdatePerson(person.GetUuid(), firstName, lastName, email, roles, password, session)
 	} else {
 		return warnings, nil
 	}
@@ -184,15 +200,15 @@ var accountDetailsTemplate = `
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>
-		<td><input type="text" name="first_name" value="{{.FirstName}}".></td>
+		<td><input type="text" name="first_name" value="{{.Person.GetFirstName}}".></td>
 	</tr>
 	<tr>
 		<th>Last Name</th>
-		<td><input type="text" name="last_name" value="{{.LastName}}"/></td>
+		<td><input type="text" name="last_name" value="{{.Person.GetLastName}}"/></td>
 	</tr>
 	<tr>
 		<th>Email</th>
-		<td><input type="email" name="email" value="{{.Email}}" style="width: 18em"></td>
+		<td><input type="email" name="email" value="{{.Person.GetEmail}}" style="width: 18em"></td>
 	</tr>
 
 	<tr><td>&nbsp;</td><td></td></tr>
@@ -203,6 +219,34 @@ var accountDetailsTemplate = `
 		this users password. Leave the pasword blank<br>
 		if you do not wish to change this users password.</td>
 	</tr>
+
+	<tr><td>&nbsp;</td><td></td></tr>
+
+	<tr>
+		<th>Administrator</th>
+		<td><input type="checkbox" name="s1" value="s1"{{if .Person.HasRole "s1"}} checked="checked"{{end}}> View administrative area</td>
+	</tr>
+	<tr>
+		<th>System Settings</th>
+		<td><input type="checkbox" name="s2" value="s2"{{if .Person.HasRole "s2"}} checked="checked"{{end}}> Manage System settings</td>
+	</tr>
+	<tr>
+		<th>Accounts</th>
+		<td><input type="checkbox" name="s3" value="s3"{{if .Person.HasRole "s3"}} checked="checked"{{end}}> Manage Accounts</td>
+	</tr>
+	<tr>
+		<th>Picklists</th>
+		<td><input type="checkbox" name="s4" value="s4"{{if .Person.HasRole "s4"}} checked="checked"{{end}}> Manage Picklists</td>
+	</tr>
+
+	<tr><td>&nbsp;</td><td></td></tr>
+
+{{range .CustomRoleTypes}}
+	<tr>
+		<th>{{.Name}}</th>
+		<td><input type="checkbox" name="{{.Uid}}" value="{{.Uid}}"{{if $.Person.HasRole .Uid}} checked="checked"{{end}}/> {{.Description}}</td>
+	</tr>
+{{end}}
 
 	<tr><td>&nbsp;</td><td></td></tr>
 

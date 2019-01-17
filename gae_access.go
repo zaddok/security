@@ -28,6 +28,22 @@ type GaeAccessManager struct {
 	throttle      Throttle
 	picklistStore PicklistStore
 	template      *template.Template
+	roleTypes     []*GaeRoleType
+}
+
+func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
+	r := make([]RoleType, len(am.roleTypes), len(am.roleTypes))
+	for i, rt := range am.roleTypes {
+		r[i] = rt
+	}
+	return r
+}
+
+func (am *GaeAccessManager) AddCustomRoleType(uid, name, description string) {
+	if uid == "" {
+		return
+	}
+	am.roleTypes = append(am.roleTypes, &GaeRoleType{Uid: uid, Name: name, Description: description})
 }
 
 type GaeRequestToken struct {
@@ -49,31 +65,49 @@ type GaePerson struct {
 	LastSignin   *time.Time
 	LastSigninIP string
 	NameKey      string
-	Site         string `datastore:"-"`
+	Roles        string
+	Site         string          `datastore:"-"`
+	RoleMap      map[string]bool `datastore:"-"`
 }
 
-func (p GaePerson) GetUuid() string {
+func (p *GaePerson) GetUuid() string {
 	return p.Uuid
 }
 
-func (p GaePerson) GetFirstName() string {
+func (p *GaePerson) GetFirstName() string {
 	return p.FirstName
 }
 
-func (p GaePerson) GetLastName() string {
+func (p *GaePerson) GetLastName() string {
 	return p.LastName
 }
 
-func (p GaePerson) GetDisplayName() string {
+func (p *GaePerson) GetDisplayName() string {
 	return p.FirstName + " " + p.LastName
 }
 
-func (p GaePerson) GetSite() string {
+func (p *GaePerson) GetSite() string {
 	return p.Site
 }
 
-func (p GaePerson) GetEmail() string {
+func (p *GaePerson) GetEmail() string {
 	return p.Email
+}
+
+func (p *GaePerson) GetRoles() []string {
+	return strings.FieldsFunc(p.Roles, func(c rune) bool { return c == ':' })
+}
+
+func (p *GaePerson) HasRole(uid string) bool {
+	if p.RoleMap == nil {
+		p.RoleMap = make(map[string]bool)
+		for _, v := range strings.FieldsFunc(p.Roles, func(c rune) bool { return c == ':' }) {
+			p.RoleMap[v] = true
+		}
+	}
+
+	_, found := p.RoleMap[uid]
+	return found
 }
 
 type GaeSession struct {
@@ -83,10 +117,11 @@ type GaeSession struct {
 	Email         string
 	Created       int64
 	Expiry        int64
-	Roles         string
 	Authenticated bool
 	Token         string `datastore:"-"`
 	Site          string `datastore:"-"`
+	Roles         string
+	RoleMap       map[string]bool `datastore:"-"`
 }
 
 func (s *GaeSession) GetPersonUuid() string {
@@ -119,6 +154,29 @@ func (s *GaeSession) GetEmail() string {
 
 func (s *GaeSession) IsAuthenticated() bool {
 	return s.Authenticated
+}
+
+func (s *GaeSession) HasRole(uid string) bool {
+	_, found := s.RoleMap[uid]
+	return found
+}
+
+type GaeRoleType struct {
+	Uid         string
+	Name        string
+	Description string
+}
+
+func (r *GaeRoleType) GetUid() string {
+	return r.Uid
+}
+
+func (r *GaeRoleType) GetName() string {
+	return r.Name
+}
+
+func (r *GaeRoleType) GetDescription() string {
+	return r.Description
 }
 
 func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
@@ -457,22 +515,29 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "", err
 		}
 
-		token, err2 := g.CreateSession(site, items[0].Uuid, items[0].FirstName, items[0].LastName, items[0].Email, ip)
+		token, err2 := g.createSession(site, items[0].Uuid, items[0].FirstName, items[0].LastName, items[0].Email, items[0].Roles, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
 		}
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
-		return &GaeSession{
+		session := &GaeSession{
 			PersonUUID:    items[0].Uuid,
 			Token:         token,
 			Site:          site,
 			FirstName:     items[0].FirstName,
 			LastName:      items[0].LastName,
 			Email:         items[0].Email,
+			Roles:         items[0].Roles,
 			Authenticated: true,
-		}, "", nil
+			RoleMap:       make(map[string]bool),
+		}
+		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+			session.RoleMap[v] = true
+		}
+
+		return session, "", nil
 	}
 
 	// User lookup failed
@@ -634,7 +699,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, password string, updator Session) error {
+func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
 	k := datastore.NameKey("Person", uuid, nil)
 	k.Namespace = updator.GetSite()
 	i := new(GaePerson)
@@ -657,6 +722,10 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, passw
 	if email != i.Email {
 		bulk.AddItem("Email", i.Email, email)
 		i.Email = email
+	}
+	if roles != i.Roles {
+		bulk.AddItem("Roles", i.Roles, roles)
+		i.Roles = roles
 	}
 	if len(password) > 0 {
 		bulk.AddItem("Password", "", "")
@@ -702,7 +771,7 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 	}
 
 	items[0].Site = site
-	return items[0], nil
+	return &items[0], nil
 }
 
 // Request the session information associated the site hostname and cookie in the web request
@@ -730,6 +799,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 			Site:      site,
 			FirstName: firstname,
 			LastName:  lastname,
+			Roles:     "",
 			NameKey:   strings.ToLower(firstname + "|" + lastname),
 			Created:   &now,
 		}
@@ -750,6 +820,8 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 		FirstName:     firstname,
 		LastName:      lastname,
 		Authenticated: true,
+		Roles:         "",
+		RoleMap:       make(map[string]bool),
 	}
 
 	return session, nil
@@ -776,6 +848,11 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			LastName:      i.LastName,
 			Email:         i.Email,
 			Authenticated: true,
+			Roles:         i.Roles,
+			RoleMap:       make(map[string]bool),
+		}
+		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+			session.RoleMap[v] = true
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -826,6 +903,8 @@ func (g *GaeAccessManager) GuestSession(site string) Session {
 		FirstName:     "",
 		LastName:      "",
 		Authenticated: false,
+		Roles:         "",
+		RoleMap:       make(map[string]bool),
 	}
 }
 
@@ -838,7 +917,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 }
 
 // Password must already be hashed
-func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, password *string, ip string) (string, error) {
+func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string) (string, error) {
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
 
@@ -858,6 +937,7 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email string, pa
 		FirstName: firstName,
 		LastName:  lastName,
 		Email:     email,
+		Roles:     roles,
 		Password:  password,
 		NameKey:   strings.ToLower(firstName + "|" + lastName),
 		Created:   &now,
@@ -916,14 +996,16 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
 	}
 
-	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, i.Password, ip)
+	// NewUserInfo doesnt carry roles, should it?
+	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip)
 	if aerr != nil {
 		g.Log().Error("addPerson() failure: " + aerr.Error())
 		return "", "", aerr
 	}
 	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("New user account activated '%s','%s','%s'", i.FirstName, i.LastName, i.Email))
 
-	token, err2 := g.CreateSession(site, uuid, i.FirstName, i.LastName, i.Email, ip)
+	// NewUserInfo doesn't permit default/initial roles. Should it?
+	token, err2 := g.createSession(site, uuid, i.FirstName, i.LastName, i.Email, "", ip)
 	if err2 == nil {
 		return token, "", nil
 	}
@@ -975,7 +1057,7 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 	return true, "Your password has been reset", nil
 }
 
-func (g *GaeAccessManager) CreateSession(site string, person string, firstName string, lastName string, email string, ip string) (string, error) {
+func (g *GaeAccessManager) createSession(site, person, firstName, lastName, email, roles, ip string) (string, error) {
 	personUuid, perr := uuid.Parse(person)
 	if perr != nil {
 		return "", perr
@@ -995,13 +1077,24 @@ func (g *GaeAccessManager) CreateSession(site string, person string, firstName s
 	token := RandomString(32)
 	now := time.Now().Unix()
 	expires := e + now
-	roles, err := g.personRoleString(site, person)
 
 	if err != nil {
 		return "", err
 	}
 
-	ri := &GaeSession{PersonUUID: personUuid.String(), FirstName: firstName, LastName: lastName, Email: email, Created: now, Expiry: expires, Roles: roles}
+	ri := &GaeSession{
+		PersonUUID: personUuid.String(),
+		FirstName:  firstName,
+		LastName:   lastName,
+		Email:      email,
+		Created:    now,
+		Expiry:     expires,
+		Roles:      roles,
+		RoleMap:    make(map[string]bool),
+	}
+	for _, v := range strings.FieldsFunc(ri.Roles, func(c rune) bool { return c == ':' }) {
+		ri.RoleMap[v] = true
+	}
 	k := datastore.NameKey("Session", token, nil)
 	k.Namespace = site
 	if _, err := g.client.Put(g.ctx, k, ri); err != nil {
@@ -1012,39 +1105,6 @@ func (g *GaeAccessManager) CreateSession(site string, person string, firstName s
 	g.Log().Debug("Created session \"%s\" for user %v.", tkn, personUuid)
 
 	return token, err
-}
-
-func (g *GaeAccessManager) personRoleString(site string, uuid string) (string, error) {
-	var b bytes.Buffer
-
-	type RI struct {
-		Role     string
-		Resource string
-		Uid      string
-	}
-	var items []RI
-	q := datastore.NewQuery("Role").Namespace(site).Filter("PersonUUID =", uuid).Limit(100)
-	_, err := g.client.GetAll(g.ctx, q, &items)
-	if err != nil {
-		return "", err
-	}
-
-	for _, i := range items {
-		if b.Len() > 0 {
-			b.WriteString("|")
-		}
-		if i.Resource != "#" {
-			b.WriteString(i.Role)
-			b.WriteString(":")
-			b.WriteString(i.Resource)
-			b.WriteString(":")
-			b.WriteString(i.Uid)
-		} else {
-			b.WriteString(i.Role)
-		}
-	}
-
-	return b.String(), err
 }
 
 func (am *GaeAccessManager) WipeDatastore(namespace string) error {

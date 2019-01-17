@@ -1037,7 +1037,6 @@ var AdminTemplate = `
 {{end}}
 
 
-
 {{define "admin_footer"}}
         </div>
         <div id="footer">

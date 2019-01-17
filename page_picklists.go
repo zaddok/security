@@ -177,7 +177,7 @@ div.picklist_menu ul {
 }
 body {
 	background: url(/grey.png);
-	background-size: 16em auto;
+	background-size: 13em auto;
 	background-repeat: repeat-y;
 }
 </style>
