@@ -69,6 +69,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
 
 	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(&FAregularEOT, 604800))
@@ -1024,7 +1025,7 @@ var AdminTemplate = `
 			div.success::before { content: '\f058'; color: #7b6; opacity: 0.7; }
                 </style>
 </head>
-<body>
+<body class="admin">
 	<div id="logo"></div>
 	<div id="header">
 		<div id="buttons">
