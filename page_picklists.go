@@ -67,14 +67,14 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			SupplimentalCss string
 			Title           []string
 			Session         Session
-			Picklist        []string
+			Picklists       []string
+			Picklist        string
 			PicklistItems   []PicklistItem
 		}
 		p := &Page{
 			SiteName:        siteName,
 			SiteDescription: siteDescription,
 			SupplimentalCss: supplimentalCss,
-			Title:           []string{"Picklists"},
 			Session:         session,
 		}
 
@@ -90,12 +90,17 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return
 		}
 		for k, _ := range all {
-			p.Picklist = append(p.Picklist, k)
+			p.Picklists = append(p.Picklists, k)
 		}
-		sort.Slice(p.Picklist, func(i, j int) bool {
-			return p.Picklist[j] > p.Picklist[i]
+		sort.Slice(p.Picklists, func(i, j int) bool {
+			return p.Picklists[j] > p.Picklists[i]
 		})
-		p.PicklistItems, err = am.PicklistStore().GetPicklistOrdered(session.GetSite(), p.Picklist[0])
+
+		picklistName := p.Picklists[0]
+		p.Picklist = picklistName
+		p.Title = []string{"Picklists", picklistName}
+
+		p.PicklistItems, err = am.PicklistStore().GetPicklistOrdered(session.GetSite(), picklistName)
 		if err != nil {
 			ShowError(w, r, t, err, siteName)
 			return
@@ -149,23 +154,41 @@ a.delete::before {
 	content: "\f2ed";
 	opacity: 0.1;
 }
+
+div.picklist_menu {
+	float: left;
+	width: 15em;
+}
+div.picklist_menu ul li {
+	list-style: none;
+	padding-bottom: 0.2em;
+}
+div.picklist_menu ul {
+	padding-left: 0;
+}
 </style>
 
 
 <div class="picklist_menu">
 <ul>
-{{range .Picklist}}
+{{range .Picklists}}
 <li><a href="/z/picklist/{{.}}">{{.}}</a></li>
 {{end}}
 </ul>
 </div>
 
 <div class="picklist_items">
-<ul>
+<h2>{{.Picklist}}</h2>
+<table>
 {{range .PicklistItems}}
-<li>{{.}}</li>
+<tr>
+	<td>{{.Key}}</td>
+	<td>{{.Value}}</td>
+	<td>{{.Description}}</td>
+	<td>{{.IsDeprecated}}</td>
+</tr>
 {{end}}
-</ul>
+</table>
 </div>
 
 
