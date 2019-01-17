@@ -1,41 +1,39 @@
-package main
+package security
 
 import (
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"git.tai.io/zadok/security"
 )
 
-func AccountDetailsPage(t *template.Template, am security.AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := security.LookupSession(r, am)
+		session, err := LookupSession(r, am)
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 		if !session.IsAuthenticated() {
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
-		security.AddSafeHeaders(w)
+		AddSafeHeaders(w)
 
 		path := r.URL.Path[1:]
 		parts := strings.Split(path, "/")
 		uuid := parts[len(parts)-1]
 		//uuid, err := gocql.ParseUUID(parts[len(parts)-1])
 
-		var person security.Person = nil
+		var person Person = nil
 
 		person, err = am.GetPerson(uuid, session)
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 		if person == nil {
-			security.ShowErrorNotFound(w, r, t, SITE)
+			ShowErrorNotFound(w, r, t, siteName)
 			return
 		}
 
@@ -45,27 +43,27 @@ func AccountDetailsPage(t *template.Template, am security.AccessManager, siteNam
 				SiteName        string
 				SiteDescription string
 				Title           []string
-				Session         security.Session
-				Person          security.Person
+				Session         Session
+				Person          Person
 				Query           string
-				EntityAudit     []*security.EntityAuditGroup
+				EntityAudit     []*EntityAuditGroup
 			}
 			items, err := am.GetEntityAuditLog(uuid, session)
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 
 			p := &Page{
-				SITE,
-				SITE_DESCRIPTION,
+				siteName,
+				siteDescription,
 				[]string{"Account History", person.GetDisplayName(), "Accounts"},
 				session,
 				person,
 				r.FormValue("q"),
-				security.DivideEntityGroups(items),
+				DivideEntityGroups(items),
 			}
-			security.Render(r, w, t, "account_history", p)
+			Render(r, w, t, "account_history", p)
 			return
 		}
 
@@ -73,8 +71,8 @@ func AccountDetailsPage(t *template.Template, am security.AccessManager, siteNam
 			SiteName        string
 			SiteDescription string
 			Title           []string
-			Session         security.Session
-			Person          security.Person
+			Session         Session
+			Person          Person
 			FirstName       string
 			LastName        string
 			Email           string
@@ -83,8 +81,8 @@ func AccountDetailsPage(t *template.Template, am security.AccessManager, siteNam
 		}
 
 		p := &Page{
-			SiteName:        SITE,
-			SiteDescription: SITE_DESCRIPTION,
+			SiteName:        siteName,
+			SiteDescription: siteDescription,
 			Title:           []string{person.GetDisplayName(), "Accounts"},
 			Session:         session,
 			Person:          person,
@@ -97,7 +95,7 @@ func AccountDetailsPage(t *template.Template, am security.AccessManager, siteNam
 		if r.Method == "POST" {
 			feedback, err := updateAccountWithFormValues(am, person, session, r)
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 			if len(feedback) == 0 {
@@ -111,12 +109,12 @@ func AccountDetailsPage(t *template.Template, am security.AccessManager, siteNam
 
 		}
 
-		security.Render(r, w, t, "account_details", p)
+		Render(r, w, t, "account_details", p)
 	}
 }
 
 // If /account.details/ detects some posted data, we can do a account update.
-func updateAccountWithFormValues(am security.AccessManager, person security.Person, session security.Session, r *http.Request) ([]string, error) {
+func updateAccountWithFormValues(am AccessManager, person Person, session Session, r *http.Request) ([]string, error) {
 	var warnings []string
 
 	if r.FormValue("first_name") == "" &&
@@ -139,7 +137,7 @@ func updateAccountWithFormValues(am security.AccessManager, person security.Pers
 	if email == "" {
 		warnings = append(warnings, "Please specify an email address.")
 	} else {
-		ev := security.CheckEmail(email)
+		ev := CheckEmail(email)
 		if ev != "" {
 			warnings = append(warnings, "Please specify a valid email adddress. "+ev+".")
 		}

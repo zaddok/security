@@ -1,26 +1,24 @@
-package main
+package security
 
 import (
 	"html/template"
 	"net/http"
 	"net/url"
 	"sort"
-
-	"git.tai.io/zadok/security"
 )
 
-func AccountsPage(t *template.Template, am security.AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := security.LookupSession(r, am)
+		session, err := LookupSession(r, am)
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 		if !session.IsAuthenticated() {
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
-		security.AddSafeHeaders(w)
+		AddSafeHeaders(w)
 
 		if r.FormValue("new") == "create" {
 
@@ -28,7 +26,7 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 				SiteName        string
 				SiteDescription string
 				Title           []string
-				Session         security.Session
+				Session         Session
 				Query           string
 				FirstName       string
 				LastName        string
@@ -37,8 +35,8 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 			}
 
 			p := &Page{
-				SiteName:        SITE,
-				SiteDescription: SITE_DESCRIPTION,
+				SiteName:        siteName,
+				SiteDescription: siteDescription,
 				Title:           []string{"Create new account", "Accounts"},
 				Session:         session,
 				Query:           r.FormValue("q"),
@@ -51,7 +49,7 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 			if r.Method == "POST" {
 				feedback, err := createAccountWithFormValues(am, session, r)
 				if err != nil {
-					security.ShowError(w, r, t, err, SITE)
+					ShowError(w, r, t, err, siteName)
 					return
 				}
 				if len(feedback) == 0 {
@@ -62,7 +60,7 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 				p.Feedback = feedback
 			}
 
-			security.Render(r, w, t, "account_create", p)
+			Render(r, w, t, "account_create", p)
 
 			return
 		}
@@ -72,23 +70,23 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 			SiteDescription string
 			SupplimentalCss string
 			Title           []string
-			Session         security.Session
+			Session         Session
 			Query           string
-			Accounts        []security.Person
+			Accounts        []Person
 		}
 
 		err = r.ParseForm()
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 		q := r.Form.Get("q")
 
-		var accounts []security.Person = nil
+		var accounts []Person = nil
 		if q != "" {
 			accounts, err = am.SearchPeople(q, session)
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 		}
@@ -97,12 +95,12 @@ func AccountsPage(t *template.Template, am security.AccessManager, siteName, sit
 			return accounts[j].GetFirstName() > accounts[i].GetFirstName()
 		})
 
-		security.Render(r, w, t, "accounts", &Page{siteName, siteDescription, supplimentalCss, []string{"Accounts"}, session, q, accounts})
+		Render(r, w, t, "accounts", &Page{siteName, siteDescription, supplimentalCss, []string{"Accounts"}, session, q, accounts})
 	}
 }
 
 // If /account.details/ detects some posted data, we can do a account update.
-func createAccountWithFormValues(am security.AccessManager, session security.Session, r *http.Request) ([]string, error) {
+func createAccountWithFormValues(am AccessManager, session Session, r *http.Request) ([]string, error) {
 	var warnings []string
 
 	if r.FormValue("first_name") == "" &&
@@ -126,7 +124,7 @@ func createAccountWithFormValues(am security.AccessManager, session security.Ses
 	if email == "" {
 		warnings = append(warnings, "Please specify an email address.")
 	} else {
-		ev := security.CheckEmail(email)
+		ev := CheckEmail(email)
 		if ev != "" {
 			warnings = append(warnings, "Please specify a valid email adddress. "+ev)
 		}

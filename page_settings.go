@@ -1,33 +1,31 @@
-package main
+package security
 
 import (
 	"html/template"
 	"net/http"
 	"sort"
 	"strings"
-
-	"git.tai.io/zadok/security"
 )
 
-func SettingsPage(t *template.Template, am security.AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		session, err := security.LookupSession(r, am)
+		session, err := LookupSession(r, am)
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 		if !session.IsAuthenticated() {
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
-		security.AddSafeHeaders(w)
+		AddSafeHeaders(w)
 
 		key := strings.TrimSpace(r.FormValue("key"))
 		value := strings.TrimSpace(r.FormValue("value"))
 		if key != "" {
 			err := am.Setting().Put(session.GetSite(), key, value)
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 		}
@@ -36,7 +34,7 @@ func SettingsPage(t *template.Template, am security.AccessManager, siteName, sit
 		if delete != "" {
 			err := am.Setting().Put(session.GetSite(), delete, "")
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 		}
@@ -49,16 +47,16 @@ func SettingsPage(t *template.Template, am security.AccessManager, siteName, sit
 				SiteDescription string
 				SupplimentalCss string
 				Title           []string
-				Session         security.Session
+				Session         Session
 				Key             string
 				Value           string
 			}
 			value := am.Setting().GetWithDefault(session.GetSite(), edit, "")
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
-			security.Render(r, w, t, "setting_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit setting", "System Settings"}, session, edit, value})
+			Render(r, w, t, "setting_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit setting", "System Settings"}, session, edit, value})
 
 			return
 		}
@@ -68,13 +66,13 @@ func SettingsPage(t *template.Template, am security.AccessManager, siteName, sit
 			SiteDescription string
 			SupplimentalCss string
 			Title           []string
-			Session         security.Session
+			Session         Session
 			Settings        [][]string
 		}
 
 		err = r.ParseForm()
 		if err != nil {
-			security.ShowError(w, r, t, err, SITE)
+			ShowError(w, r, t, err, siteName)
 			return
 		}
 
@@ -89,7 +87,7 @@ func SettingsPage(t *template.Template, am security.AccessManager, siteName, sit
 			return values[j][0] > values[i][0]
 		})
 
-		security.Render(r, w, t, "settings", &Page{siteName, siteDescription, supplimentalCss, []string{"System Settings"}, session, values})
+		Render(r, w, t, "settings", &Page{siteName, siteDescription, supplimentalCss, []string{"System Settings"}, session, values})
 	}
 }
 
