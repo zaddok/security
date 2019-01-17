@@ -303,6 +303,11 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 
 func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
 
+	syslog := NewGaeSyslogBundle(site, a.client, a.ctx)
+	defer syslog.Put()
+
+	syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest '%s'", email))
+
 	var items []GaePerson
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
@@ -312,10 +317,12 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	}
 	if len(items) == 0 {
 		a.Log().Info("Forgot Password Request ignored for unknown email address: " + email)
+		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with unknown email address: %s", email))
 		return "", nil
 	}
 	if items[0].Password == nil || *items[0].Password == "" {
 		a.Log().Info("Forgot Password Request ignored for account with an empty password field. Email: " + email)
+		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with an empty password.  Email address: %s", email))
 		return "", nil
 	}
 
@@ -409,8 +416,14 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if email == "" {
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
+
+	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
+	defer syslog.Put()
+	syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication attempt for '%s'", email))
+
 	email = strings.ToLower(strings.TrimSpace(email))
 	if throttled, _ := g.throttle.IsThrottled(email); throttled {
+		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
 	}
 
@@ -449,6 +462,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
 		}
+		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication success for '%s'", email))
 
 		return &GaeSession{
 			PersonUUID:    items[0].Uuid,
@@ -466,12 +480,30 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		// An invalid email address was entered. If this occurs too many times, stop reporting
 		// back the normal "Invalid email address or password" message prevent the signin form
 		// revealing to a bot that this email address/password combination is invalid.
+		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
 	}
 
 	g.throttle.Increment(ip)
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
 	return g.GuestSession(site), "Invalid email address or password.", nil
+}
+func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
+	var items []SystemLog
+
+	q := datastore.NewQuery("SystemLog").Namespace(requestor.GetSite()).Order("-Recorded").Limit(200)
+	it := a.client.Run(a.ctx, q)
+	for {
+		e := new(GaeSystemLog)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
 }
 
 func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {

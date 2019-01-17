@@ -31,6 +31,7 @@ type AccessManager interface {
 	Setting() Setting
 	PicklistStore() PicklistStore
 
+	GetRecentSystemLog(requestor Session) ([]SystemLog, error)
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
 	GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error)

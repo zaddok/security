@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/zaddok/log"
@@ -83,6 +84,15 @@ func TestAccountManagement(t *testing.T) {
 		//if len(people) != 2 {
 		//	t.Fatalf("am.GetPeople() should return two results, not %d", len(people))
 		//}
+
+		entries, err := am.GetRecentSystemLog(session)
+		if err != nil {
+			t.Fatalf("am.GetRecentSystemLog() failed: %v", err)
+		}
+		for _, e := range entries {
+			fmt.Println(e)
+		}
+
 	}
 
 }

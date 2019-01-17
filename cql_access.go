@@ -285,6 +285,10 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
 
+func (a *CqlAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {
 	return nil, errors.New("unimplemented")
 }

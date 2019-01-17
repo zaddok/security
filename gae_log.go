@@ -45,6 +45,13 @@ type LogEntry interface {
 	GetLevel() string
 	GetMessage() string
 }
+type SystemLog interface {
+	GetUuid() string
+	GetRecorded() time.Time
+	GetComponent() string
+	GetLevel() string
+	GetMessage() string
+}
 
 type DatastoreLog struct {
 	client    *datastore.Client
@@ -114,6 +121,72 @@ func (le *GaeLogEntry) GetLevel() string {
 
 func (le *GaeLogEntry) GetMessage() string {
 	return le.Message
+}
+
+type GaeSystemLog struct {
+	Recorded  time.Time
+	IP        string `datastore:",noindex"`
+	Component string `datastore:",noindex"`
+	Level     string `datastore:",noindex"`
+	Message   string `datastore:",noindex"`
+	Uuid      string `datastore:",noindex"`
+}
+
+func (le *GaeSystemLog) GetUuid() string {
+	return le.Uuid
+}
+
+func (le *GaeSystemLog) GetRecorded() time.Time {
+	return le.Recorded
+}
+
+func (le *GaeSystemLog) GetIP() string {
+	return le.IP
+}
+
+func (le *GaeSystemLog) GetComponent() string {
+	return le.Component
+}
+
+func (le *GaeSystemLog) GetLevel() string {
+	return le.Level
+}
+
+func (le *GaeSystemLog) GetMessage() string {
+	return le.Message
+}
+
+func NewGaeSyslogBundle(site string, client *datastore.Client, ctx context.Context) *GaeSyslogBundle {
+	return &GaeSyslogBundle{site: site, client: client, ctx: ctx}
+}
+
+type GaeSyslogBundle struct {
+	client *datastore.Client
+	ctx    context.Context
+	site   string
+	Item   []GaeSystemLog
+	Key    []*datastore.Key
+}
+
+func (sb *GaeSyslogBundle) Put() {
+	go func() {
+		if _, err := sb.client.PutMulti(sb.ctx, sb.Key, sb.Item); err != nil {
+			fmt.Printf("Unable to store system log entries: %v", err)
+		}
+	}()
+}
+
+func (sb *GaeSyslogBundle) Add(component, ip, level, message string) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        ip,
+		Level:     level,
+		Message:   message}
+	sb.Item = append(sb.Item, i)
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = sb.site
+	sb.Key = append(sb.Key, k)
 }
 
 func NewDatastoreLog(component string, user Session, client *datastore.Client, ctx context.Context) (log.Log, string, error) {
