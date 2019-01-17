@@ -175,7 +175,6 @@ div.picklist_menu ul li {
 div.picklist_menu ul {
 	padding-left: 0;
 }
-
 body {
 	background: url(/grey.png);
 	background-size: 16em auto;
@@ -224,7 +223,7 @@ body {
 	<table>
 		<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
 		<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
-		<tr><th>Description</th><td><textarea name="description" class="description"/></td></tr>
+		<tr><th>Description</th><td><textarea name="description" class="description"></textarea></td></tr>
 	</table>
 	</div>
   <div class="modal-footer">
