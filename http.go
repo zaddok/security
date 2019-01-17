@@ -27,7 +27,44 @@ func RegisterHttpHandlers() {
 	http.HandleFunc("/font/materialicons.eot", BinaryFile(&materialIconsEot, 604800))
 	http.HandleFunc("/font/materialicons.ttf", BinaryFile(&materialIconsTtf, 604800))
 	http.HandleFunc("/font/materialicons.woff", BinaryFile(&materialIconsWoff, 604800))
+}
 
+var firsts map[string]bool
+
+func FirstRequestOnSite(site string, am AccessManager) {
+	if firsts == nil {
+		firsts = make(map[string]bool)
+	}
+	if _, found := firsts[site]; found {
+		return
+	}
+	firsts[site] = true
+	am.Log().Debug("First access to site %s since appserver start", site)
+
+	val := am.Setting().Get(site, "self.signup")
+	if val == nil {
+		am.Setting().Put(site, "self.signup", "no")
+	}
+	val = am.Setting().Get(site, "session.expiry")
+	if val == nil {
+		am.Setting().Put(site, "session.expiry", "900")
+	}
+	val = am.Setting().Get(site, "smtp.hostname")
+	if val == nil {
+		am.Setting().Put(site, "smtp.hostname", "smtp.example.com")
+	}
+	val = am.Setting().Get(site, "smtp.port")
+	if val == nil {
+		am.Setting().Put(site, "smtp.port", "587")
+	}
+	val = am.Setting().Get(site, "support_team.name")
+	if val == nil {
+		am.Setting().Put(site, "support_team.name", "Unknown")
+	}
+	val = am.Setting().Get(site, "support_team.email")
+	if val == nil {
+		am.Setting().Put(site, "support_team.email", "support@example.com")
+	}
 }
 
 // Serve the contents of a binary file back to the web browser

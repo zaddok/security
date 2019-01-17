@@ -35,6 +35,8 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			return
 		}
 
+		security.FirstRequestOnSite(session.GetSite(), am)
+
 		if session.IsAuthenticated() {
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			return
