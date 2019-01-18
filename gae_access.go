@@ -220,6 +220,8 @@ func (c *GaeAccessManager) Log() log.Log {
 func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, string, error) {
 	var results []string
 
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	// Check email does not already exist
 	var items []GaePerson
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
@@ -360,6 +362,7 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 }
 
 func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
 
 	syslog := NewGaeSyslogBundle(site, a.client, a.ctx)
 	defer syslog.Put()
@@ -556,6 +559,10 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
 	var items []SystemLog
 
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
 	q := datastore.NewQuery("SystemLog").Namespace(requestor.GetSite()).Order("-Recorded").Limit(200)
 	it := a.client.Run(a.ctx, q)
 	for {
@@ -574,6 +581,10 @@ func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, e
 func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {
 	var items []LogCollection
 
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
 	q := datastore.NewQuery("LogCollection").Namespace(requestor.GetSite()).Order("-Began").Limit(200)
 	it := am.client.Run(am.ctx, q)
 	for {
@@ -591,6 +602,10 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 
 func (am *GaeAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error) {
 	var items []EntityAudit
+
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
 
 	q := datastore.NewQuery("EntityAudit").Namespace(requestor.GetSite()).Filter("EntityUuid =", uuid).Limit(10000)
 	it := am.client.Run(am.ctx, q)
@@ -652,6 +667,10 @@ func (am *GaeAccessManager) BulkUpdateEntityAuditLog(ec EntityAuditLogCollection
 func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
 	var items []LogEntry
 
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
 	q := datastore.NewQuery("LogEntry").Namespace(requestor.GetSite()).Filter("LogUuid =", uuid).Order("Recorded").Limit(10000)
 	it := am.client.Run(am.ctx, q)
 	for {
@@ -668,6 +687,10 @@ func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 }
 
 func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
+	if !requestor.HasRole("s1") && requestor.GetPersonUuid() != uuid {
+		return nil, errors.New("Permission denied.")
+	}
+
 	k := datastore.NameKey("Person", uuid, nil)
 	k.Namespace = requestor.GetSite()
 	i := new(GaePerson)
@@ -682,6 +705,10 @@ func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, e
 
 func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	var items []Person
+
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
 
 	q := datastore.NewQuery("Person").Namespace(requestor.GetSite()).Limit(2000)
 	it := am.client.Run(am.ctx, q)
@@ -700,6 +727,10 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 }
 
 func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
+	if !updator.HasRole("s3") && updator.GetPersonUuid() != uuid {
+		return errors.New("Permission denied.")
+	}
+
 	k := datastore.NameKey("Person", uuid, nil)
 	k.Namespace = updator.GetSite()
 	i := new(GaePerson)
@@ -709,6 +740,14 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 	} else if err != nil {
 		return err
 	}
+
+	// Normal users may not update their own system roles
+	if !updator.HasRole("s3") && updator.GetPersonUuid() == uuid {
+		if roles != i.Roles {
+			return errors.New("Permission denied.")
+		}
+	}
+
 	bulk := &GaeEntityAuditLogCollection{}
 	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid(), updator.GetDisplayName())
 	if firstName != i.FirstName {
@@ -745,14 +784,26 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 }
 
 func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {
+	if !updator.HasRole("s3") {
+		return errors.New("Permission denied.")
+	}
+
 	return errors.New("unimplemented")
 }
 
 func (am *GaeAccessManager) SearchPeople(keyword string, requestor Session) ([]Person, error) {
+	if !requestor.HasRole("s1") {
+		return []Person{}, errors.New("Permission denied.")
+	}
+
 	return am.GetPeople(requestor)
 }
 
-func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
+func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error) {
+	if requestor != nil && !requestor.HasRole("s1") {
+		return nil, errors.New("Permission denied.")
+	}
+
 	firstname = strings.TrimSpace(firstname)
 	lastname = strings.TrimSpace(lastname)
 	namekey := strings.ToLower(firstname + "|" + lastname)
@@ -780,7 +831,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 	firstname = strings.TrimSpace(firstname)
 	lastname = strings.TrimSpace(lastname)
 
-	person, err := g.GetPersonByFirstNameLastName(site, firstname, lastname)
+	person, err := g.GetPersonByFirstNameLastName(site, firstname, lastname, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -799,7 +850,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 			Site:      site,
 			FirstName: firstname,
 			LastName:  lastname,
-			Roles:     "",
+			Roles:     "s1:s2:s3:s4",
 			NameKey:   strings.ToLower(firstname + "|" + lastname),
 			Created:   &now,
 		}
@@ -820,8 +871,11 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 		FirstName:     firstname,
 		LastName:      lastname,
 		Authenticated: true,
-		Roles:         "",
+		Roles:         "s1:s2:s3:s4",
 		RoleMap:       make(map[string]bool),
+	}
+	for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+		session.RoleMap[v] = true
 	}
 
 	return session, nil
@@ -917,7 +971,11 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 }
 
 // Password must already be hashed
-func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string) (string, error) {
+func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error) {
+	if requestor != nil && !requestor.HasRole("s1") {
+		return "", errors.New("Permission denied.")
+	}
+
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
 
@@ -997,7 +1055,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	}
 
 	// NewUserInfo doesnt carry roles, should it?
-	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip)
+	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip, nil)
 	if aerr != nil {
 		g.Log().Error("addPerson() failure: " + aerr.Error())
 		return "", "", aerr

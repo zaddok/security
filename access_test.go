@@ -116,6 +116,7 @@ func TestAccessManager(t *testing.T) {
 			t.Fatalf("am.ForgotPasswordRequest() failed, when it should have succeded: %v", err)
 		}
 		if token == "" {
+			dumpSystemLog(am, host)
 			t.Fatalf("am.ForgotPasswordRequest() should have returned a token")
 		}
 
@@ -129,6 +130,14 @@ func TestAccessManager(t *testing.T) {
 
 	}
 
+}
+
+func dumpSystemLog(am AccessManager, site string) {
+	session, _ := am.GetSystemSession(site, "Test", "Test")
+	items, _ := am.GetRecentSystemLog(session)
+	for _, i := range items {
+		fmt.Println(i)
+	}
 }
 
 var TestSite string

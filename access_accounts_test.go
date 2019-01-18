@@ -17,18 +17,35 @@ func TestAccountManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
-	user := am.GuestSession(TestSite)
+	var user Session = am.GuestSession(TestSite)
 
 	// Test Create account
 	{
-		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", HashPassword("abc123--"), "127.0.0.1")
+
+		// Create account
+		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", "s1:s2:s3:s4", HashPassword("abc123-!"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
+
+		// Get people should fail with guest session
 		people, err := am.GetPeople(user)
+		if err == nil && err.Error() != "Permission deniedx" {
+			t.Fatalf("am.GetPeople() should fail with permission denied. %v", err)
+		}
+
+		// Authenticate
+		user, _, err = am.Authenticate(TestSite, "stacy@test.com", "abc123-!", "127.0.0.1")
+		if err != nil {
+			t.Fatalf("am.Authenticate() failed: %v", err)
+		}
+
+		// Get people should now succeed
+		people, err = am.GetPeople(user)
 		if err != nil {
 			t.Fatalf("am.GetPeople() failed: %v", err)
 		}
+
 		if len(people) != 1 {
 			t.Fatalf("am.GetPeople() should return one result, not %d", len(people))
 		}
@@ -49,7 +66,7 @@ func TestAccountManagement(t *testing.T) {
 	// Test Create Anoter account
 	var uuid string
 	{
-		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", HashPassword("abc123--"), "127.0.0.1")
+		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -64,7 +81,7 @@ func TestAccountManagement(t *testing.T) {
 
 	// Test updating an account
 	{
-		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "abc123--", "127.0.0.1")
+		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "abc123-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -77,13 +94,27 @@ func TestAccountManagement(t *testing.T) {
 			t.Fatalf("am.GetPerson() failed: %v", err)
 		}
 
-		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "", session)
+		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "s1:s2:s4", "", session)
 		if err != nil {
 			t.Fatalf("am.UpdatePerson() failed: %v", err)
 		}
-		//if len(people) != 2 {
-		//	t.Fatalf("am.GetPeople() should return two results, not %d", len(people))
-		//}
+
+		person2, err := am.GetPerson(uuid, session)
+		if err != nil {
+			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+		if len(person2.GetRoles()) != 3 {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed. expect three roles, not %d", len(person2.GetRoles()))
+		}
+		if person2.GetRoles()[0] != "s1" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 1 is \"s1\" not %s", person2.GetRoles()[0])
+		}
+		if person2.GetRoles()[1] != "s2" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 2 is \"s2\" not %s", person2.GetRoles()[1])
+		}
+		if person2.GetRoles()[2] != "s4" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 3 is \"s4\" not %s", person2.GetRoles()[2])
+		}
 
 		entries, err := am.GetRecentSystemLog(session)
 		if err != nil {

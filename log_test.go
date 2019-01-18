@@ -32,20 +32,16 @@ func TestEntityAudit(t *testing.T) {
 	var entityUuid string
 
 	{
-		personUuid, err := am.AddPerson(TestSite, "Stacy", "Jones", "Stacy.Jones@test.com", HashPassword("abc123--"), "127.0.0.1")
+		_, err := am.AddPerson(TestSite, "Stacy", "Jones", "Stacy.Jones@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
-		token, err := am.CreateSession(TestSite, personUuid, "Stacy", "Jones", "stacy.jones@test.com", "127.0.0.1")
+		session, _, err = am.Authenticate(TestSite, "stacy.jones@test.com", "abc123--", "127.0.0.1")
 		if err != nil {
-			t.Fatalf("am.CreateSession() failed: %v", err)
-		}
-		session, err = am.Session(TestSite, token)
-		if err != nil {
-			t.Fatalf("am.Session() failed: %v", err)
+			t.Fatalf("am.Authenticate() failed: %v", err)
 		}
 
-		entityUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", HashPassword("abc123--"), "127.0.0.1")
+		entityUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}

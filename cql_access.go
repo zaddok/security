@@ -370,7 +370,7 @@ func (am *CqlAccessManager) SearchPeople(keyword string, requestor Session) ([]P
 	return nil, errors.New("unimplemented")
 }
 
-func (am *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string) (Person, error) {
+func (am *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error) {
 	return nil, errors.New("unimplemented")
 }
 
@@ -467,7 +467,7 @@ func (g *CqlAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
-func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string) (string, error) {
+func (g *CqlAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error) {
 
 	uuid := gocql.TimeUUID()
 	rows := g.cql.Query("insert into person (site, uuid, first_name, last_name, email, roles, password, created) values(?,?,?,?,?,?,?)",
@@ -507,7 +507,7 @@ func (g *CqlAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		} else {
 
 			// We dont allow default roles from NewUserInfo at this point. Should we?
-			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip)
+			uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip, nil)
 
 			if aerr == nil {
 				// No default roles provided via NewUserInfo, should we allow this?

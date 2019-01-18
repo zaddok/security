@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -27,7 +26,7 @@ func TestThrottle(t *testing.T) {
 	{
 		email := RandomString(10) + "@example.com"
 
-		fmt.Println("Should start as not throtled")
+		// Check this random email address is not throttled
 		v, err := throttle.IsThrottled(email)
 		if err != nil {
 			t.Fatalf("throttle.IsThrottled() failed: %v", err)
@@ -36,6 +35,7 @@ func TestThrottle(t *testing.T) {
 			t.Fatalf("throttle.IsThrottled() should not be throttled")
 		}
 
+		// Should still not be throttled
 		err = throttle.Increment(email)
 		if err != nil {
 			t.Fatalf("throttle.Increment() failed: %v", err)
@@ -48,6 +48,7 @@ func TestThrottle(t *testing.T) {
 			t.Fatalf("throttle.IsThrottled() should not be throttled")
 		}
 
+		// Should still not be throttled
 		err = throttle.Increment(email)
 		if err != nil {
 			t.Fatalf("throttle.Increment() failed: %v", err)
@@ -60,6 +61,7 @@ func TestThrottle(t *testing.T) {
 			t.Fatalf("throttle.IsThrottled() should not be throttled")
 		}
 
+		// Should still not be throttled
 		err = throttle.Increment(email)
 		if err != nil {
 			t.Fatalf("throttle.Increment() failed: %v", err)
@@ -72,6 +74,7 @@ func TestThrottle(t *testing.T) {
 			t.Fatalf("throttle.IsThrottled() should not be throttled")
 		}
 
+		// Should be throttled
 		err = throttle.Increment(email)
 		if err != nil {
 			t.Fatalf("throttle.Increment() failed: %v", err)
