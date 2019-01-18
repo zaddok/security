@@ -735,9 +735,11 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 		return errors.New("Permission denied.")
 	}
 
-	passwordCheck := PasswordStrength(password)
-	if len(passwordCheck) > 0 {
-		return errors.New("Password is insecure. " + passwordCheck[0])
+	if password != "" {
+		passwordCheck := PasswordStrength(password)
+		if len(passwordCheck) > 0 {
+			return errors.New("Password is insecure. " + passwordCheck[0])
+		}
 	}
 
 	k := datastore.NameKey("Person", uuid, nil)
