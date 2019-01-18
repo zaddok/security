@@ -215,6 +215,26 @@ func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Templ
 	}
 }
 
+func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Template, siteName string) {
+	w.WriteHeader(http.StatusForbidden)
+	type Page struct {
+		SiteName        string
+		SiteDescription string
+		Title           []string
+		Slug            string
+		Today           time.Time
+	}
+	err := t.ExecuteTemplate(w, "error_forbidden", &Page{
+		siteName,
+		"",
+		[]string{"Permission Denied"},
+		"",
+		time.Now()})
+	if err != nil {
+		panic(fmt.Sprintf("Error displaying error page: %v", err))
+	}
+}
+
 func DecodeOrPanic(data string) []byte {
 	bin, berr := base64.StdEncoding.DecodeString(data)
 	if berr != nil {
@@ -559,6 +579,70 @@ A problem occured while attempting to display this page. Please try again shortl
 {{.Error}}
 </pre>
 </div>
+
+<div>
+<a class="button orange"  href="/">Go back to the home page</a>
+</div>
+
+</body></html>
+{{end}}
+
+{{define "error_forbidden"}}
+<html>
+	<head>
+		<title>Permission denied</title>
+		<style type="text/css">
+body, h1, h2, h3, div, p { font-family: Helvetica Neue, Helvetica, Arial, Sans-sersif }
+body { margin-left: auto; margin-right: auto; max-width: 40em; margin-top: 5%; }
+.button {
+	display: inline-block;
+	outline: none;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	font: 14px/100% Arial, Helvetica, sans-serif;
+	padding: .5em 2em .55em;
+	text-shadow: 0 1px 1px rgba(0,0,0,.3);
+	border-radius: .5em; -webkit-border-radius: .5em; -moz-border-radius: .5em;
+	box-shadow: 0 1px 2px rgba(0,0,0,.2); -webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2); -moz-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.button:hover {
+	text-decoration: none;
+}
+.button:active {
+	position: relative;
+	top: 1px;
+}
+
+.orange {
+	color: #fef4e9;
+	border: solid 1px #da7c0c;
+	background: #f78d1d;
+	background: -webkit-gradient(linear, left top, left bottom, from(#faa51a), to(#f47a20));
+	background: -moz-linear-gradient(top,  #faa51a,  #f47a20);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#faa51a', endColorstr='#f47a20');
+}
+.orange:hover {
+	background: #f47c20;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f88e11), to(#f06015));
+	background: -moz-linear-gradient(top,  #f88e11,  #f06015);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f88e11', endColorstr='#f06015');
+}
+.orange:active {
+	color: #fcd3a5;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f47a20), to(#faa51a));
+	background: -moz-linear-gradient(top,  #f47a20,  #faa51a);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f47a20', endColorstr='#faa51a');
+}
+		</style>
+	</head>
+<body>
+
+<h1>Permission denied</h1>
+<p>
+Sorry, but you do not appear to have permission to access this page. Consider returing to the home page and/or signing in again into your account.
+</p>
+
 
 <div>
 <a class="button orange"  href="/">Go back to the home page</a>
