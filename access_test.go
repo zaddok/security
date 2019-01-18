@@ -40,6 +40,46 @@ func TestSystemSessionManagement(t *testing.T) {
 	}
 }
 
+// Test password security
+func TestPasswordSecurity(t *testing.T) {
+	{
+		result := PasswordStrength("a1A$ri4q")
+		if len(result) > 0 {
+			t.Fatalf("PasswordStrength() Password should be deemed ok")
+		}
+	}
+	{
+		result := PasswordStrength("this is a long password")
+		if len(result) > 0 {
+			t.Fatalf("PasswordStrength() Password should be deemed ok")
+		}
+	}
+	{
+		result := PasswordStrength("this is a loong password")
+		if len(result) > 0 {
+			t.Fatalf("PasswordStrength() Password should be deemed ok")
+		}
+	}
+	{
+		result := PasswordStrength("this is a looong password")
+		if len(result) == 0 {
+			t.Fatalf("PasswordStrength() Password should not be deemed ok")
+		}
+	}
+	{
+		result := PasswordStrength("this is a long password 123")
+		if len(result) == 0 {
+			t.Fatalf("PasswordStrength() Password should not be deemed ok")
+		}
+	}
+	{
+		result := PasswordStrength("this is a long password abc")
+		if len(result) == 0 {
+			t.Fatalf("PasswordStrength() Password should not be deemed ok")
+		}
+	}
+}
+
 // Test access manager
 func TestAccessManager(t *testing.T) {
 
@@ -79,7 +119,7 @@ func TestAccessManager(t *testing.T) {
 
 	// Test Signup fail
 	{
-		_, _, err := am.Signup(host, first, last, email, "mypassword123", "127.0.0.1")
+		_, _, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1")
 		if err == nil {
 			t.Fatalf("am.Signup() should have failed when self.signup=no")
 		}
@@ -90,7 +130,7 @@ func TestAccessManager(t *testing.T) {
 	// Test Signup success
 	{
 		//Signup(host, email, password, first_name, last_name, ip string) (*[]string, error)
-		_, token, err := am.Signup(host, first, last, email, "mypassword123", "127.0.0.1")
+		_, token, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Signup() failed: %v", err)
 		}

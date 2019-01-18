@@ -71,3 +71,74 @@ func NowMilliseconds() int64 {
 	syscall.Gettimeofday(&tv)
 	return int64(tv.Sec)*1e3 + int64(tv.Usec)/1e3
 }
+
+// PasswordStrength checks the provide password meets a minimum security level. Warnings
+// about weaknesses are returned as plain English strings.
+func PasswordStrength(password string) []string {
+	messages := []string{}
+
+	hasLetter := false
+	hasNumber := false
+	hasPunctuation := false
+	hasRepeatedCharacter := false
+
+	var lastRune rune
+	var lastRuneCount int = 0
+	for _, c := range password {
+		if c != lastRune {
+			lastRune = c
+			lastRuneCount = 0
+		} else {
+			lastRuneCount = lastRuneCount + 1
+			if lastRuneCount >= 2 {
+				hasRepeatedCharacter = true
+			}
+		}
+		if c > '0' && c < '9' {
+			hasNumber = true
+		}
+		if c > 'A' && c < 'Z' {
+			hasLetter = true
+		}
+		if c > 'a' && c < 'z' {
+			hasLetter = true
+		}
+		if c == ' ' || c == '.' || c == ',' ||
+			c == '=' || c == '!' || c == '@' ||
+			c == '#' || c == '$' || c == '%' ||
+			c == '^' || c == ':' || c == '&' ||
+			c == '*' || c == '(' || c == ')' ||
+			c == '-' || c == '_' || c == '+' ||
+			c == '[' || c == ']' || c == '{' ||
+			c == '}' || c == '|' || c == '\\' ||
+			c == '/' || c == '\'' || c == '"' ||
+			c == '`' || c == '~' || c == '<' ||
+			c == '>' || c == ';' || c == '?' {
+			hasPunctuation = true
+		}
+	}
+
+	if len(password) < 8 {
+		messages = append(messages, "Passwords must be at least 8 characters")
+	}
+
+	if len(password) < 12 {
+		if !hasLetter || !hasNumber || !hasPunctuation {
+			messages = append(messages, "Passwords less than 10 characters must contain letters, numbers, and punctuation")
+		}
+	}
+
+	if hasRepeatedCharacter {
+		messages = append(messages, "Passwords may not have repeated characters, i.e. 111")
+	}
+
+	if strings.Index(password, "abc") >= 0 {
+		messages = append(messages, "Password may not contain 'abc'")
+	}
+
+	if strings.Index(password, "123") >= 0 {
+		messages = append(messages, "Password may not contain '123'")
+	}
+
+	return messages
+}

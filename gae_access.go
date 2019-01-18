@@ -232,6 +232,10 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	if len(items) > 0 {
 		results = append(results, "This email address already belongs to a valid user.")
 	}
+	passwordCheck := PasswordStrength(password)
+	if len(passwordCheck) > 0 {
+		results = append(results, passwordCheck...)
+	}
 
 	if strings.ToLower(a.setting.GetWithDefault(site, "self.signup", "no")) == "no" {
 		results = append(results, "Self registration is not allowed at this time.")
@@ -731,6 +735,11 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 		return errors.New("Permission denied.")
 	}
 
+	passwordCheck := PasswordStrength(password)
+	if len(passwordCheck) > 0 {
+		return errors.New("Password is insecure. " + passwordCheck[0])
+	}
+
 	k := datastore.NameKey("Person", uuid, nil)
 	k.Namespace = updator.GetSite()
 	i := new(GaePerson)
@@ -974,6 +983,13 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error) {
 	if requestor != nil && !requestor.HasRole("s1") {
 		return "", errors.New("Permission denied.")
+	}
+
+	if password != nil {
+		passwordCheck := PasswordStrength(*password)
+		if len(passwordCheck) > 0 {
+			return "", errors.New("Password is insecure. " + passwordCheck[0])
+		}
 	}
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)

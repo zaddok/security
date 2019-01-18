@@ -23,7 +23,7 @@ func TestAccountManagement(t *testing.T) {
 	{
 
 		// Create account
-		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", "s1:s2:s3:s4", HashPassword("abc123-!"), "127.0.0.1", nil)
+		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", "s1:s2:s3:s4", HashPassword("fIr10g-!"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -35,7 +35,7 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Authenticate
-		user, _, err = am.Authenticate(TestSite, "stacy@test.com", "abc123-!", "127.0.0.1")
+		user, _, err = am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Authenticate() failed: %v", err)
 		}
@@ -66,7 +66,7 @@ func TestAccountManagement(t *testing.T) {
 	// Test Create Anoter account
 	var uuid string
 	{
-		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
+		uuid, err = am.AddPerson(TestSite, "Jason", "Smith", "jason@test.com", "s1:s2:s3:s4", HashPassword("fIr10g--"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -81,7 +81,7 @@ func TestAccountManagement(t *testing.T) {
 
 	// Test updating an account
 	{
-		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "abc123-!", "127.0.0.1")
+		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -94,7 +94,7 @@ func TestAccountManagement(t *testing.T) {
 			t.Fatalf("am.GetPerson() failed: %v", err)
 		}
 
-		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "s1:s2:s4", "", session)
+		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "s1:s2:s4", "pea fish 1! apple", session)
 		if err != nil {
 			t.Fatalf("am.UpdatePerson() failed: %v", err)
 		}
