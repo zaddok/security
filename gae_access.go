@@ -21,14 +21,15 @@ import (
 )
 
 type GaeAccessManager struct {
-	client        *datastore.Client
-	ctx           context.Context
-	log           log.Log
-	setting       Setting
-	throttle      Throttle
-	picklistStore PicklistStore
-	template      *template.Template
-	roleTypes     []*GaeRoleType
+	client           *datastore.Client
+	ctx              context.Context
+	log              log.Log
+	setting          Setting
+	throttle         Throttle
+	picklistStore    PicklistStore
+	template         *template.Template
+	roleTypes        []*GaeRoleType
+	virtualHostSetup VirtualHostSetup // setup function pointer
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -37,6 +38,16 @@ func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
 		r[i] = rt
 	}
 	return r
+}
+
+func (am *GaeAccessManager) SetVirtualHostSetupHandler(fn VirtualHostSetup) {
+	am.virtualHostSetup = fn
+}
+
+func (am *GaeAccessManager) RunVirtualHostSetupHandler(site string) {
+	if am.virtualHostSetup != nil {
+		am.virtualHostSetup(site, am)
+	}
 }
 
 func (am *GaeAccessManager) AddCustomRoleType(uid, name, description string) {

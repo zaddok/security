@@ -6,6 +6,8 @@ import (
 	"github.com/zaddok/log"
 )
 
+type VirtualHostSetup func(site string, am AccessManager)
+
 type AccessManager interface {
 	Signup(host, first_name, last_name, email, password, ip string) (*[]string, string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
@@ -29,6 +31,8 @@ type AccessManager interface {
 	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
+	SetVirtualHostSetupHandler(fn VirtualHostSetup)
+	RunVirtualHostSetupHandler(site string)
 
 	GetCustomRoleTypes() []RoleType
 	AddCustomRoleType(uid, name, description string)

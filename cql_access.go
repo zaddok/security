@@ -18,12 +18,13 @@ import (
 )
 
 type CqlAccessManager struct {
-	cql           *gocql.Session
-	log           log.Log
-	setting       Setting
-	picklistStore PicklistStore
-	template      *template.Template
-	roleTypes     []*CqlRoleType
+	cql              *gocql.Session
+	log              log.Log
+	setting          Setting
+	picklistStore    PicklistStore
+	template         *template.Template
+	roleTypes        []*CqlRoleType
+	virtualHostSetup VirtualHostSetup // setup function pointer
 }
 
 func (am *CqlAccessManager) GetCustomRoleTypes() []RoleType {
@@ -39,6 +40,16 @@ func (am *CqlAccessManager) AddCustomRoleType(uid, name, description string) {
 		return
 	}
 	am.roleTypes = append(am.roleTypes, &CqlRoleType{Uid: uid, Name: name, Description: description})
+}
+
+func (am *CqlAccessManager) SetVirtualHostSetupHandler(fn VirtualHostSetup) {
+	am.virtualHostSetup = fn
+}
+
+func (am *CqlAccessManager) RunVirtualHostSetupHandler(site string) {
+	if am.virtualHostSetup != nil {
+		am.virtualHostSetup(site, am)
+	}
 }
 
 type CqlRoleType struct {

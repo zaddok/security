@@ -169,7 +169,10 @@ func FirstRequestOnSite(site string, am AccessManager) {
 				ps.AddPicklistItem(site, "country", r[0], r[1], r[1])
 			}
 		}
+	}()
 
+	go func() {
+		am.RunVirtualHostSetupHandler(site)
 	}()
 }
 
