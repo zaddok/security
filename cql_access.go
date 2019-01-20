@@ -307,6 +307,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			LastName:      lastName,
 			Email:         email,
 			Roles:         roles,
+			CSRF:          RandomString(8),
 			Authenticated: true,
 		}
 		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
@@ -381,13 +382,13 @@ func (am *CqlAccessManager) GetSystemSession(site, firstname, lastname string) (
 
 func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
-		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles, email from session_token where site=? and uid=?", site, cookie).Iter()
+		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles, email, csrf from session_token where site=? and uid=?", site, cookie).Iter()
 
 		var created int64
 		var expires int64
 		var uuid gocql.UUID
-		var firstName, lastName, roles, email string
-		match := rows.Scan(&firstName, &lastName, &uuid, &created, &expires, &roles, &email)
+		var firstName, lastName, roles, email, csrf string
+		match := rows.Scan(&firstName, &lastName, &uuid, &created, &expires, &roles, &email, &csrf)
 		err := rows.Close()
 		if err != nil {
 			return g.GuestSession(site), err
@@ -404,6 +405,7 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 			LastName:      lastName,
 			Email:         email,
 			Roles:         roles,
+			CSRF:          csrf,
 			Authenticated: true,
 			RoleMap:       make(map[string]bool),
 		}
@@ -455,6 +457,7 @@ func (g *CqlAccessManager) GuestSession(site string) Session {
 		Email:         "",
 		Authenticated: false,
 		Roles:         "",
+		CSRF:          "",
 		RoleMap:       make(map[string]bool),
 	}
 }
@@ -587,6 +590,7 @@ type CqlSession struct {
 	Authenticated bool
 	Token         string
 	Site          string
+	CSRF          string
 	RoleMap       map[string]bool `datastore:"-"`
 }
 
@@ -595,6 +599,10 @@ func (s *CqlSession) GetPersonUuid() string {
 }
 
 func (s *CqlSession) GetToken() string {
+	return s.Token
+}
+
+func (s *CqlSession) GetCSRF() string {
 	return s.Token
 }
 

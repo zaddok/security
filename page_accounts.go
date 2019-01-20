@@ -185,8 +185,8 @@ var accountsTemplate = `
 {{end}}
 <h1>Accounts</h1>
 <div class="search">
-<form method=get>
-<div id="q"><input type="text" name="q" id="qi" value="{{.Query}}" placeholder="First name, Last name, or Student number"/></div>
+<form method="get" action="/z/accounts">
+<div id="q"><input type="search" name="q" id="qi" value="{{.Query}}" placeholder="First name, Last name, or Student number"/></div>
 </form>
 </div>
 

@@ -947,7 +947,10 @@ var AdminTemplate = `
 				font-size: 1.1em;
 				border: 0px;
 				padding-left: 0.5em;
-				border-radius: 0.5em; -webkit-border-radius: 0.5em; -moz-border-radius: 0.5em;
+				border-radius: 0.5em;
+				-webkit-border-radius: 0.5em;
+				-moz-border-radius: 0.5em;
+				-webkit-appearance: none;
 			}
 			a.jumpto::before {
 				content: "\f0a9";

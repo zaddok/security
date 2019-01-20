@@ -119,6 +119,7 @@ type GaeSession struct {
 	Expiry        int64
 	Authenticated bool
 	Token         string `datastore:"-"`
+	CSRF          string
 	Site          string `datastore:"-"`
 	Roles         string
 	RoleMap       map[string]bool `datastore:"-"`
@@ -130,6 +131,10 @@ func (s *GaeSession) GetPersonUuid() string {
 
 func (s *GaeSession) GetToken() string {
 	return s.Token
+}
+
+func (s *GaeSession) GetCSRF() string {
+	return s.CSRF
 }
 
 func (s *GaeSession) GetSite() string {
@@ -537,6 +542,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			LastName:      items[0].LastName,
 			Email:         items[0].Email,
 			Roles:         items[0].Roles,
+			CSRF:          RandomString(8),
 			Authenticated: true,
 			RoleMap:       make(map[string]bool),
 		}
@@ -882,6 +888,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 		FirstName:     firstname,
 		LastName:      lastname,
 		Authenticated: true,
+		CSRF:          RandomString(8),
 		Roles:         "s1:s2:s3:s4",
 		RoleMap:       make(map[string]bool),
 	}
@@ -914,6 +921,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			Email:         i.Email,
 			Authenticated: true,
 			Roles:         i.Roles,
+			CSRF:          i.CSRF,
 			RoleMap:       make(map[string]bool),
 		}
 		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
@@ -969,6 +977,7 @@ func (g *GaeAccessManager) GuestSession(site string) Session {
 		LastName:      "",
 		Authenticated: false,
 		Roles:         "",
+		CSRF:          "",
 		RoleMap:       make(map[string]bool),
 	}
 }
@@ -1160,6 +1169,7 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 
 	ri := &GaeSession{
 		PersonUUID: personUuid.String(),
+		Token:      token,
 		FirstName:  firstName,
 		LastName:   lastName,
 		Email:      email,
@@ -1167,6 +1177,7 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 		Expiry:     expires,
 		Roles:      roles,
 		RoleMap:    make(map[string]bool),
+		CSRF:       RandomString(8),
 	}
 	for _, v := range strings.FieldsFunc(ri.Roles, func(c rune) bool { return c == ':' }) {
 		ri.RoleMap[v] = true

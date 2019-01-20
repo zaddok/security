@@ -65,6 +65,7 @@ type Verification interface {
 type Session interface {
 	GetPersonUuid() string
 	GetToken() string
+	GetCSRF() string
 	GetSite() string
 	GetFirstName() string
 	GetLastName() string
