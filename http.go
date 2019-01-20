@@ -162,9 +162,9 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		if err != nil {
 			return
 		}
-		if list == nil || len(isoCountryList) == 0 {
+		if list == nil || len(IsoCountryList) == 0 {
 			am.Log().Debug("Prefill picklist: country")
-			for _, r := range isoCountryList {
+			for _, r := range IsoCountryList {
 				fmt.Println("add", r[1])
 				ps.AddPicklistItem(site, "country", r[0], r[1], r[1])
 			}
@@ -1180,8 +1180,8 @@ Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}. <a href="/f
 {{end}}
 `
 
-func isCountryName(country string) bool {
-	for _, c := range isoCountryList {
+func IsCountryName(country string) bool {
+	for _, c := range IsoCountryList {
 		if c[1] == country {
 			return true
 		}
@@ -1189,7 +1189,7 @@ func isCountryName(country string) bool {
 	return false
 }
 
-var isoCountryList [][]string = [][]string{
+var IsoCountryList [][]string = [][]string{
 	{"AFG", "Afghanistan"},
 	{"ALA", "Åland Islands"},
 	{"ALB", "Albania"},
