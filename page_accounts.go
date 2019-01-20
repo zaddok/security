@@ -33,6 +33,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				LastName        string
 				Email           string
 				Feedback        []string
+				CustomRoleTypes []RoleType
 			}
 
 			p := &Page{
@@ -41,6 +42,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				Title:           []string{"Create new account", "Accounts"},
 				Session:         session,
 				Query:           r.FormValue("q"),
+				CustomRoleTypes: am.GetCustomRoleTypes(),
 			}
 
 			p.FirstName = r.FormValue("first_name")
@@ -48,6 +50,13 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			p.Email = r.FormValue("email")
 
 			if r.Method == "POST" {
+				csrf := r.FormValue("csrf")
+				if csrf != session.GetCSRF() {
+					am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
+					ShowErrorForbidden(w, r, t, siteName)
+					return
+				}
+
 				feedback, err := createAccountWithFormValues(am, session, r)
 				if err != nil {
 					ShowError(w, r, t, err, siteName)
@@ -244,7 +253,7 @@ var accountCreateTemplate = `
 <div id="editform">
 <h1>New Account</h1>
 
-<form method="post"><input type="hidden" name="q" value="{{.Query}}"/>
+<form method="post"><input type="hidden" name="q" value="{{.Query}}"/><input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>

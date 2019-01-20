@@ -93,6 +93,12 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		p.CustomRoleTypes = am.GetCustomRoleTypes()
 
 		if r.Method == "POST" {
+			csrf := r.FormValue("csrf")
+			if csrf != session.GetCSRF() {
+				am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			feedback, err := updateAccountWithFormValues(am, person, session, r)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -196,7 +202,9 @@ var accountDetailsTemplate = `
 
 {{if .Feedback}}<div class="feedback error">{{if eq 1 (len .Feedback)}}<p>{{index .Feedback 0}}</p>{{else}}<ul>{{range .Feedback}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
 
-<form method="post"><input type="hidden" name="q" value="{{.Query}}"/>
+<form method="post">
+<input type="hidden" name="q" value="{{.Query}}"/>
+<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>
