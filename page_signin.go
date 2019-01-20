@@ -15,16 +15,16 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		ip := IpFromRequest(r)
 		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip)
 		if err != nil {
-			am.Log().Error("Error during authentication: %s", err)
+			am.Log().Error("Error during authentication: %v", err)
 			ShowError(w, r, t, errors.New("An error occurred, please try again shortly."), siteName)
-
-			//http.Redirect(w, r, "/?e=f", http.StatusTemporaryRedirect)
 			return
 		}
 		if failure != "" || session == nil {
-			am.Log().Error("Error during authentication: %s %s", failure, err)
-			//http.Redirect(w, r, "/?e=f", http.StatusTemporaryRedirect)
-			//return
+			if err != nil {
+				am.Log().Error("Error during authentication: %s %v", failure, err)
+			} else {
+				am.Log().Error("Error during authentication: %s", failure)
+			}
 
 			p := &SignupPageData{}
 			p.SiteName = siteName
@@ -52,6 +52,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 				w.Write([]byte("Error displaying 'signup' page"))
 				return
 			}
+			return
 		}
 
 		// Signin successful
