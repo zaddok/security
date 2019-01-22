@@ -45,6 +45,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		accountCreateTemplate,
 		ErrorTemplates,
 		ForgotTemplate,
+		feedbackTemplate,
 		picklistTemplate,
 		ResetPasswordTemplate,
 		SecurityHeader,
@@ -70,6 +71,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/feedback", FeedbackPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
 
@@ -148,6 +150,7 @@ func FirstRequestOnSite(site string, am AccessManager) {
 			ps.AddPicklistItem(site, "title", "dr", "Dr", "U")
 			ps.AddPicklistItem(site, "title", "ps", "Pastor", "")
 		}
+
 		list, err = ps.GetPicklist(site, "sex")
 		if err != nil {
 			return
@@ -158,6 +161,22 @@ func FirstRequestOnSite(site string, am AccessManager) {
 			ps.AddPicklistItem(site, "sex", "m", "Male", "Male")
 			ps.AddPicklistItem(site, "sex", "f", "Female", "F")
 		}
+
+		list, err = ps.GetPicklist(site, "day")
+		if err != nil {
+			return
+		}
+		if list == nil || len(list) == 0 {
+			am.Log().Debug("Prefill picklist: day")
+			ps.AddPicklistItem(site, "day", "sunday", "Sunday", "")
+			ps.AddPicklistItem(site, "day", "monday", "Monday", "")
+			ps.AddPicklistItem(site, "day", "tuesday", "Tuesday", "")
+			ps.AddPicklistItem(site, "day", "wednesday", "Wednesday", "")
+			ps.AddPicklistItem(site, "day", "thursday", "Thursday", "")
+			ps.AddPicklistItem(site, "day", "friday", "Friday", "")
+			ps.AddPicklistItem(site, "day", "saturday", "Saturday", "")
+		}
+
 		list, err = ps.GetPicklist(site, "country")
 		if err != nil {
 			return
@@ -470,7 +489,8 @@ var SecurityHeader = `
 
 			#signin_box input[type=text], #signup_box input[type=text],
 			#signin_box input[type=email], #signup_box input[type=email],
-			#signin_box input[type=password], #signup input[type=password] {
+			#signin_box input[type=password], #signup input[type=password],
+			#signin_box textarea {
 				border: 1px solid rgba(0, 0, 0, 0.23);
 				border-radius: 0.5em;
 				background: rgba(93, 93, 93, 0.41);
@@ -1107,7 +1127,7 @@ var AdminTemplate = `
 				content: "\f015";
 				padding-right:0.3em;
 			}
-			#footer a[href^="/feedback"]::before {
+			#footer a[href^="/z/feedback"]::before {
 				font-family: FontAwesome;
 				margin-left: 0.7em;
 				content: "\f075";
@@ -1173,7 +1193,7 @@ var AdminTemplate = `
 {{define "admin_footer"}}
         </div>
         <div id="footer">
-Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}. <a href="/feedback">Feedback</a> <a href="/">Home</a> <a href="/signout">Sign out</a>.
+Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}. <a href="/z/feedback">Feedback</a> <a href="/">Home</a> <a href="/signout">Sign out</a>.
         </div>
 </body>
 </html>
