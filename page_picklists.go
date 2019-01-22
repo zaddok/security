@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -29,8 +30,10 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		key := strings.TrimSpace(r.FormValue("key"))
 		value := strings.TrimSpace(r.FormValue("value"))
+		description := strings.TrimSpace(r.FormValue("description"))
+		index, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("index")), 10, 64)
 		if key != "" {
-			err := am.Setting().Put(session.GetSite(), key, value)
+			err := am.PicklistStore().AddPicklistItem(session.GetSite(), picklistName, key, value, description, index)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -39,7 +42,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		delete := strings.TrimSpace(r.FormValue("delete"))
 		if delete != "" {
-			err := am.Setting().Put(session.GetSite(), delete, "")
+			err := am.PicklistStore().DeprecatePicklistItem(session.GetSite(), picklistName, delete)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -63,7 +66,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 				ShowError(w, r, t, err, siteName)
 				return
 			}
-			Render(r, w, t, "setting_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit setting", "System Settings"}, session, edit, value})
+			Render(r, w, t, "picklist_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit Picklist Item", "Picklists", "Administration"}, session, edit, value})
 
 			return
 		}
@@ -199,6 +202,7 @@ body {
 	<th>Name</th>
 	<th>Description</th>
 	<th>Deprecated</th>
+	<th>Index</th>
 </tr>
 {{range .PicklistItems}}
 <tr>
@@ -206,6 +210,7 @@ body {
 	<td>{{.Value}}</td>
 	<td>{{.Description}}</td>
 	<td>{{.IsDeprecated}}</td>
+	<td>{{.Index}}</td>
 </tr>
 {{end}}
 </table>
@@ -224,6 +229,7 @@ body {
 		<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
 		<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
 		<tr><th>Description</th><td><textarea name="description" class="description"></textarea></td></tr>
+		<tr><th>Index</th><td><input type="text" name="index" placeholder="10"/></td></tr>
 	</table>
 	</div>
   <div class="modal-footer">
