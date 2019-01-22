@@ -27,24 +27,24 @@ func TestPicklistStore(t *testing.T) {
 
 	// Test Put with two different hostnames
 	{
-		err := s.AddPicklistItem(host, "sex", "M", "Male", "Desc1")
+		err := s.AddPicklistItem(host, "sex", "M", "Male", "Desc1", 1)
 		if err != nil {
 			t.Fatalf("settings.Put() failed: %v", err)
 		}
-		s.AddPicklistItem(host, "sex", "F", "Female", "F Desc2")
+		s.AddPicklistItem(host, "sex", "F", "Female", "F Desc2", 2)
 
-		err = s.AddPicklistItem(host2, "sex", "M", "ανηρ", "Man")
+		err = s.AddPicklistItem(host2, "sex", "M", "ανηρ", "Man", 3)
 		if err != nil {
 			t.Fatalf("settings.Put() failed: %v", err)
 		}
-		s.AddPicklistItem(host2, "sex", "F", "γυνη", "Woman")
+		s.AddPicklistItem(host2, "sex", "F", "γυνη", "Woman", 4)
 
-		err = s.AddPicklistItem(host2, "country", "Australia", "Australia", "Desc1")
+		err = s.AddPicklistItem(host2, "country", "Australia", "Australia", "Desc1", 1)
 		if err != nil {
 			t.Fatalf("settings.Put() failed: %v", err)
 		}
-		s.AddPicklistItem(host2, "country", "Greece", "Greece", "Desc1")
-		s.AddPicklistItem(host2, "country", "tw", "Taiwan", "T Desc1")
+		s.AddPicklistItem(host2, "country", "Greece", "Greece", "Desc1", 10)
+		s.AddPicklistItem(host2, "country", "tw", "Taiwan", "T Desc1", 10)
 	}
 
 	s = NewGaePicklistStore(requireEnv("GAE_PROJECT_ID", t), client, ctx)
@@ -60,7 +60,7 @@ func TestPicklistStore(t *testing.T) {
 	}
 
 	{
-		err := s.AddPicklistItem(host, "sex", "U", "Unspecified", "Description of Unspecified")
+		err := s.AddPicklistItem(host, "sex", "U", "Unspecified", "Description of Unspecified", 0)
 		pkl, err := s.GetPicklistOrdered(host, "sex") // F, M, U
 		if err != nil {
 			t.Fatalf("GetPicklist() failed: %v", err)
@@ -86,6 +86,9 @@ func TestPicklistStore(t *testing.T) {
 		}
 		if item == nil || item.GetValue() != "Female" {
 			t.Fatal(fmt.Sprintf("GetPicklistItem(\"%s\",\"sex\", \"F\") should return \"Female\" not: %s", host, item.GetValue()))
+		}
+		if item == nil || item.GetIndex() != 2 {
+			t.Fatal(fmt.Sprintf("GetPicklistItem(\"%s\",\"sex\", \"F\") should return index \"2\" not: %d", host, item.GetIndex()))
 		}
 		if item == nil || item.GetDescription() != "F Desc2" {
 			t.Fatal(fmt.Sprintf("GetPicklistItem(\"%s\",\"sex\", \"F\") should return \"Desc1\" not: %s", host, item.GetDescription()))

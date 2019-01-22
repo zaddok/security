@@ -23,6 +23,7 @@ type GaePicklistItem struct {
 	Value       string
 	Description string
 	Deprecated  bool
+	Index       int64
 }
 
 func (pi *GaePicklistItem) GetKey() string {
@@ -31,6 +32,10 @@ func (pi *GaePicklistItem) GetKey() string {
 
 func (pi *GaePicklistItem) GetValue() string {
 	return pi.Value
+}
+
+func (pi *GaePicklistItem) GetIndex() int64 {
+	return pi.Index
 }
 
 func (pi *GaePicklistItem) GetDescription() string {
@@ -96,6 +101,9 @@ func (s *GaePicklistStore) GetPicklistOrdered(site, picklist string) ([]Picklist
 			results = append(results, v)
 		}
 		sort.Slice(results, func(i, j int) bool {
+			if results[j].GetIndex() != results[i].GetIndex() {
+				return results[j].GetIndex() > results[i].GetIndex()
+			}
 			return results[j].GetValue() > results[i].GetValue()
 		})
 
@@ -130,13 +138,20 @@ func (s *GaePicklistStore) DeprecatePicklistItem(site, picklist, key string) err
 }
 
 // Store a configuration setting. Stores in cache, and flushes through to database.
-func (s *GaePicklistStore) AddPicklistItem(site, picklist, key, value, description string) error {
+func (s *GaePicklistStore) AddPicklistItem(site, picklist, key, value, description string, index int64) error {
 	picklist = strings.ToLower(picklist)
 	key = strings.ToLower(key)
 
 	k := datastore.NameKey("PicklistItem", picklist+"|"+key, nil)
 	k.Namespace = site
-	i := &GaePicklistItem{Picklist: picklist, Key: key, Value: value, Description: description, Deprecated: false}
+	i := &GaePicklistItem{
+		Picklist:    picklist,
+		Key:         key,
+		Value:       value,
+		Description: description,
+		Deprecated:  false,
+		Index:       index,
+	}
 	if _, err := s.client.Put(s.ctx, k, i); err != nil {
 		return err
 	}
@@ -161,13 +176,20 @@ func (s *GaePicklistStore) AddPicklistItem(site, picklist, key, value, descripti
 }
 
 // Store a configuration setting. Stores in cache, and flushes through to database.
-func (s *GaePicklistStore) AddPicklistItemDeprecated(site, picklist, key, value, description string) error {
+func (s *GaePicklistStore) AddPicklistItemDeprecated(site, picklist, key, value, description string, index int64) error {
 	picklist = strings.ToLower(picklist)
 	key = strings.ToLower(key)
 
 	k := datastore.NameKey("PicklistItem", picklist+"|"+key, nil)
 	k.Namespace = site
-	i := &GaePicklistItem{Picklist: picklist, Key: key, Value: value, Description: description, Deprecated: true}
+	i := &GaePicklistItem{
+		Picklist:    picklist,
+		Key:         key,
+		Value:       value,
+		Description: description,
+		Deprecated:  true,
+		Index:       index,
+	}
 	if _, err := s.client.Put(s.ctx, k, i); err != nil {
 		return err
 	}

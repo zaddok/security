@@ -142,13 +142,13 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		}
 		if list == nil || len(list) == 0 {
 			am.Log().Debug("Prefill picklist: title")
-			ps.AddPicklistItem(site, "title", "u", "", "")
-			ps.AddPicklistItem(site, "title", "mr", "Mr", "")
-			ps.AddPicklistItem(site, "title", "ms", "Ms", "")
-			ps.AddPicklistItem(site, "title", "mrs", "Mrs", "")
-			ps.AddPicklistItem(site, "title", "miss", "Miss", "")
-			ps.AddPicklistItem(site, "title", "dr", "Dr", "U")
-			ps.AddPicklistItem(site, "title", "ps", "Pastor", "")
+			ps.AddPicklistItem(site, "title", "u", "", "", 0)
+			ps.AddPicklistItem(site, "title", "mr", "Mr", "", 0)
+			ps.AddPicklistItem(site, "title", "ms", "Ms", "", 0)
+			ps.AddPicklistItem(site, "title", "mrs", "Mrs", "", 0)
+			ps.AddPicklistItem(site, "title", "miss", "Miss", "", 0)
+			ps.AddPicklistItem(site, "title", "dr", "Dr", "U", 0)
+			ps.AddPicklistItem(site, "title", "ps", "Pastor", "", 0)
 		}
 
 		list, err = ps.GetPicklist(site, "sex")
@@ -157,9 +157,9 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		}
 		if list == nil || len(list) == 0 {
 			am.Log().Debug("Prefill picklist: sex")
-			ps.AddPicklistItem(site, "sex", "u", "Unspecified", "U")
-			ps.AddPicklistItem(site, "sex", "m", "Male", "Male")
-			ps.AddPicklistItem(site, "sex", "f", "Female", "F")
+			ps.AddPicklistItem(site, "sex", "u", "Unspecified", "U", 3)
+			ps.AddPicklistItem(site, "sex", "m", "Male", "Male", 1)
+			ps.AddPicklistItem(site, "sex", "f", "Female", "F", 2)
 		}
 
 		list, err = ps.GetPicklist(site, "day")
@@ -168,13 +168,13 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		}
 		if list == nil || len(list) == 0 {
 			am.Log().Debug("Prefill picklist: day")
-			ps.AddPicklistItem(site, "day", "sunday", "Sunday", "")
-			ps.AddPicklistItem(site, "day", "monday", "Monday", "")
-			ps.AddPicklistItem(site, "day", "tuesday", "Tuesday", "")
-			ps.AddPicklistItem(site, "day", "wednesday", "Wednesday", "")
-			ps.AddPicklistItem(site, "day", "thursday", "Thursday", "")
-			ps.AddPicklistItem(site, "day", "friday", "Friday", "")
-			ps.AddPicklistItem(site, "day", "saturday", "Saturday", "")
+			ps.AddPicklistItem(site, "day", "sunday", "Sunday", "", 1)
+			ps.AddPicklistItem(site, "day", "monday", "Monday", "", 2)
+			ps.AddPicklistItem(site, "day", "tuesday", "Tuesday", "", 3)
+			ps.AddPicklistItem(site, "day", "wednesday", "Wednesday", "", 4)
+			ps.AddPicklistItem(site, "day", "thursday", "Thursday", "", 5)
+			ps.AddPicklistItem(site, "day", "friday", "Friday", "", 6)
+			ps.AddPicklistItem(site, "day", "saturday", "Saturday", "", 7)
 		}
 
 		list, err = ps.GetPicklist(site, "country")
@@ -183,9 +183,19 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		}
 		if list == nil || len(IsoCountryList) == 0 {
 			am.Log().Debug("Prefill picklist: country")
+			var c int64 = 10
 			for _, r := range IsoCountryList {
 				fmt.Println("add", r[1])
-				ps.AddPicklistItem(site, "country", r[0], r[1], r[1])
+				if r[0] == "AUS" {
+					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 1)
+				} else if r[0] == "GBR" {
+					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 2)
+				} else if r[0] == "USA" {
+					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 3)
+				} else {
+					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], c)
+					c = c + 1
+				}
 			}
 		}
 	}()
