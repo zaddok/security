@@ -14,7 +14,7 @@ func TestSystemSessionManagement(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), log)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), log)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestAccessManager(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), log)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), log)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -197,8 +197,8 @@ func TestMain(m *testing.M) {
 
 	// If we used a random keyspace, we want to go ahead and
 	// wipe any left behind data
-	if os.Getenv("SITE_HOSTNAME") == "" && os.Getenv("GAE_PROJECT_ID") != "" {
-		am, _, _, _ := NewGaeAccessManager(os.Getenv("GAE_PROJECT_ID"), log.NewStdoutLogDebug())
+	if os.Getenv("SITE_HOSTNAME") == "" && os.Getenv("GOOGLE_CLOUD_PROJECT") != "" {
+		am, _, _, _ := NewGaeAccessManager(os.Getenv("GOOGLE_CLOUD_PROJECT"), log.NewStdoutLogDebug())
 		err := am.WipeDatastore(TestSite)
 		if err != nil {
 			fmt.Println("Failed to cleanup datastore:", err)

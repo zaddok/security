@@ -22,8 +22,8 @@ func TestPicklistStore(t *testing.T) {
 	host := RandomString(20) + ".test.com"
 	host2 := RandomString(20) + ".test.com"
 
-	_, client, ctx := NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
-	s := NewGaePicklistStore(requireEnv("GAE_PROJECT_ID", t), client, ctx)
+	_, client, ctx := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
+	s := NewGaePicklistStore(requireEnv("GOOGLE_CLOUD_PROJECT", t), client, ctx)
 
 	// Test Put with two different hostnames
 	{
@@ -47,7 +47,7 @@ func TestPicklistStore(t *testing.T) {
 		s.AddPicklistItem(host2, "country", "tw", "Taiwan", "T Desc1", 10)
 	}
 
-	s = NewGaePicklistStore(requireEnv("GAE_PROJECT_ID", t), client, ctx)
+	s = NewGaePicklistStore(requireEnv("GOOGLE_CLOUD_PROJECT", t), client, ctx)
 
 	{
 		pkl, err := s.GetPicklist(host, "sex")
@@ -68,14 +68,14 @@ func TestPicklistStore(t *testing.T) {
 		if pkl == nil || len(pkl) != 3 {
 			t.Fatal(fmt.Sprintf("GetPicklist(\"%s\",\"sex\") contains %d items, should contain 2", host, len(pkl)))
 		}
-		if pkl[0].GetKey() != "f" {
-			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"F\" first, but got %s", host, pkl[0].GetKey()))
+		if pkl[0].GetKey() != "u" {
+			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"u\" first, but got %s", host, pkl[0].GetKey()))
 		}
 		if pkl[1].GetValue() != "Male" {
 			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"Male\" second, but got %s", host, pkl[1].GetValue()))
 		}
-		if pkl[2].GetKey() != "u" {
-			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"U\" third, but got %s", host, pkl[2].GetKey()))
+		if pkl[2].GetKey() != "f" {
+			t.Fatal(fmt.Sprintf("GetPicklistOrdered(\"%s\",\"sex\") expected \"f\" third, but got %s", host, pkl[2].GetKey()))
 		}
 	}
 

@@ -19,7 +19,7 @@ func TestThrottle(t *testing.T) {
 		}
 	*/
 
-	s, client, ctx := NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
+	s, client, ctx := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
 	throttle := NewGaeThrottle(s, client, ctx)
 
 	// Test basic operation

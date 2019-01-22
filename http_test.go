@@ -12,7 +12,7 @@ func TestHtmlCompiles(t *testing.T) {
 	l := log.NewStdoutLogDebug()
 	defer l.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GAE_PROJECT_ID", t), l)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), l)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

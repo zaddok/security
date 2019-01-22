@@ -32,7 +32,7 @@ func TestSettings(t *testing.T) {
 	host := RandomString(20) + ".test.com"
 	host2 := RandomString(20) + ".test.com"
 
-	s, _, _ := NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
+	s, _, _ := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
 
 	// Test Put with two different hostnames
 	{
@@ -46,7 +46,7 @@ func TestSettings(t *testing.T) {
 		}
 	}
 
-	s, _, _ = NewGaeSetting(requireEnv("GAE_PROJECT_ID", t))
+	s, _, _ = NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
 
 	// Test Get and ensure value for right hostname was returned
 	{
