@@ -193,7 +193,9 @@ var accountsTemplate = `
 {{template "admin_header" .}}
 {{if .Query}}
 <div id="actions">
+{{if $.Session.HasRole "s3"}}
 <a href="/z/accounts?q={{.Query}}&new=create" class="new_person">New Account</a>
+{{end}}
 </div>
 {{end}}
 
