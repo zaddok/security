@@ -322,6 +322,7 @@ func (e *GaeEntityAudit) IsPicklistType() bool {
 		e.ValueType == "int" ||
 		e.ValueType == "string" ||
 		e.ValueType == "money" ||
+		e.ValueType == "document" ||
 		e.ValueType == "" ||
 		e.ValueType == "date" {
 		return false
@@ -370,6 +371,13 @@ func (ec *GaeEntityAuditLogCollection) AddPicklistItem(attribute, oldValue, newV
 		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
 	}
 	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, oldValue, newValue, picklistType, ec.PersonUuid, ec.PersonName})
+}
+
+func (ec *GaeEntityAuditLogCollection) AddDocumentItem(attribute string, documentType, url string) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddIntItem() called piror to SetEntityUuidPersonUuid()."))
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, documentType, url, "document", ec.PersonUuid, ec.PersonName})
 }
 
 func (ec *GaeEntityAuditLogCollection) AddIntItem(attribute string, oldValue, newValue int64) {

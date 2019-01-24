@@ -325,6 +325,7 @@ h1 {
 <tr>
 <td style="text-align:left; font-weight: bold;white-space:nowrap">{{.GetAttribute}}</td>
 {{if .IsPicklistType}}
+
 {{if eq .GetActionType "delete"}}
 	<td style="text-align:right;white-space:nowrap;"></td>
 	{{else}}{{$l := lookup $.Session.Site .ValueType .OldValue}}
@@ -337,6 +338,12 @@ h1 {
 	<td style="text-align:left; width: 99%">{{lookup $.Session.Site .ValueType .NewValue}}</td>
 {{end}}
 {{else}}
+
+{{if .GetValueType ""}}
+	<td style="text-align:right;white-space:nowrap"></td>
+	<td style="width:1%"><span class="{{.GetActionType}}"><a href="{{.NewValue}}">{{.OldValue}}</a></span></td>
+{{else}}
+
 {{if eq .GetActionType "delete"}}
 	<td style="text-align:right;white-space:nowrap"></td>
 {{else}}
@@ -347,6 +354,7 @@ h1 {
 	<td style="text-align:left; width: 99%">{{.OldValue}}</td>
 {{else}}
 	<td style="text-align:left; width: 99%">{{.NewValue}}</td>
+{{end}}
 {{end}}
 {{end}}
 </tr>
