@@ -19,6 +19,7 @@ type SignupPageData struct {
 	Password2       string
 	Referer         string
 	AllowSignup     bool
+	Session         Session
 	Errors          []string
 	Infos           []string
 	Successes       []string
@@ -51,6 +52,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p.Email = strings.TrimSpace(r.FormValue("email"))
 		p.Password = strings.TrimSpace(r.FormValue("password"))
 		p.Password2 = strings.TrimSpace(r.FormValue("password2"))
+		p.Session = session
 		if r.FormValue("r") != "" {
 			p.Referer = r.FormValue("r")
 		}

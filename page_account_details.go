@@ -19,6 +19,11 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
+		if !session.HasRole("s1") {
+			ShowErrorForbidden(w, r, t, siteName)
+			return
+		}
+
 		AddSafeHeaders(w)
 
 		path := r.URL.Path[1:]
@@ -93,6 +98,10 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		p.CustomRoleTypes = am.GetCustomRoleTypes()
 
 		if r.Method == "POST" {
+			if !session.HasRole("s3") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			csrf := r.FormValue("csrf")
 			if csrf != session.GetCSRF() {
 				am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")

@@ -9,10 +9,18 @@ import (
 
 func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := LookupSession(r, am)
+		if err != nil {
+			am.Log().Notice("Error fetching session data %s", err)
+			w.Write([]byte("Error fetching session data"))
+			return
+		}
+
 		p := &SignupPageData{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
+		p.Session = session
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/activate/") {

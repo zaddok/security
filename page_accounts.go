@@ -19,9 +19,18 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
+		if !session.HasRole("s1") {
+			ShowErrorForbidden(w, r, t, siteName)
+			return
+		}
+
 		AddSafeHeaders(w)
 
 		if r.FormValue("new") == "create" {
+			if !session.HasRole("s3") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 
 			type Page struct {
 				SiteName        string

@@ -30,6 +30,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			SigninDescription string
 			SupplimentalCss   string
 			Token             string
+			Session           Session
 			Errors            []string
 			Infos             []string
 			Successes         []string
@@ -39,6 +40,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		p.SigninDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
 		p.Token = token
+		p.Session = session
 
 		// Form has been submitted with new password
 		if r.FormValue("new_password1") != "" || r.FormValue("new_password2") != "" {

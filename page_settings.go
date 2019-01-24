@@ -18,11 +18,23 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
 			return
 		}
+		if !session.IsAuthenticated() {
+			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
+			return
+		}
+		if !session.HasRole("s1") {
+			ShowErrorForbidden(w, r, t, siteName)
+			return
+		}
 		AddSafeHeaders(w)
 
 		key := strings.TrimSpace(r.FormValue("key"))
 		value := strings.TrimSpace(r.FormValue("value"))
 		if key != "" {
+			if !session.HasRole("s2") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			err := am.Setting().Put(session.GetSite(), key, value)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -32,6 +44,10 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		delete := strings.TrimSpace(r.FormValue("delete"))
 		if delete != "" {
+			if !session.HasRole("s2") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			err := am.Setting().Put(session.GetSite(), delete, "")
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -95,7 +111,9 @@ var settingsTemplate = `
 {{define "settings"}}
 {{template "admin_header" .}}
 <div id="actions">
+{{if $.Session.HasRole "s2"}}
 <a href="javascript:document.getElementById('myModal').style.display='block'" class="note">Add Setting</a>
+{{end}}
 </div>
 
 <style type="text/css">
@@ -150,10 +168,10 @@ a.delete::before {
 	</tr>
 	{{range .Settings}}{{$k := index . 0}}{{$v := index . 1}}{{if ne $k "smtp.password"}}{{if ne $v ""}}
 	<tr>
-		<td><a href="/z/settings?edit={{$k}}">{{$k}}</a></td>
-		<td><a href="/z/settings?edit={{$k}}">{{$v}}</a></td>
-		<td><a href="/z/settings?delete={{$k}}" class="delete"></a></td>
-		<td><a href="/z/settings?edit={{$k}}" class="edit"></a></td>
+		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}">{{$k}}</a>{{else}}{{$k}}{{end}}</td>
+		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}">{{$v}}{{else}}{{$v}}{{end}}</a></td>
+		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?delete={{$k}}" class="delete"></a>{{end}}</td>
+		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}" class="edit"></a>{{end}}</td>
 	</tr>
 {{end}}{{end}}{{end}}
 </table>
