@@ -807,6 +807,8 @@ var AdminTemplate = `
 <!doctype html>
 <html lang="en">
         <head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="refresh" content="{{timeout .Session.Site}}">
                 <meta charset="utf-8">
                 <title>{{range .Title}}{{.}} &mdash; {{end}} {{.SiteName}}</title>
                 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
