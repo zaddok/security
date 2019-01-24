@@ -169,7 +169,7 @@ a.delete::before {
 
 div.picklist_menu {
 	float: left;
-	width: 15em;
+	width: 17em;
 }
 div.picklist_menu ul li {
 	list-style: none;
@@ -180,7 +180,7 @@ div.picklist_menu ul {
 }
 body {
 	background: url(/grey.png);
-	background-size: 13em auto;
+	background-size: 17em auto;
 	background-repeat: repeat-y;
 }
 </style>
