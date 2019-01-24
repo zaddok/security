@@ -24,6 +24,9 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		"log_date": func(t time.Time) string {
 			return t.In(defaultTimezone).Format("2006-01-02 15:04")
 		},
+		"timeout": func(site string) int {
+			return am.Setting().GetInt(site, "session.expiry", 60*60*24) + 2
+		},
 		"lookup": func(site, category, code string) (template.HTML, error) {
 			i, err := am.PicklistStore().GetPicklistItem(site, category, code)
 			if err != nil {
@@ -416,6 +419,7 @@ var SecurityHeader = `
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta http-equiv="refresh" content="{{timeout .Session.Site}}">
 		<meta charset="utf-8">
 		<meta property="og:site_name" content="{{.SiteName}}"/>
 		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
