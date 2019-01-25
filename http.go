@@ -201,6 +201,7 @@ func FirstRequestOnSite(site string, am AccessManager) {
 				}
 			}
 		}
+		ps.AddPicklistItem(site, "country", "xxx0", "–", "", 9)
 	}()
 
 	go func() {
