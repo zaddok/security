@@ -29,7 +29,7 @@ func TestEntityAudit(t *testing.T) {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
 	var session Session = nil
-	var entityUuid string
+	var personUuid string
 
 	{
 		_, err := am.AddPerson(TestSite, "Stacy", "Jones", "Stacy.Jones@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
@@ -41,39 +41,41 @@ func TestEntityAudit(t *testing.T) {
 			t.Fatalf("am.Authenticate() failed: %v", err)
 		}
 
-		entityUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", "s1:s2:s3:s4", HashPassword("abc123--"), "127.0.0.1", nil)
+		personUuid, err = am.AddPerson(TestSite, "Matthew", "Jones", "matthew.jones@test.com", "s1:s2:s3:s4", HashPassword("Tbc923--"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
 
-		err = am.UpdateEntityAuditLog(entityUuid, "FirstName", "", "Matthew", "string", session)
-		if err != nil {
-			t.Fatalf("am.UpdateEntityAuditLog() failed: %v", err)
-		}
+		/*
+			err = am.UpdateEntityAuditLog(personUuid, "FirstName", "", "Matthew", "string", session)
+			if err != nil {
+				t.Fatalf("am.UpdateEntityAuditLog() failed: %v", err)
+			}
+		*/
 	}
 
 	{
-		items, err := am.GetEntityAuditLog("junk", session)
-		if len(items) != 0 {
-			t.Fatalf("am.GetEntityAuditLog() should have returned no results, it returned %d", len(items))
+		items, err := am.GetEntityChangeLog("junk", session)
+		if err != nil {
+			t.Fatalf("am.GetEntityChangeLog() failed %s", err)
 		}
-		items, err = am.GetEntityAuditLog(entityUuid, session)
-		if len(items) != 1 {
-			t.Fatalf("am.GetEntityAuditLog() should have returned one result, it returned %d", len(items))
+		if len(items) != 0 {
+			t.Fatalf("am.GetEntityChangeLog() should have returned no results, it returned %d", len(items))
 		}
 
-		bulk := &GaeEntityAuditLogCollection{}
-		bulk.SetEntityUuidPersonUuid(entityUuid, session.GetPersonUuid(), session.GetDisplayName())
-		bulk.AddItem("FirstName", "Stacy", "Jenny")
-		bulk.AddItem("LastName", "Smith", "Smithe")
-		bulk.AddItem("Phone", "01234", "03456")
-		err = am.BulkUpdateEntityAuditLog(bulk, session)
+		// One log entry was created when the person was added
+		items, err = am.GetEntityChangeLog(personUuid, session)
 		if err != nil {
-			t.Fatalf("am.UpdateEntityAuditLog() failed: %v", err)
+			t.Fatalf("am.GetEntityChangeLog() failed %s", err)
 		}
-		items, err = am.GetEntityAuditLog(entityUuid, session)
-		if len(items) != 4 {
-			t.Fatalf("am.GetEntityAuditLog() should have returned 5 result(s), it returned %d", len(items))
+		if len(items) != 1 {
+			t.Fatalf("am.GetEntityChangeLog() should have returned one result, it returned %d", len(items))
+		}
+
+		err = am.UpdatePerson(personUuid, "Matt", "Jones", "matt.jones@test.com", "s1:s2:s3:s4", "", session)
+		items, err = am.GetEntityChangeLog(personUuid, session)
+		if len(items) != 2 { // once for the add, second for the update
+			t.Fatalf("am.GetEntityAuditLog() should have returned 2 result(s), it returned %d", len(items))
 		}
 	}
 

@@ -621,17 +621,20 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error) {
-	var items []EntityAudit
+func (am *GaeAccessManager) GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error) {
+	var items []EntityAuditLogCollection
 
 	if !requestor.HasRole("s1") {
-		return items, errors.New("Permission denied.")
+		return nil, errors.New("Permission denied.")
 	}
 
-	q := datastore.NewQuery("EntityAudit").Namespace(requestor.GetSite()).Filter("EntityUuid =", uuid).Limit(10000)
+	pkey := datastore.NameKey("EntityChange", uuid, nil)
+	pkey.Namespace = requestor.GetSite()
+
+	q := datastore.NewQuery("EntityChange").Namespace(requestor.GetSite()).Ancestor(pkey).Limit(500)
 	it := am.client.Run(am.ctx, q)
 	for {
-		e := new(GaeEntityAudit)
+		e := new(GaeEntityAuditLogCollection)
 		if _, err := it.Next(e); err == iterator.Done {
 			break
 		} else if err != nil {
@@ -647,38 +650,19 @@ func (am *GaeAccessManager) GetEntityAuditLog(uuid string, requestor Session) ([
 	return items[:], nil
 }
 
-func (am *GaeAccessManager) UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue, valueType string, requestor Session) error {
-	i := GaeEntityAudit{
-		Date:       time.Now(),
-		EntityUuid: entityUuid,
-		Attribute:  attribute,
-		OldValue:   oldValue,
-		NewValue:   newValue,
-		ValueType:  valueType,
-		PersonUuid: requestor.GetPersonUuid(),
-		PersonName: requestor.GetDisplayName(),
-	}
-
-	k := datastore.IncompleteKey("EntityAudit", nil)
-	k.Namespace = requestor.GetSite()
-
-	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (am *GaeAccessManager) BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error {
-	var keys []*datastore.Key
+func (am *GaeAccessManager) AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error {
 	var e *GaeEntityAuditLogCollection = ec.(*GaeEntityAuditLogCollection)
 
-	for range e.Items {
-		key := datastore.IncompleteKey("EntityAudit", nil)
-		key.Namespace = requestor.GetSite()
-		keys = append(keys, key)
+	if e.EntityUuid == "" {
+		return errors.New("Invalid entity uuid.")
 	}
 
-	if _, err := am.client.PutMulti(am.ctx, keys, e.Items); err != nil {
+	pkey := datastore.NameKey("EntityChange", e.EntityUuid, nil)
+	pkey.Namespace = requestor.GetSite()
+	key := datastore.IncompleteKey("EntityChange", pkey)
+	key.Namespace = requestor.GetSite()
+
+	if _, err := am.client.Put(am.ctx, key, e); err != nil {
 		return err
 	}
 
@@ -799,8 +783,8 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 		i.Password = HashPassword(password)
 	}
 	if bulk.HasUpdates() {
-		if err = am.BulkUpdateEntityAuditLog(bulk, updator); err != nil {
-			am.Log().Error("UpdatePerson() failed. Error: %v", err)
+		if err = am.AddEntityChangeLog(bulk, updator); err != nil {
+			am.Log().Error("UpdatePerson() failed persisting changelog. Error: %v", err)
 			return err
 		}
 		if _, err := am.client.Put(am.ctx, k, i); err != nil {
@@ -1038,6 +1022,38 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 		NameKey:   strings.ToLower(firstName + "|" + lastName),
 		Created:   &now,
 	}
+
+	if requestor == nil {
+		requestor = &GaeSession{
+			PersonUUID: si.Uuid,
+			Site:       site,
+			FirstName:  firstName,
+			LastName:   lastName,
+			Email:      email,
+			Roles:      roles,
+		}
+	}
+
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid(uuid.String(), requestor.GetPersonUuid(), requestor.GetDisplayName())
+
+	if firstName != "" {
+		bulk.AddItem("FirstName", "", firstName)
+	}
+	if lastName != "" {
+		bulk.AddItem("LastName", "", lastName)
+	}
+	if email != "" {
+		bulk.AddItem("Email", "", email)
+	}
+	if roles != "" {
+		bulk.AddItem("Roles", "", roles)
+	}
+	if err = g.AddEntityChangeLog(bulk, requestor); err != nil {
+		g.Log().Error("AddPerson() failed persisting changelog. Error: %v", err)
+		return "", err
+	}
+
 	k := datastore.NameKey("Person", uuid.String(), nil)
 	k.Namespace = site
 	if _, err := g.client.Put(g.ctx, k, si); err != nil {

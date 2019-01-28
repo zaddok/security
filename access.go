@@ -40,9 +40,9 @@ type AccessManager interface {
 	GetRecentSystemLog(requestor Session) ([]SystemLog, error)
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
-	GetEntityAuditLog(uuid string, requestor Session) ([]EntityAudit, error)
-	UpdateEntityAuditLog(entityUuid, attribute, oldValue, newValue, valueType string, requestor Session) error
-	BulkUpdateEntityAuditLog(ec EntityAuditLogCollection, requestor Session) error
+
+	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
+	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 
 	WipeDatastore(namespace string) error
 }
@@ -102,15 +102,10 @@ type NewUserInfo struct {
 // This will perform well only on entities that are not continually changing, i.e. Personal
 // detais of user accounts, contact details, etc...
 type EntityAudit interface {
-	GetDate() time.Time
-	GetEntityUuid() string
 	GetAttribute() string
 	GetOldValue() string
 	GetNewValue() string
 	GetValueType() string
-	GetPersonUuid() string
-	GetPersonName() string
-
 	IsPicklistType() bool
 	GetActionType() string
 }
@@ -118,6 +113,12 @@ type EntityAudit interface {
 // EntityAuditLogCollection defines an interface used by the BulkUpdateEntityAuditLog() function.
 // It facilitates collecting together multiple updates to be persisted in one operation.
 type EntityAuditLogCollection interface {
+	GetEntityUuid() string
+	GetPersonUuid() string
+	GetPersonName() string
+	GetDate() time.Time
+	GetItems() []EntityAudit
+
 	SetEntityUuidPersonUuid(entityUuid, personUuid, personName string)
 	AddItem(attribute, oldValue, newValue string)
 	AddIntItem(attribute string, oldValue, newValue int64)
@@ -126,37 +127,6 @@ type EntityAuditLogCollection interface {
 	AddBoolItem(attribute string, oldValue, newValue bool)
 	AddPicklistItem(attribute string, oldValue, newValue, valueType string)
 	HasUpdates() bool
-}
-
-type EntityAuditGroup struct {
-	Person Person
-	Date   time.Time
-	Items  []EntityAudit
-}
-
-func DivideEntityGroups(items []EntityAudit) []*EntityAuditGroup {
-	var groups []*EntityAuditGroup
-	var group *EntityAuditGroup = nil
-
-	for _, item := range items {
-		if group == nil {
-			group = new(EntityAuditGroup)
-			groups = append(groups, group)
-			group.Date = item.GetDate()
-			group.Items = append(group.Items, item)
-			continue
-		}
-		if item.GetDate().Unix() != group.Date.Unix() {
-			group = new(EntityAuditGroup)
-			groups = append(groups, group)
-			group.Date = item.GetDate()
-			group.Items = append(group.Items, item)
-			continue
-		}
-		group.Items = append(group.Items, item)
-	}
-
-	return groups[:]
 }
 
 const emailHtmlTemplates string = `

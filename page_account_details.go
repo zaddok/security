@@ -51,9 +51,9 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 				Session         Session
 				Person          Person
 				Query           string
-				EntityAudit     []*EntityAuditGroup
+				EntityAudit     []EntityAuditLogCollection
 			}
-			items, err := am.GetEntityAuditLog(uuid, session)
+			changeLog, err := am.GetEntityChangeLog(uuid, session)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -66,7 +66,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 				session,
 				person,
 				r.FormValue("q"),
-				DivideEntityGroups(items),
+				changeLog,
 			}
 			Render(r, w, t, "account_history", p)
 			return
@@ -319,9 +319,9 @@ h1 {
 
 {{range .EntityAudit}}
 <div class="audit_set">
-<table style="width:100%;margin-top:-0.4em;margin-left:-0.4em;color:#77c;"><tr><td>{{.Date}}</td><td style="text-align:right">{{$i := index .Items 0}}{{$i.PersonName}}</td></tr></table>
+<table style="width:100%;margin-top:-0.4em;margin-left:-0.4em;color:#77c;"><tr><td>{{.GetDate}}</td><td style="text-align:right">{{.GetPersonName}}</td></tr></table>
 <table>
-{{range .Items}}
+{{range .GetItems}}
 <tr>
 <td style="text-align:left; font-weight: bold;white-space:nowrap">{{.GetAttribute}}</td>
 {{if .IsPicklistType}}
@@ -339,7 +339,7 @@ h1 {
 {{end}}
 {{else}}
 
-{{if .GetValueType ""}}
+{{if eq .GetValueType ""}}
 	<td style="text-align:right;white-space:nowrap"></td>
 	<td style="width:1%"><span class="{{.GetActionType}}"><a href="{{.NewValue}}">{{.OldValue}}</a></span></td>
 {{else}}

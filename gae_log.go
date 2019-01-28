@@ -359,6 +359,32 @@ func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, perso
 	ec.Date = time.Now()
 }
 
+func (ec *GaeEntityAuditLogCollection) GetPersonUuid() string {
+	return ec.PersonUuid
+}
+
+func (ec *GaeEntityAuditLogCollection) GetPersonName() string {
+	return ec.PersonName
+}
+
+func (ec *GaeEntityAuditLogCollection) GetEntityUuid() string {
+	return ec.EntityUuid
+}
+
+func (ec *GaeEntityAuditLogCollection) GetDate() time.Time {
+	return ec.Date
+}
+
+func (ec *GaeEntityAuditLogCollection) GetItems() []EntityAudit {
+	var i []EntityAudit
+
+	for x, _ := range ec.Items {
+		i = append(i, &(ec.Items[x]))
+	}
+
+	return i
+}
+
 func (ec *GaeEntityAuditLogCollection) AddItem(attribute, oldValue, newValue string) {
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
 		panic(errors.New("GaeEntityAuditLogCollection.AddItem() called piror to SetEntityUuidPersonUuid()."))
