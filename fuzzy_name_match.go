@@ -955,7 +955,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"sandra", "sandy", "cassandra"},
 	{"sandy", "sandra"},
 	{"sanford", "sandy"},
-	{"sarah", "sally", "sadie"},
+	{"sarah", "sara", "sally", "sadie"},
 	{"sarilla", "silla"},
 	{"savannah", "vannie", "anna"},
 	{"scott", "scotty", "sceeter", "squat", "scottie"},
