@@ -234,7 +234,6 @@ func (s *GaePicklistStore) refreshCache(site string) error {
 // Lookup all settings from the database
 func (s *GaePicklistStore) load(site string) (map[string]map[string]PicklistItem, error) {
 	all := make(map[string]map[string]PicklistItem)
-
 	var items []*GaePicklistItem
 
 	q := datastore.NewQuery("PicklistItem").Namespace(site).Limit(3000)
