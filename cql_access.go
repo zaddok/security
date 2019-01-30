@@ -586,6 +586,10 @@ func (am *CqlAccessManager) WipeDatastore(namespace string) error {
 	return errors.New("Unimeplemented")
 }
 
+func (am *CqlAccessManager) GetSyslogBundle(site string) SyslogBundle {
+	return nil
+}
+
 type CqlSession struct {
 	PersonUUID    string
 	FirstName     string

@@ -476,6 +476,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"hezekiah", "hy", "hez", "kiah"},
 	{"hilary", "hil"},
 	{"hiram", "hy"},
+	{"holly", "hollie"},
 	{"honora", "honey", "nora", "norry", "norah"},
 	{"hopkins", "hopp", "hop"},
 	{"horace", "horry"},

@@ -161,6 +161,15 @@ func NewGaeSyslogBundle(site string, client *datastore.Client, ctx context.Conte
 	return &GaeSyslogBundle{site: site, client: client, ctx: ctx}
 }
 
+func (am *GaeAccessManager) GetSyslogBundle(site string) SyslogBundle {
+	return &GaeSyslogBundle{site: site, client: am.client, ctx: am.ctx}
+}
+
+type SyslogBundle interface {
+	Put()
+	Add(component, ip, level, message string)
+}
+
 type GaeSyslogBundle struct {
 	client *datastore.Client
 	ctx    context.Context

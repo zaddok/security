@@ -37,6 +37,7 @@ type AccessManager interface {
 	GetCustomRoleTypes() []RoleType
 	AddCustomRoleType(uid, name, description string)
 
+	GetSyslogBundle(site string) SyslogBundle
 	GetRecentSystemLog(requestor Session) ([]SystemLog, error)
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
