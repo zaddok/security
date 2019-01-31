@@ -14,7 +14,7 @@ import (
 var COOKIE_DAYS = 365
 
 // Register pages specific to the security package
-func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
+func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessManager, tm TicketManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
 
 	st := template.New("page")
 	fm := template.FuncMap{
@@ -74,7 +74,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/feedback", FeedbackPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/feedback", FeedbackPage(st, am, tm, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
 

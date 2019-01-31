@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func FeedbackPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
@@ -75,10 +75,30 @@ func FeedbackPage(t *template.Template, am AccessManager, siteName, siteDescript
 		}
 
 		if r.Method == "POST" {
-			if p.CurrentUrl == "" {
-				http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+			_, err = tm.AddTicket(
+				"open",
+				session.GetPersonUuid(),
+				session.GetFirstName(),
+				session.GetLastName(),
+				session.GetEmail(),
+				p.MessageSubject+"\nURL: "+p.CurrentUrl,
+				p.MessageText,
+				p.CurrentIP,
+				[]string{"feedback"},
+				[]TicketViewer{}, []TicketViewer{},
+				p.CurrentUserAgent,
+				session)
+
+			if err == nil {
+				if p.CurrentUrl == "" {
+					http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+				} else {
+					http.Redirect(w, r, p.CurrentUrl, http.StatusTemporaryRedirect)
+				}
+				return
 			} else {
-				http.Redirect(w, r, p.CurrentUrl, http.StatusTemporaryRedirect)
+				ShowError(w, r, t, err, siteName)
+				return
 			}
 
 		}
