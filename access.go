@@ -169,7 +169,7 @@ type EntityAuditLogCollection interface {
 const emailHtmlTemplates string = `
 {{define "signup_confirmation_html"}}
 <p>
-Dear {{.FirstName}} {{.LastName}},
+Hi {{.FirstName}},
 </p>
 
 <p>
@@ -179,7 +179,7 @@ details are all correct.
 
 <p>
 <b>Name:</b> {{.FirstName}} {{.LastName}}<br/>
-<b>Email:</b> {{.Email}}
+<b>Email:</b> {{.ToEmail}}
 <p>
 
 <p>
@@ -193,13 +193,13 @@ free to simply ignore this email.
 {{end}}
 
 {{define "signup_confirmation_text"}}
-Dear {{.FirstName}} {{.LastName}}
+Hi {{.FirstName}},
 
 Thanks for signing up, please use the link below to confirm that your account
 details are all correct.
 
   Name: {{.FirstName}} {{.LastName}}
-  Email: {{.Email}}
+  Email: {{.ToEmail}}
 
   {{.BaseURL}}/activate/{{.Token}}
 
@@ -209,7 +209,7 @@ free to simply ignore this email.
 
 {{define "lost_password_html"}}
 <p>
-Dear {{.FirstName}} {{.LastName}},
+Hi {{.FirstName}},
 </p>
 
 <p>
@@ -220,7 +220,7 @@ link below. This link will expire in 24 hours.
 
 <p>
 <b>Name:</b> {{.FirstName}} {{.LastName}}<br/>
-<b>Email:</b> {{.Email}}
+<b>Email:</b> {{.ToEmail}}
 <p>
 
 <p>
@@ -234,14 +234,14 @@ simply ignore this email.
 {{end}}
 
 {{define "lost_password_text"}}
-Dear {{.FirstName}} {{.LastName}}
+Hi {{.FirstName}},
 
 We received a request to reset the password for your account, if this request
 was initiated by you, then you can go ahead and reset your password at the
 link below. This link will expire in 24 hours.
 
   Name: {{.FirstName}} {{.LastName}}
-  Email: {{.Email}}
+  Email: {{.ToEmail}}
 
   {{.BaseURL}}/reset.password/{{.Token}}
 

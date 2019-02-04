@@ -235,6 +235,82 @@ func (c *GaeAccessManager) Log() log.Log {
 	return c.log
 }
 
+// SendEmail delivers an email message over smtp to the intended target using the preconfigured
+// smtp settings. Returns with a list of strings to present to the user if sending fails, or an
+// error object if a system error has occured.
+func SendEmail(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte) (*[]string, error) {
+	var results []string
+
+	smtpHostname := am.Setting().GetWithDefault(site, "smtp.hostname", "")
+	smtpPassword := am.Setting().GetWithDefault(site, "smtp.password", "")
+	smtpPort := am.Setting().GetWithDefault(site, "smtp.port", "")
+	smtpUser := am.Setting().GetWithDefault(site, "smtp.user", "")
+	supportName := am.Setting().GetWithDefault(site, "support_team.name", "")
+	supportEmail := am.Setting().GetWithDefault(site, "support_team.email", "")
+
+	if smtpHostname == "" {
+		results = append(results, "Missing \"smtp.hostname\" host, setting, cant send message notification")
+	}
+	if smtpPort == "" {
+		results = append(results, "Missing \"smtp.port\" setting, cant send message notification")
+	}
+	if supportName == "" {
+		results = append(results, "Missing \"support_team.name\" setting, cant send message notification")
+	}
+	if supportEmail == "" {
+		results = append(results, "Missing \"support_team.email\" setting, cant send message notification")
+	}
+
+	if len(results) > 0 {
+		am.Log().Error("Email configuration issue. Not sending email to: %s Subject: %s ", toEmail, subject)
+		am.Log().Warning("Check configuration: %s", results[0])
+		return &results, errors.New(results[0])
+	}
+
+	var w bytes.Buffer
+	boundary := RandomString(20)
+	w.Write([]byte("Subject: "))
+	w.Write([]byte(subject))
+	w.Write([]byte("\r\n"))
+	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
+	w.Write([]byte(fmt.Sprintf("To: %s <%s>\r\n", toName, toEmail)))
+	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
+	w.Write([]byte("MIME-version: 1.0\r\n\r\n"))
+	w.Write([]byte(fmt.Sprintf("Content-type: multipart/alternative; charset=\"UTF-8\"; boundary=%s\r\n", boundary)))
+	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
+	w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	//w.Write([]byte("Content-Disposition: inline\r\n"))
+
+	w.Write(textContent)
+
+	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
+	//w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
+
+	w.Write(htmlContent)
+
+	w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
+
+	var auth smtp.Auth
+	if smtpUser != "" && smtpPassword != "" {
+		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHostname)
+	}
+	err := smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, []string{toEmail}, w.Bytes())
+	if err != nil {
+		am.Log().Error("Email delivery failed. To: %s Subject: %s Error: %v", toName, subject, err)
+		results = append(results, "Email delivery failed. Please retry shortly.")
+		return &results, errors.New(results[0])
+	} else {
+		am.Log().Info("Email delivered. To: %s Subject: %s ", toEmail, subject)
+	}
+
+	return &results, nil
+}
+
 func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, string, error) {
 	var results []string
 
@@ -260,14 +336,6 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 		return &results, "", errors.New(results[0])
 	}
 
-	smtpHostname := a.setting.GetWithDefault(site, "smtp.hostname", "")
-	smtpPassword := a.setting.GetWithDefault(site, "smtp.password", "")
-	smtpPort := a.setting.GetWithDefault(site, "smtp.port", "")
-	smtpUser := a.setting.GetWithDefault(site, "smtp.user", "")
-	supportName := a.setting.GetWithDefault(site, "support_team.name", "")
-	supportEmail := a.setting.GetWithDefault(site, "support_team.email", "")
-	baseUrl := a.setting.GetWithDefault(site, "base.url", "")
-
 	ui := &NewUserInfo{
 		Site:      site,
 		FirstName: first_name,
@@ -276,28 +344,13 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 		Password:  HashPassword(password),
 	}
 	data, merr := json.Marshal(ui)
-
-	if smtpHostname == "" {
-		results = append(results, "Missing \"smtp.hostname\" host, setting, cant send message notification")
-	}
-	if smtpPort == "" {
-		results = append(results, "Missing \"smtp.port\" setting, cant send message notification")
-	}
-	if supportName == "" {
-		results = append(results, "Missing \"support_team.name\" setting, cant send message notification")
-	}
-	if supportEmail == "" {
-		results = append(results, "Missing \"support_team.email\" setting, cant send message notification")
-	}
 	if merr != nil {
 		results = append(results, "Internal server error. "+merr.Error())
 		a.log.Info("%s doSignup() mashal error: %v", ip, merr.Error())
 	}
 
-	if len(results) > 0 {
-		return &results, "", errors.New(results[0])
-	}
-
+	// Generate a unique identifying token to include in the email for authentication
+	// that thie receipient of the email is the person who created this account
 	token, err := uuid.NewUUID()
 	if err != nil {
 		return nil, "", err
@@ -313,71 +366,59 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 		return nil, "", err
 	}
 
-	type Page struct {
+	baseUrl := a.Setting().GetWithDefault(site, "base.url", "")
+	supportName := a.Setting().GetWithDefault(site, "support_team.name", "")
+	supportEmail := a.Setting().GetWithDefault(site, "support_team.email", "")
+
+	type EmailTemplateData struct {
 		Site      string
 		BaseURL   string
 		Uuid      string
 		FirstName string
 		LastName  string
-		Email     string
+		ToEmail   string
+		ToName    string
+		FromEmail string
+		FromName  string
+		Subject   string
 		Token     string
 	}
-	p := &Page{}
-	p.Site = site
-	p.Email = email
-	p.Uuid = token.String()
-	p.LastName = last_name
-	p.FirstName = first_name
-	p.Token = p.Uuid
+	t := &EmailTemplateData{}
+	t.Site = site
+	t.ToEmail = email
+	t.ToName = strings.TrimSpace(first_name + " " + last_name)
+	t.FromEmail = supportEmail
+	t.FromName = supportName
+	t.Uuid = token.String()
+	t.LastName = last_name
+	t.FirstName = first_name
+	t.Token = token.String()
 	if baseUrl == "" {
-		p.BaseURL = "http://" + site
+		t.BaseURL = "http://" + site
 	} else {
-		p.BaseURL = baseUrl
+		t.BaseURL = baseUrl
 	}
 
-	var w bytes.Buffer
-	boundary := RandomString(20)
-	w.Write([]byte(fmt.Sprintf("Subject: Signup confirmation\r\n")))
-	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
-	w.Write([]byte(fmt.Sprintf("To: %s\r\n", email)))
-	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
-	w.Write([]byte(fmt.Sprintf("Content-type: multipart/alternative; charset=UTF-8; boundary=%s\r\n", boundary)))
-	w.Write([]byte("MIME-version: 1.0\r\n\r\n"))
-	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
-	w.Write([]byte("Content-Type: text/plain; charset=utf-8; format=flowed\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
-	w.Write([]byte("Content-Disposition: inline\r\n"))
-	err = a.template.ExecuteTemplate(&w, "signup_confirmation_text", p)
+	var textBuffer bytes.Buffer
+	err = a.template.ExecuteTemplate(&textBuffer, "signup_confirmation_text", t)
 	if err != nil {
 		results = append(results, fmt.Sprintf("Error rendering template \"signup_confirmation_text\": %v", err))
 		return &results, "", errors.New(results[0])
 	}
-	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
-	w.Write([]byte("Content-Type: text/html; charset=utf-8\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
-	w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
-	var h bytes.Buffer
-	err = a.template.ExecuteTemplate(&w, "signup_confirmation_html", p)
+
+	var htmlBuffer bytes.Buffer
+	err = a.template.ExecuteTemplate(&htmlBuffer, "signup_confirmation_html", t)
 	if err != nil {
 		results = append(results, fmt.Sprintf("Error rendering template \"signup_confirmation_html\": %v", err))
 		return &results, "", errors.New(results[0])
 	}
-	w.Write([]byte(base64.StdEncoding.EncodeToString(h.Bytes())))
-	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
-	to := []string{email}
-	msg := w.Bytes()
-	var auth smtp.Auth
-	if smtpUser != "" && smtpPassword != "" {
-		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHostname)
+
+	sendResults, err := SendEmail(a, t.Site, t.Subject, t.ToEmail, t.ToName, textBuffer.Bytes(), htmlBuffer.Bytes())
+	if sendResults != nil && len(*sendResults) != 0 {
+		return sendResults, token.String(), err
 	}
-	err = smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, to, msg)
 	if err != nil {
-		a.log.Error("%s Send signup confirmation mail failed: %v", ip, err)
-		results = append(results, "Sending your signup confirmation mail failed. Please retry shortly.")
-		return &results, "", errors.New(results[0])
-	} else {
-		a.log.Info("%s Sent signup confirmation mail to: %s", ip, email)
+		return sendResults, token.String(), err
 	}
 
 	return nil, token.String(), nil
@@ -414,34 +455,37 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		return "", err
 	}
 
-	smtpHostname := a.setting.GetWithDefault(site, "smtp.hostname", "")
-	smtpPassword := a.setting.GetWithDefault(site, "smtp.password", "")
-	smtpPort := a.setting.GetWithDefault(site, "smtp.port", "")
-	smtpUser := a.setting.GetWithDefault(site, "smtp.user", "")
 	supportName := a.setting.GetWithDefault(site, "support_team.name", "")
 	supportEmail := a.setting.GetWithDefault(site, "support_team.email", "")
 	baseUrl := a.setting.GetWithDefault(site, "base.url", "")
 
-	type Page struct {
+	type EmailTemplateData struct {
 		Site      string
 		BaseURL   string
-		Uuid      string
+		Subject   string
 		FirstName string
 		LastName  string
+		ToEmail   string
+		ToName    string
+		FromEmail string
+		FromName  string
 		Email     string
 		Token     string
 	}
-	p := &Page{}
-	p.Site = site
-	p.Email = email
-	p.Uuid = token.String()
-	p.Token = token.String()
-	p.FirstName = items[0].FirstName
-	p.LastName = items[0].LastName
+	t := &EmailTemplateData{}
+	t.Site = site
+	t.ToEmail = email
+	t.ToName = strings.TrimSpace(items[0].FirstName + " " + items[0].LastName)
+	t.Token = token.String()
+	t.FirstName = items[0].FirstName
+	t.LastName = items[0].LastName
+	t.Subject = "Lost password retrieval"
+	t.FromEmail = supportEmail
+	t.FromName = supportName
 	if baseUrl == "" {
-		p.BaseURL = "http://" + site
+		t.BaseURL = "http://" + site
 	} else {
-		p.BaseURL = baseUrl
+		t.BaseURL = baseUrl
 	}
 
 	k := datastore.NameKey("RequestToken", token.String(), nil)
@@ -451,47 +495,26 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		return "Unable to process password reset request. Please try again.", err
 	}
 
-	var w bytes.Buffer
-	boundary := RandomString(20)
-	w.Write([]byte(fmt.Sprintf("Subject: Lost password request\r\n")))
-	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
-	w.Write([]byte(fmt.Sprintf("To: %s\r\n", email)))
-	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
-	w.Write([]byte(fmt.Sprintf("Content-type: multipart/alternative; charset=UTF-8; boundary=%s\r\n", boundary)))
-	w.Write([]byte("MIME-version: 1.0\r\n\r\n"))
-	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
-	w.Write([]byte("Content-Type: text/plain; charset=utf-8; format=flowed\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
-	w.Write([]byte("Content-Disposition: inline\r\n"))
-	err = a.template.ExecuteTemplate(&w, "lost_password_text", p)
+	var textBuffer bytes.Buffer
+	err = a.template.ExecuteTemplate(&textBuffer, "lost_password_text", t)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("Error rendering template \"lost_password_text\": %v", err))
 	}
-	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
-	w.Write([]byte("Content-Type: text/html; charset=utf-8\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
-	w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
-	var h bytes.Buffer
-	err = a.template.ExecuteTemplate(&w, "lost_password_html", p)
+
+	var htmlBuffer bytes.Buffer
+	err = a.template.ExecuteTemplate(&htmlBuffer, "lost_password_html", t)
 	if err != nil {
 		return "", errors.New(fmt.Sprintf("Error rendering template \"lost_password_html\": %v", err))
 	}
-	w.Write([]byte(base64.StdEncoding.EncodeToString(h.Bytes())))
-	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
-	to := []string{email}
-	msg := w.Bytes()
-	var auth smtp.Auth
-	if smtpUser != "" && smtpPassword != "" {
-		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHostname)
+
+	sendResults, err := SendEmail(a, t.Site, t.Subject, t.ToEmail, t.ToName, textBuffer.Bytes(), htmlBuffer.Bytes())
+	if sendResults != nil && len(*sendResults) != 0 {
+		return token.String(), err
 	}
-	err = smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, to, msg)
 	if err != nil {
-		a.log.Error("%s Sending lost password email failed: %v", ip, err)
-		return "", err
+		return token.String(), err
 	}
 
-	a.log.Info("%s Sent signup confirmation mail to: %s", ip, email)
 	return token.String(), nil
 }
 
