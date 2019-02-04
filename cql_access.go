@@ -401,7 +401,7 @@ func (am *CqlAccessManager) TriggerNotificationEvent(objectUuid string, session 
 			}
 		}
 		if !handled {
-			fmt.Println("Unhandled notificatin event", watcher)
+			fmt.Println("Unhandled notification event", watcher)
 		}
 
 	}
