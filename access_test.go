@@ -102,6 +102,166 @@ func TestSystemSessionManagement(t *testing.T) {
 	}
 }
 
+func TestScheduledConnectors(t *testing.T) {
+
+	tc := &ScheduledConnector{}
+	tc.SetConfig("a", "b")
+	if len(tc.Config) != 1 {
+		t.Fatalf("SeheduledConnector.SetConfig() failed. Expect 1 items, not %d", len(tc.Config))
+	}
+	tc.SetConfig("1", "2")
+	if len(tc.Config) != 2 {
+		t.Fatalf("SeheduledConnector.SetConfig() failed. Expect 2 items, not %d", len(tc.Config))
+	}
+	tc.SetConfig("1", "")
+	tc.SetConfig("x", "y")
+	if len(tc.Config) != 2 {
+		t.Fatalf("SeheduledConnector.SetConfig() failed. Expect 2 items, not %d", len(tc.Config))
+	}
+
+	l := log.NewStdoutLogDebug()
+	defer l.Close()
+
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), l)
+	if err != nil {
+		t.Fatalf("NewGaeAccessManager() failed: %v", err)
+	}
+
+	_, err = am.AddPerson(TestSite, "sct", "lookupsubject", "sct_tmp@example.com", "s1:s2:s3:s4:c1:c2:c3:c4:c5:c6", HashPassword("fish cat water dog 190!"), "127.0.0.1", nil)
+	if err != nil {
+		t.Fatalf("AddPerson() failed: %v", err)
+	}
+	user, _, err := am.Authenticate(TestSite, "sct_tmp@example.com", "fish cat water dog 190!", "127.0.0.1")
+	if err != nil {
+		t.Fatalf("Authenticate() failed: %v", err)
+	}
+
+	ext1 := new(ScheduledConnector)
+	ext1.Label = "moodle-fetch"
+	ext1.Config = []*KeyValue{&KeyValue{"username", "james"}, &KeyValue{"password", "mypassword"}}
+	err = am.AddScheduledConnector(ext1, user)
+	if err != nil {
+		t.Fatalf("AddScheduledConnector() failed: %s", err)
+		return
+	}
+
+	ext2 := new(ScheduledConnector)
+	ext2.Label = "d2l-fetch"
+	ext2.Day = 4
+	ext2.Hour = 9
+	ext2.Frequency = "daily"
+	ext2.Config = []*KeyValue{&KeyValue{"server", "test.com"}, &KeyValue{"port", "9030"}}
+	err = am.AddScheduledConnector(ext2, user)
+	if err != nil {
+		t.Fatalf("AddScheduledConnector() failed: %s", err)
+		return
+	}
+
+	search, err := am.GetScheduledConnector(ext1.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetExternalSystem() failed unexpectedly: %v", err)
+		return
+	}
+	if search == nil {
+		t.Fatalf("GetScheduledConnector() Did not return the connector details: %s", ext1.Label)
+	}
+
+	search, err = am.GetScheduledConnector(ext2.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() failed unexpectedly: %v", err)
+		return
+	}
+	if search == nil {
+		t.Fatalf("GetScheduledConnector() Did not return the connector details: %s", ext2.Label)
+	}
+
+	if search.Day != 4 {
+		t.Fatalf("GetScheduledConnector() expected day=4. day=%d", search.Day)
+	}
+
+	if search.Hour != 9 {
+		t.Fatalf("GetScheduledConnector() expected hour=4. hour=%d", search.Hour)
+	}
+
+	if search.Frequency != "daily" {
+		t.Fatalf("GetScheduledConnector() expected frequency=daily. frequency=%s", search.Frequency)
+	}
+
+	search.Day = 3
+	search.Hour = 8
+	search.Frequency = "hourly"
+	search.SetData("c", "10")
+	err = am.UpdateScheduledConnector(search, user)
+	if err != nil {
+		t.Fatalf("UpdateScheduledConnector() failed: %s", err)
+		return
+	}
+	if search.Day != 3 {
+		t.Fatalf("GetScheduledConnector() expected day=3. day=%d", search.Day)
+	}
+
+	if search.Hour != 8 {
+		t.Fatalf("GetScheduledConnector() expected hour=8. hour=%d", search.Hour)
+	}
+
+	if search.Frequency != "hourly" {
+		t.Fatalf("GetScheduledConnector() expected frequency=hourly. frequency=%s", search.Frequency)
+	}
+
+	search, err = am.GetScheduledConnector(search.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() failed unexpectedly: %v", err)
+		return
+	}
+	if search == nil {
+		t.Fatalf("GetScheduledConnector() Did not return the connector details: %s", ext2.Label)
+	}
+	if search.GetData("c") != "10" {
+		t.Fatalf("GetScheduledConnector() Did not return updated data (c) value: %s", search.GetData("c"))
+	}
+
+	search.SetData("d", "20")
+	sys, err := am.GetSystemSession(user.GetSite(), "Test System Session", "Account")
+	err = am.UpdateScheduledConnector(search, sys)
+	if err != nil {
+		t.Fatalf("UpdateScheduledConnector() with system session failed unexpectedly: %v", err)
+		return
+	}
+	search, err = am.GetScheduledConnector(search.Uuid, sys)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() with system session failed unexpectedly: %v", err)
+		return
+	}
+	if len(search.Data) != 2 {
+		t.Fatalf("GetScheduledConnector() should have returned two data elements, but returned: %d", len(search.Data))
+		return
+	}
+
+	err = am.DeleteScheduledConnector(ext1.Uuid, user)
+	if err != nil {
+		t.Fatalf("DeleteScheduledConnector() failed: %s", err)
+		return
+	}
+
+	search, err = am.GetScheduledConnector(ext1.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() failed unexpectedly: %v", err)
+		return
+	}
+	if search != nil {
+		t.Fatalf("GetScheduledConnector() scheduled connector should have been deleted: %s", ext1.Label)
+	}
+
+	search, err = am.GetScheduledConnector(ext2.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() failed unexpectedly: %v", err)
+		return
+	}
+	if search == nil {
+		t.Fatalf("GetScheduledConnector() scheduled connector should have been returned: %s", ext2.Label)
+	}
+}
+
 // Test password security
 func TestPasswordSecurity(t *testing.T) {
 	{
