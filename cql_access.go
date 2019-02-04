@@ -18,13 +18,15 @@ import (
 )
 
 type CqlAccessManager struct {
-	cql              *gocql.Session
-	log              log.Log
-	setting          Setting
-	picklistStore    PicklistStore
-	template         *template.Template
-	roleTypes        []*CqlRoleType
-	virtualHostSetup VirtualHostSetup // setup function pointer
+	cql                       *gocql.Session
+	log                       log.Log
+	setting                   Setting
+	picklistStore             PicklistStore
+	template                  *template.Template
+	roleTypes                 []*CqlRoleType
+	virtualHostSetup          VirtualHostSetup // setup function pointer
+	notificationEventHandlers []NotificationEventHandler
+	connectorInfo             []*ConnectorInfo
 }
 
 func (am *CqlAccessManager) GetCustomRoleTypes() []RoleType {
@@ -338,6 +340,14 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	return g.GuestSession(site), "Invalid email address or password.", nil
 }
 
+func (am *CqlAccessManager) GetConnectorInfo() []*ConnectorInfo {
+	return am.connectorInfo[:]
+}
+
+func (am *CqlAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
+	am.connectorInfo = append(am.connectorInfo, connector)
+}
+
 func (a *CqlAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
 	return nil, errors.New("unimplemented")
 }
@@ -367,10 +377,36 @@ func (am *CqlAccessManager) StopWatching(objectUuid, objectType string, requesto
 }
 
 func (am *CqlAccessManager) RegisterNotificationEventHandler(handler NotificationEventHandler) {
+	am.notificationEventHandlers = append(am.notificationEventHandlers, handler)
 }
 
 func (am *CqlAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {
-	return errors.New("unimplemented")
+	var watchers []Watch
+
+	watchers, err := am.GetWatchers(objectUuid, session)
+	if err != nil {
+		return err
+	}
+
+	for _, watcher := range watchers {
+		handled := false
+		for _, handler := range am.notificationEventHandlers {
+			done, err := handler(watcher, session, am)
+			if err != nil {
+				return err
+			}
+			if done {
+				handled = true
+				break
+			}
+		}
+		if !handled {
+			fmt.Println("Unhandled notificatin event", watcher)
+		}
+
+	}
+
+	return nil
 }
 
 func (am *CqlAccessManager) GetWatching(requestor Session) ([]Watch, error) {

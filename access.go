@@ -61,6 +61,9 @@ type AccessManager interface {
 	TriggerNotificationEvent(objectUuid string, session Session) error
 	RegisterNotificationEventHandler(handler NotificationEventHandler)
 
+	GetConnectorInfo() []*ConnectorInfo
+	RegisterConnectorInfo(connector *ConnectorInfo)
+
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
 	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 

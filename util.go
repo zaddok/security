@@ -142,3 +142,13 @@ func PasswordStrength(password string) []string {
 
 	return messages
 }
+
+func Underscorify(text string) string {
+	text = strings.ToLower(text)
+	text = strings.Replace(text, " ", "_", -1)
+	text = strings.Replace(text, "-", "_", -1)
+	text = strings.Replace(text, "'", "", -1)
+	text = strings.Replace(text, "?", "", -1)
+	text = strings.Replace(text, ":", "", -1)
+	return text
+}

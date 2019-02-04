@@ -31,6 +31,7 @@ type GaeAccessManager struct {
 	roleTypes                 []*GaeRoleType
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
+	connectorInfo             []*ConnectorInfo
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -758,6 +759,14 @@ func (am *GaeAccessManager) StopWatching(objectUuid, objectType string, requesto
 	}
 
 	return nil
+}
+
+func (am *GaeAccessManager) GetConnectorInfo() []*ConnectorInfo {
+	return am.connectorInfo[:]
+}
+
+func (am *GaeAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
+	am.connectorInfo = append(am.connectorInfo, connector)
 }
 
 type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)
