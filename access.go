@@ -56,6 +56,11 @@ type AccessManager interface {
 	// GetWatchers returns the list of users watching this object
 	GetWatchers(objectUuid string, requestor Session) ([]Watch, error)
 
+	// TriggerNotificationEvent is called when an object that is potentially being monitered is updated.
+	// It is reponsible for examining who may need to be notified and invoke any event handlers
+	TriggerNotificationEvent(objectUuid string, session Session) error
+	RegisterNotificationEventHandler(handler NotificationEventHandler)
+
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
 	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 
@@ -103,6 +108,7 @@ type RoleType interface {
 type Watch interface {
 	GetObjectUuid() string
 	GetObjectName() string
+	GetObjectType() string
 	GetPersonUuid() string
 	GetPersonName() string
 }

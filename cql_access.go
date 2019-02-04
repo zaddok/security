@@ -366,6 +366,13 @@ func (am *CqlAccessManager) StopWatching(objectUuid, objectType string, requesto
 	return errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) RegisterNotificationEventHandler(handler NotificationEventHandler) {
+}
+
+func (am *CqlAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {
+	return errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 	return nil, errors.New("unimplemented")
 }

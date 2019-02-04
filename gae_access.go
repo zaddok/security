@@ -21,15 +21,16 @@ import (
 )
 
 type GaeAccessManager struct {
-	client           *datastore.Client
-	ctx              context.Context
-	log              log.Log
-	setting          Setting
-	throttle         Throttle
-	picklistStore    PicklistStore
-	template         *template.Template
-	roleTypes        []*GaeRoleType
-	virtualHostSetup VirtualHostSetup // setup function pointer
+	client                    *datastore.Client
+	ctx                       context.Context
+	log                       log.Log
+	setting                   Setting
+	throttle                  Throttle
+	picklistStore             PicklistStore
+	template                  *template.Template
+	roleTypes                 []*GaeRoleType
+	virtualHostSetup          VirtualHostSetup // setup function pointer
+	notificationEventHandlers []NotificationEventHandler
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -694,6 +695,7 @@ func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 type GaeWatch struct {
 	ObjectUuid string
 	ObjectName string
+	ObjectType string
 	PersonUuid string
 	PersonName string
 }
@@ -704,6 +706,10 @@ func (w *GaeWatch) GetObjectUuid() string {
 
 func (w *GaeWatch) GetObjectName() string {
 	return w.ObjectName
+}
+
+func (w *GaeWatch) GetObjectType() string {
+	return w.ObjectType
 }
 
 func (w *GaeWatch) GetPersonUuid() string {
@@ -728,6 +734,7 @@ func (am *GaeAccessManager) StartWatching(objectUuid, objectName, objectType str
 		PersonName: requestor.GetDisplayName(),
 		PersonUuid: requestor.GetPersonUuid(),
 		ObjectUuid: objectUuid,
+		ObjectType: objectType,
 		ObjectName: objectName,
 	}
 	if _, err := am.client.Put(am.ctx, key, &w); err != nil {
@@ -748,6 +755,41 @@ func (am *GaeAccessManager) StopWatching(objectUuid, objectType string, requesto
 	key.Namespace = requestor.GetSite()
 	if err := am.client.Delete(am.ctx, key); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)
+
+func (am *GaeAccessManager) RegisterNotificationEventHandler(handler NotificationEventHandler) {
+	am.notificationEventHandlers = append(am.notificationEventHandlers, handler)
+}
+
+func (am *GaeAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {
+	var watchers []Watch
+
+	watchers, err := am.GetWatchers(objectUuid, session)
+	if err != nil {
+		return err
+	}
+
+	for _, watcher := range watchers {
+		handled := false
+		for _, handler := range am.notificationEventHandlers {
+			done, err := handler(watcher, session, am)
+			if err != nil {
+				return err
+			}
+			if done {
+				handled = true
+				break
+			}
+		}
+		if !handled {
+			fmt.Println("Unhandled notificatin event", watcher)
+		}
+
 	}
 
 	return nil
