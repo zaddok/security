@@ -1,11 +1,14 @@
 package security
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"hash"
 	"math/rand"
+	"net/smtp"
 	"strings"
 	"syscall"
 	"time"

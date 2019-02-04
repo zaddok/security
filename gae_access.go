@@ -3,12 +3,10 @@ package security
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
-	"net/smtp"
 	"sort"
 	"strconv"
 	"strings"
