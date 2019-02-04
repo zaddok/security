@@ -26,7 +26,7 @@ func TestWatch(t *testing.T) {
 	}
 
 	marketingUuid, err := uuid.NewRandom()
-	err = am.StartWatching(marketingUuid.String(), "Marketing Task", "Unknown", user)
+	err = am.StartWatching(marketingUuid.String(), "Marketing Task", "Queue", user)
 	if err != nil {
 		t.Fatalf("am.StartWatching() failed: %v", err)
 	}
@@ -36,6 +36,7 @@ func TestWatch(t *testing.T) {
 		t.Fatalf("am.StartWatching() failed: %v", err)
 	}
 
+	// Check this person is recorded as watching two record
 	items, err := am.GetWatching(user)
 	if err != nil {
 		t.Fatalf("am.GetWatching() failed: %v", err)
@@ -44,6 +45,16 @@ func TestWatch(t *testing.T) {
 		t.Fatalf("Expected to find two watching items, found %d", len(items))
 	}
 
+	// Check we can retrieve the list of users watching an object
+	items, err = am.GetWatchers(marketingUuid.String(), user)
+	if err != nil {
+		t.Fatalf("am.GetWatchers() failed: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("Expected to find one watcer for this item, found %d", len(items))
+	}
+
+	// Stop watching an item, to check the watch list goes down to 1
 	err = am.StopWatching(user.GetPersonUuid(), "Person", user)
 	if err != nil {
 		t.Fatalf("am.StopWatching() failed: %v", err)

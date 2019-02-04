@@ -756,7 +756,25 @@ func (am *GaeAccessManager) StopWatching(objectUuid, objectType string, requesto
 func (am *GaeAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 	var items []Watch
 
-	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Limit(200)
+	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Filter("PersonUuid =", requestor.GetPersonUuid()).Limit(200)
+	it := am.client.Run(am.ctx, q)
+	for {
+		w := new(GaeWatch)
+		if _, err := it.Next(w); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, w)
+	}
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) GetWatchers(objectUuid string, requestor Session) ([]Watch, error) {
+	var items []Watch
+
+	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Filter("ObjectUuid =", objectUuid).Limit(200)
 	it := am.client.Run(am.ctx, q)
 	for {
 		w := new(GaeWatch)

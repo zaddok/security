@@ -370,6 +370,10 @@ func (am *CqlAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) GetWatchers(objectUuid string, requestor Session) ([]Watch, error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
 	return nil, errors.New("unimplemented")
 }

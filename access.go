@@ -53,6 +53,9 @@ type AccessManager interface {
 	// GetWatching returns the list of objects the current user is watching
 	GetWatching(requestor Session) ([]Watch, error)
 
+	// GetWatchers returns the list of users watching this object
+	GetWatchers(objectUuid string, requestor Session) ([]Watch, error)
+
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
 	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 
