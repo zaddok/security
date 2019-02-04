@@ -5,8 +5,59 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"github.com/zaddok/log"
 )
+
+// Test access manager
+func TestWatch(t *testing.T) {
+
+	log := log.NewStdoutLogDebug()
+	defer log.Close()
+
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), log)
+	if err != nil {
+		t.Fatalf("NewGaeAccessManager() failed: %v", err)
+	}
+	user, err := am.GetSystemSession(TestSite, "Google Sample", "Connector")
+	if err != nil {
+		t.Fatalf("am.GetSystemSession() failed: %v", err)
+	}
+
+	marketingUuid, err := uuid.NewRandom()
+	err = am.StartWatching(marketingUuid.String(), "Marketing Task", "Unknown", user)
+	if err != nil {
+		t.Fatalf("am.StartWatching() failed: %v", err)
+	}
+
+	err = am.StartWatching(user.GetPersonUuid(), "Person", "Person", user)
+	if err != nil {
+		t.Fatalf("am.StartWatching() failed: %v", err)
+	}
+
+	items, err := am.GetWatching(user)
+	if err != nil {
+		t.Fatalf("am.GetWatching() failed: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("Expected to find two watching items, found %d", len(items))
+	}
+
+	err = am.StopWatching(user.GetPersonUuid(), "Person", user)
+	if err != nil {
+		t.Fatalf("am.StopWatching() failed: %v", err)
+	}
+
+	items, err = am.GetWatching(user)
+	if err != nil {
+		t.Fatalf("am.GetWatching() failed: %v", err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("Expected to find one watching items, found %d", len(items))
+	}
+
+}
 
 // Test access manager
 func TestSystemSessionManagement(t *testing.T) {

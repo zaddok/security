@@ -358,6 +358,18 @@ func (am *CqlAccessManager) GetEntityChangeLog(uuid string, requestor Session) (
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) StartWatching(objectUuid, objectName, objectType string, requestor Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) StopWatching(objectUuid, objectType string, requestor Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetWatching(requestor Session) ([]Watch, error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
 	return nil, errors.New("unimplemented")
 }

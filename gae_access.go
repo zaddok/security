@@ -691,6 +691,86 @@ func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 	return items[:], nil
 }
 
+type GaeWatch struct {
+	ObjectUuid string
+	ObjectName string
+	PersonUuid string
+	PersonName string
+}
+
+func (w *GaeWatch) GetObjectUuid() string {
+	return w.ObjectUuid
+}
+
+func (w *GaeWatch) GetObjectName() string {
+	return w.ObjectName
+}
+
+func (w *GaeWatch) GetPersonUuid() string {
+	return w.PersonUuid
+}
+
+func (w *GaeWatch) GetPersonName() string {
+	return w.PersonName
+}
+
+func (am *GaeAccessManager) StartWatching(objectUuid, objectName, objectType string, requestor Session) error {
+	if objectUuid == "" {
+		return errors.New("Invalid object uuid.")
+	}
+
+	pkey := datastore.NameKey(objectType, objectUuid, nil)
+	pkey.Namespace = requestor.GetSite()
+	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.GetPersonUuid(), pkey)
+	key.Namespace = requestor.GetSite()
+
+	w := GaeWatch{
+		PersonName: requestor.GetDisplayName(),
+		PersonUuid: requestor.GetPersonUuid(),
+		ObjectUuid: objectUuid,
+		ObjectName: objectName,
+	}
+	if _, err := am.client.Put(am.ctx, key, &w); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (am *GaeAccessManager) StopWatching(objectUuid, objectType string, requestor Session) error {
+	if objectUuid == "" {
+		return errors.New("Invalid object uuid.")
+	}
+
+	pkey := datastore.NameKey(objectType, objectUuid, nil)
+	pkey.Namespace = requestor.GetSite()
+	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.GetPersonUuid(), pkey)
+	key.Namespace = requestor.GetSite()
+	if err := am.client.Delete(am.ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (am *GaeAccessManager) GetWatching(requestor Session) ([]Watch, error) {
+	var items []Watch
+
+	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Limit(200)
+	it := am.client.Run(am.ctx, q)
+	for {
+		w := new(GaeWatch)
+		if _, err := it.Next(w); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, w)
+	}
+
+	return items[:], nil
+}
+
 func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
 	if !requestor.HasRole("s1") && requestor.GetPersonUuid() != uuid {
 		return nil, errors.New("Permission denied.")

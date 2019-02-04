@@ -42,6 +42,17 @@ type AccessManager interface {
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
 
+	// StartWatching records that a user is interested in notifications when an
+	// event of interest occurs
+	StartWatching(objectUuid, objectName, objectType string, user Session) error
+
+	// StopWatching registers that a user is no longer interested in notifications
+	// when an event of interest occurs
+	StopWatching(objectUuid, objectType string, requestor Session) error
+
+	// GetWatching returns the list of objects the current user is watching
+	GetWatching(requestor Session) ([]Watch, error)
+
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
 	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 
@@ -84,6 +95,13 @@ type RoleType interface {
 	GetUid() string
 	GetName() string
 	GetDescription() string
+}
+
+type Watch interface {
+	GetObjectUuid() string
+	GetObjectName() string
+	GetPersonUuid() string
+	GetPersonName() string
 }
 
 type NewUserInfo struct {
