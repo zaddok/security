@@ -226,16 +226,15 @@ func SendEmail(am AccessManager, site, subject, toEmail, toName string, textCont
 
 	w.Write(textContent)
 
-	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
+	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
 	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
 	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
 	w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
 	//w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
-
-	w.Write(htmlContent)
-
+	//w.Write(htmlContent)
 	w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
-	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
+
+	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s--\r\n", boundary)))
 
 	var auth smtp.Auth
 	if smtpUser != "" && smtpPassword != "" {
