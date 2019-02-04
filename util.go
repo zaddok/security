@@ -171,3 +171,81 @@ func MatchingDate(a, b *time.Time) bool {
 	}
 	return true
 }
+
+// SendEmail delivers an email message over smtp to the intended target using the preconfigured
+// smtp settings. Returns with a list of strings to present to the user if sending fails, or an
+// error object if a system error has occured.
+func SendEmail(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte) (*[]string, error) {
+	var results []string
+
+	smtpHostname := am.Setting().GetWithDefault(site, "smtp.hostname", "")
+	smtpPassword := am.Setting().GetWithDefault(site, "smtp.password", "")
+	smtpPort := am.Setting().GetWithDefault(site, "smtp.port", "")
+	smtpUser := am.Setting().GetWithDefault(site, "smtp.user", "")
+	supportName := am.Setting().GetWithDefault(site, "support_team.name", "")
+	supportEmail := am.Setting().GetWithDefault(site, "support_team.email", "")
+
+	if smtpHostname == "" {
+		results = append(results, "Missing \"smtp.hostname\" host, setting, cant send message notification")
+	}
+	if smtpPort == "" {
+		results = append(results, "Missing \"smtp.port\" setting, cant send message notification")
+	}
+	if supportName == "" {
+		results = append(results, "Missing \"support_team.name\" setting, cant send message notification")
+	}
+	if supportEmail == "" {
+		results = append(results, "Missing \"support_team.email\" setting, cant send message notification")
+	}
+
+	if len(results) > 0 {
+		am.Log().Error("Email configuration issue. Not sending email to: %s Subject: %s ", toEmail, subject)
+		am.Log().Warning("Check configuration: %s", results[0])
+		return &results, errors.New(results[0])
+	}
+
+	var w bytes.Buffer
+	boundary := RandomString(20)
+	w.Write([]byte("Subject: "))
+	w.Write([]byte(subject))
+	w.Write([]byte("\r\n"))
+	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
+	w.Write([]byte(fmt.Sprintf("To: %s <%s>\r\n", toName, toEmail)))
+	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
+	w.Write([]byte("MIME-version: 1.0\r\n"))
+	w.Write([]byte("Content-type: multipart/alternative; charset=\"UTF-8\"; boundary="))
+	w.Write([]byte(boundary))
+	w.Write([]byte("\r\n\r\n"))
+	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
+	w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	//w.Write([]byte("Content-Disposition: inline\r\n"))
+
+	w.Write(textContent)
+
+	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
+	//w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
+
+	w.Write(htmlContent)
+
+	w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
+
+	var auth smtp.Auth
+	if smtpUser != "" && smtpPassword != "" {
+		auth = smtp.PlainAuth("", smtpUser, smtpPassword, smtpHostname)
+	}
+	err := smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, []string{toEmail}, w.Bytes())
+	if err != nil {
+		am.Log().Error("Email delivery failed. To: %s Subject: %s Error: %v", toName, subject, err)
+		results = append(results, "Email delivery failed. Please retry shortly.")
+		return &results, errors.New(results[0])
+	} else {
+		am.Log().Info("Email delivered. To: %s Subject: %s ", toEmail, subject)
+	}
+
+	return &results, nil
+}
