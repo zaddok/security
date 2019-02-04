@@ -221,7 +221,7 @@ func SendEmail(am AccessManager, site, subject, toEmail, toName string, textCont
 	w.Write([]byte("\r\n\r\n"))
 	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
 	w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n\r\n"))
 	//w.Write([]byte("Content-Disposition: inline\r\n"))
 
 	w.Write(textContent)
@@ -229,7 +229,7 @@ func SendEmail(am AccessManager, site, subject, toEmail, toName string, textCont
 	w.Write([]byte(fmt.Sprintf("\r\n--%s\r\n", boundary)))
 	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n"))
 	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
+	w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
 	//w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
 
 	w.Write(htmlContent)
