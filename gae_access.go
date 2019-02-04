@@ -1370,6 +1370,152 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 	return token, err
 }
 
+type GaeScheduledConnector struct {
+	Uuid      string      `json:",omitempty"`
+	Label     string      `json:",omitempty"`
+	Config    []*KeyValue `json:",omitempty" datastore:",noindex"`
+	Data      []*KeyValue `json:",omitempty" datastore:",noindex"`
+	Frequency string      `json:",omitempty" datastore:",noindex"` // daily, hourly, weekly
+	Hour      int         `json:",omitempty" datastore:",noindex"` // if hourly/weekly, what hour
+	Day       int         `json:",omitempty" datastore:",noindex"` // if weekly, what day
+	LastRun   *time.Time  `json:",omitempty"`
+	Disabled  bool
+}
+
+func (s *GaeScheduledConnector) ToScheduledConnector() *ScheduledConnector {
+	return &ScheduledConnector{
+		Uuid:      s.Uuid,
+		Label:     s.Label,
+		Config:    s.Config,
+		Data:      s.Data,
+		Frequency: s.Frequency,
+		Hour:      s.Hour,
+		Day:       s.Day,
+		LastRun:   s.LastRun,
+		Disabled:  s.Disabled,
+	}
+}
+
+func (am *GaeAccessManager) GetScheduledConnectors(requestor Session) ([]*ScheduledConnector, error) {
+	var items []*GaeScheduledConnector
+
+	q := datastore.NewQuery("ScheduledConnector").Namespace(requestor.GetSite()).Limit(500)
+	_, err := am.client.GetAll(am.ctx, q, &items)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]*ScheduledConnector, len(items), len(items))
+	for i, o := range items {
+		results[i] = o.ToScheduledConnector()
+	}
+
+	return results, nil
+}
+
+func (am *GaeAccessManager) GetScheduledConnector(uuid string, requestor Session) (*ScheduledConnector, error) {
+	k := datastore.NameKey("ScheduledConnector", uuid, nil)
+	k.Namespace = requestor.GetSite()
+
+	var i GaeScheduledConnector
+	if err := am.client.Get(am.ctx, k, &i); err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return i.ToScheduledConnector(), nil
+}
+
+func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	connector.Uuid = uuid.String()
+
+	k := datastore.NameKey("ScheduledConnector", uuid.String(), nil)
+	k.Namespace = updator.GetSite()
+
+	i := &GaeScheduledConnector{
+		Uuid:      connector.Uuid,
+		Label:     connector.Label,
+		Config:    connector.Config,
+		Data:      connector.Data,
+		Frequency: connector.Frequency,
+		Hour:      connector.Hour,
+		Day:       connector.Day,
+		LastRun:   connector.LastRun,
+		Disabled:  connector.Disabled,
+	}
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	k := datastore.NameKey("ScheduledConnector", connector.Uuid, nil)
+	k.Namespace = updator.GetSite()
+
+	var current GaeScheduledConnector
+	if err := am.client.Get(am.ctx, k, &current); err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil
+		}
+		return err
+	}
+
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid(connector.Uuid, updator.GetPersonUuid(), updator.GetDisplayName())
+
+	if connector.Day != current.Day {
+		bulk.AddIntItem("Day", int64(current.Day), int64(connector.Day))
+		current.Day = connector.Day
+	}
+
+	if connector.Hour != current.Hour {
+		bulk.AddIntItem("Hour", int64(current.Hour), int64(connector.Hour))
+		current.Hour = connector.Hour
+	}
+
+	if connector.Frequency != current.Frequency {
+		bulk.AddItem("Frequency", current.Frequency, connector.Frequency)
+		current.Frequency = connector.Frequency
+	}
+
+	if !MatchingDate(connector.LastRun, current.LastRun) {
+		bulk.AddDateItem("LastRun", current.LastRun, connector.LastRun)
+		current.LastRun = connector.LastRun
+	}
+
+	SyncKeyValueList("Data", &connector.Data, &current.Data, bulk)
+	SyncKeyValueList("Config", &connector.Config, &current.Config, bulk)
+
+	if bulk.HasUpdates() {
+		if err := am.AddEntityChangeLog(bulk, updator); err != nil {
+			return err
+		}
+		if _, err := am.client.Put(am.ctx, k, &current); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (am *GaeAccessManager) DeleteScheduledConnector(uuid string, updator Session) error {
+	k := datastore.NameKey("ScheduledConnector", uuid, nil)
+	k.Namespace = updator.GetSite()
+
+	if err := am.client.Delete(am.ctx, k); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (am *GaeAccessManager) WipeDatastore(namespace string) error {
 
 	for {
@@ -1394,4 +1540,78 @@ func (am *GaeAccessManager) WipeDatastore(namespace string) error {
 	}
 
 	return nil
+}
+
+// Changes found when copying a into b
+func SyncKeyValueList(fieldName string, a, b *[]*KeyValue, bulk EntityAuditLogCollection) bool {
+	updated := false
+	if fieldName != "" {
+		fieldName = fieldName + "."
+	}
+
+	// Look for added items
+	adds := []*KeyValue{}
+	for _, x := range *a {
+		var found *KeyValue = nil
+		for _, y := range *b {
+			if x.Key == y.Key {
+				found = x
+				break
+			}
+		}
+		if found == nil {
+			// a has an extra item, to add it to b
+			if x.Value != "" {
+				bulk.AddItem(fieldName+x.Key, "", x.Value)
+				adds = append(adds, x)
+				updated = true
+			}
+		}
+	}
+	for _, add := range adds {
+		*b = append(*b, add)
+	}
+
+	// Look for removed items
+	for _, x := range *b {
+		var found *KeyValue = nil
+		for _, y := range *a {
+			if y.Key == x.Key {
+				found = x
+			}
+		}
+		if found == nil {
+			// a has a missing item, remove it from b
+			if x.Value != "" {
+				bulk.AddItem(fieldName+x.Key, x.Value, "")
+				x.Value = ""
+				updated = true
+			}
+		}
+	}
+
+	for _, _ = range *b {
+		for i, v := range *b {
+			if v.Value == "" {
+				*b = append((*b)[0:i], (*b)[i+1:]...)
+				break
+			}
+		}
+	}
+
+	// Look for matching items
+	for _, x := range *b {
+		for _, y := range *a {
+			if x.Key == y.Key {
+				// item is in both, compare it
+				if x.Value != y.Value {
+					bulk.AddItem(fieldName+x.Key, x.Value, y.Value)
+					x.Value = y.Value
+					updated = true
+				}
+			}
+		}
+	}
+
+	return updated
 }

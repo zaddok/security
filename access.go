@@ -67,6 +67,12 @@ type AccessManager interface {
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
 	AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error
 
+	GetScheduledConnectors(requestor Session) ([]*ScheduledConnector, error)
+	GetScheduledConnector(uuid string, requestor Session) (*ScheduledConnector, error)
+	AddScheduledConnector(connector *ScheduledConnector, updator Session) error
+	UpdateScheduledConnector(connector *ScheduledConnector, updator Session) error
+	DeleteScheduledConnector(uuid string, updator Session) error
+
 	WipeDatastore(namespace string) error
 }
 

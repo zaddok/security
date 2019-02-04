@@ -152,3 +152,22 @@ func Underscorify(text string) string {
 	text = strings.Replace(text, ":", "", -1)
 	return text
 }
+
+// MatchingDate checks if two dates are equal, were one or both may be nil. Two dates
+// are considered to match if both dates are nil, or both have the same number of seconds
+// since 1970
+func MatchingDate(a, b *time.Time) bool {
+	if a != nil && b == nil {
+		return false
+	}
+	if b != nil && a == nil {
+		return false
+	}
+	if a == nil && b == nil {
+		return true
+	}
+	if a.Unix() != b.Unix() {
+		return false
+	}
+	return true
+}

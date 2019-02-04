@@ -704,3 +704,23 @@ func (s *CqlSession) HasRole(uid string) bool {
 	_, found := s.RoleMap[uid]
 	return found
 }
+
+func (am *CqlAccessManager) GetScheduledConnectors(requestor Session) ([]*ScheduledConnector, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetScheduledConnector(uuid string, requestor Session) (*ScheduledConnector, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) AddScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) UpdateScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	return errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) DeleteScheduledConnector(uuid string, updator Session) error {
+	return errors.New("unimplemented")
+}
