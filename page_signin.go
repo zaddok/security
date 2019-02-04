@@ -75,6 +75,6 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			MaxAge:   60 * 60 * 24 * COOKIE_DAYS,
 		}
 		http.SetCookie(w, cookie)
-		http.Redirect(w, r, "/"+refer+"?e=s", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/"+refer, http.StatusTemporaryRedirect)
 	}
 }

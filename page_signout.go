@@ -30,6 +30,6 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 		if err != nil && session != nil && session.IsAuthenticated() {
 			am.Log().Info("Signout from %s %s", session.GetFirstName(), session.GetLastName())
 		}
-		http.Redirect(w, r, "/?e=s", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
 }
