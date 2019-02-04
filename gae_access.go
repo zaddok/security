@@ -32,6 +32,7 @@ type GaeAccessManager struct {
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
 	connectorInfo             []*ConnectorInfo
+	systemSessions            map[string]Session
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -213,13 +214,14 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *
 	picklistStore := NewGaePicklistStore(projectId, client, ctx)
 
 	return &GaeAccessManager{
-		client:        client,
-		ctx:           ctx,
-		log:           log,
-		setting:       settings,
-		throttle:      throttle,
-		picklistStore: picklistStore,
-		template:      t,
+		client:         client,
+		ctx:            ctx,
+		log:            log,
+		setting:        settings,
+		throttle:       throttle,
+		picklistStore:  picklistStore,
+		template:       t,
+		systemSessions: map[string]Session{},
 	}, nil, client, ctx
 }
 
@@ -1011,6 +1013,11 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 
 // Request the session information associated the site hostname and cookie in the web request
 func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
+	found, ok := g.systemSessions[site+"|"+firstname+"|"+lastname]
+	if ok {
+		return found, nil
+	}
+
 	now := time.Now()
 	firstname = strings.TrimSpace(firstname)
 	lastname = strings.TrimSpace(lastname)
@@ -1062,6 +1069,8 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 	for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
 		session.RoleMap[v] = true
 	}
+
+	g.systemSessions[site+"|"+firstname+"|"+lastname] = session
 
 	return session, nil
 }
