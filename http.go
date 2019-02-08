@@ -221,6 +221,8 @@ func BinaryFile(data *[]byte, cacheTime int) func(w http.ResponseWriter, r *http
 			w.Header().Set("Content-type", "image/svg+xml")
 		} else if strings.HasSuffix(path, ".jpg") {
 			w.Header().Set("Content-type", "image/jpg")
+		} else if strings.HasSuffix(path, ".gif") {
+			w.Header().Set("Content-type", "image/gif")
 		} else if strings.HasSuffix(path, ".css") {
 			w.Header().Set("Content-type", "text/css")
 		} else {
