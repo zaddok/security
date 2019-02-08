@@ -79,6 +79,8 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/api/", ApiPage(st, am, siteName, siteDescription))
 
+	http.HandleFunc("/i/loading.gif", BinaryFile(&loadingGif, 604800))
+
 	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(&FAregularEOT, 604800))
 	http.HandleFunc("/font/fa-regular-400.ttf", BinaryFile(&FAregularTTF, 604800))
 	http.HandleFunc("/font/fa-regular-400.woff", BinaryFile(&FAregularWOFF, 604800))
