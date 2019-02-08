@@ -1,4 +1,4 @@
-package main
+package security
 
 var loadingGif []byte = []byte{71, 73, 70, 56, 57, 97, 0, 1, 0, 1, 247,
 	0, 0, 0, 0, 0, 146, 59, 65, 216, 87,
