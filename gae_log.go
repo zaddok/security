@@ -327,7 +327,11 @@ func (e *GaeEntityAudit) GetDocumentFilename() string {
 	if e.ValueType == "document" {
 		i := strings.LastIndex(e.OldValue, "|")
 		if i > 0 {
-			return e.OldValue[i+1:]
+			f := e.OldValue[i+1:]
+			if f != "" {
+				return f
+			}
+			return e.NewValue[i+1:]
 		}
 	}
 	return ""
