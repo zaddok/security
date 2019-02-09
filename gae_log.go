@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -312,7 +313,46 @@ func (e *GaeEntityAudit) GetValueType() string {
 	return e.ValueType
 }
 
+func (e *GaeEntityAudit) GetDocumentType() string {
+	if e.ValueType == "document" {
+		i := strings.LastIndex(e.OldValue, "|")
+		if i > 0 {
+			return e.OldValue[0:i]
+		}
+	}
+	return ""
+}
+
+func (e *GaeEntityAudit) GetDocumentFilename() string {
+	if e.ValueType == "document" {
+		i := strings.LastIndex(e.OldValue, "|")
+		if i > 0 {
+			return e.OldValue[i+1:]
+		}
+	}
+	return ""
+}
+
 func (e *GaeEntityAudit) GetActionType() string {
+	if e.ValueType == "document" {
+		i := strings.LastIndex(e.OldValue, "|")
+		if i > 0 {
+			//docType := e.OldValue[0:i]
+			ov := e.OldValue[i+1:]
+			nv := e.OldValue[i+1:]
+			if ov != "" && nv != "" {
+				return "update"
+			}
+			if ov == "" && nv != "" {
+				return "add"
+			}
+			if ov != "" && nv == "" {
+				return "delete"
+			}
+		}
+
+	}
+
 	if e.OldValue != "" && e.NewValue != "" {
 		return "update"
 	}
