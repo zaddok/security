@@ -343,7 +343,7 @@ func (e *GaeEntityAudit) GetActionType() string {
 		if i > 0 {
 			//docType := e.OldValue[0:i]
 			ov := e.OldValue[i+1:]
-			nv := e.OldValue[i+1:]
+			nv := e.NewValue[i+1:]
 			if ov != "" && nv != "" {
 				return "update"
 			}

@@ -6,6 +6,37 @@ import (
 	"github.com/zaddok/log"
 )
 
+func TestEntityAuditLogCollection(t *testing.T) {
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid("uuid", "uuid", "name")
+
+	bulk.AddDocumentItem("Support", "passport", "", "file.txt")
+	bulk.AddDocumentItem("Support", "passport", "file.txt", "")
+
+	items := bulk.GetItems()
+	if len(items) != 2 {
+		t.Fatalf("AddDocumentItem() calls should have resulted in two items: %d", len(items))
+	}
+
+	if items[0].GetActionType() != "add" {
+		t.Fatalf("AddDocumentItem() item 0 should be add")
+	}
+	if items[0].GetDocumentFilename() != "file.txt" {
+		t.Fatalf("AddDocumentItem() item 0 filename should be 'file.txt'")
+	}
+
+	if items[1].GetActionType() != "delete" {
+		t.Fatalf("AddDocumentItem() item 0 should be add")
+	}
+	if items[1].GetDocumentFilename() != "file.txt" {
+		t.Fatalf("AddDocumentItem() item 1 filename should should be 'file.txt'")
+	}
+	if items[1].GetDocumentType() != "passport" {
+		t.Fatalf("AddDocumentItem() item 1 document type should should be 'passport'")
+	}
+
+}
+
 func TestEntityAudit(t *testing.T) {
 
 	/*
