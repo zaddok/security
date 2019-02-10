@@ -32,7 +32,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		value := strings.TrimSpace(r.FormValue("value"))
 		description := strings.TrimSpace(r.FormValue("description"))
 		index, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("index")), 10, 64)
-		if key != "" {
+		if r.Method == "POST" && key != "" {
 			err := am.PicklistStore().AddPicklistItem(session.GetSite(), picklistName, key, value, description, index)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -251,8 +251,8 @@ tr td a.not_deprecated::before {
   <form method="post">
 	<div class="modal-body">
 	<table>
-		<tr><th>Code</th><td><input type="text" name="code" placeholder="code"/></td></tr>
-		<tr><th>Name</th><td><input type="text" name="name" placeholder="name"/></td></tr>
+		<tr><th>Key</th><td><input type="text" name="key" placeholder="key"/></td></tr>
+		<tr><th>Value</th><td><input type="text" name="value" placeholder="value"/></td></tr>
 		<tr><th>Description</th><td><textarea name="description" class="description"></textarea></td></tr>
 		<tr><th>Index</th><td><input type="text" name="index" placeholder="10"/></td></tr>
 	</table>
@@ -267,7 +267,7 @@ var modal = document.getElementById('myModal');
 var span = document.getElementsByClassName("close")[0];
 span.onclick = function() { modal.style.display = "none"; }
 window.onclick = function(event) { if (event.target == modal) { modal.style.display = "none"; } }
-</script>,
+</script>
 
 {{template "admin_footer" .}}
 {{end}}
