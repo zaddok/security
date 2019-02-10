@@ -25,7 +25,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		parts := strings.Split(path, "/")
 		picklistName := parts[len(parts)-1]
 		if picklistName == "picklist" {
-			picklistName = "unknown"
+			picklistName = ""
 		}
 
 		key := strings.TrimSpace(r.FormValue("key"))
@@ -33,6 +33,10 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		description := strings.TrimSpace(r.FormValue("description"))
 		index, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("index")), 10, 64)
 		if r.Method == "POST" && key != "" {
+			if !session.HasRole("s4") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			err := am.PicklistStore().AddPicklistItem(session.GetSite(), picklistName, key, value, description, index)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -42,6 +46,10 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		toggle := strings.TrimSpace(r.FormValue("toggle"))
 		if toggle != "" {
+			if !session.HasRole("s4") {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
 			err := am.PicklistStore().TogglePicklistItem(session.GetSite(), picklistName, toggle)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
@@ -106,9 +114,10 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return p.Picklists[j] > p.Picklists[i]
 		})
 
-		if picklistName == "" {
+		if picklistName == "" && len(p.Picklists) > 0 {
 			picklistName = p.Picklists[0]
 		}
+
 		p.Picklist = picklistName
 		p.Title = []string{"Picklists", picklistName}
 
@@ -217,14 +226,14 @@ tr td a.not_deprecated::before {
 
 <div class="picklist_items">
 <h2>{{.Picklist}}</h2>
-<table>
+<table id="picklist_item_table">
 <thead>
 <tr>
 	<th>Code</th>
 	<th>Name</th>
 	<th>Description</th>
 	<th>Deprecated</th>
-	<th>Index</th>
+	<th data-sort-method="number">Index</th>
 </tr>
 </thead>
 <tbody>
@@ -233,13 +242,17 @@ tr td a.not_deprecated::before {
 	<td>{{.Key}}</td>
 	<td>{{.Value}}</td>
 	<td>{{.Description}}</td>
-	<td><a class="{{if .IsDeprecated}}deprecated{{else}}not_deprecated{{end}}" href="/z/picklist/{{.Picklist}}?toggle={{.Key}}"></a></td>
+	<td><a class="{{if .IsDeprecated}}deprecated{{else}}not_deprecated{{end}}"{{if $.Session.HasRole "s4"}} href="/z/picklist/{{.Picklist}}?toggle={{.Key}}"{{end}}></a></td>
 	<td>{{.Index}}</td>
 </tr>
 {{end}}
 </tbody>
 </table>
 </div>
+
+<script src='/tablesort.js'></script>
+<script src='/tablesort.number.js'></script>
+<script>new Tablesort(document.getElementById('picklist_item_table'));</script>
 
 
 <div id="myModal" class="modal">
