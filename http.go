@@ -40,7 +40,6 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	}
 	st = st.Funcs(fm)
 	for i, page := range []string{
-		ActivateTemplate,
 		AdminTemplate,
 		accountsTemplate,
 		accountHistoryTemplate,

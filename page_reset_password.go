@@ -25,19 +25,28 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			return
 		}
 
-		type Page struct {
-			SiteName          string
-			SigninDescription string
-			SupplimentalCss   string
-			Token             string
-			Session           Session
-			Errors            []string
-			Infos             []string
-			Successes         []string
+		type SignupPageData struct {
+			SiteName        string
+			SiteDescription string
+			SigninEmail     string
+			SupplimentalCss string
+			FirstName       string
+			LastName        string
+			Email           string
+			Password        string
+			Password2       string
+			Referer         string
+			Token           string
+			AllowSignup     bool
+			Session         Session
+			Errors          []string
+			Infos           []string
+			Successes       []string
 		}
-		p := &Page{}
+
+		p := &SignupPageData{}
 		p.SiteName = siteName
-		p.SigninDescription = siteDescription
+		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
 		p.Token = token
 		p.Session = session
@@ -63,6 +72,14 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 				success, message, err := am.ResetPassword(session.GetSite(), token, r.FormValue("new_password1"), IpFromRequest(r))
 				if success {
 					p.Successes = append(p.Successes, "Your password has been reset.")
+
+					err = t.ExecuteTemplate(w, "signin_page", p)
+					if err != nil {
+						am.Log().Notice("Error displaying 'signup' page: %v", err)
+						w.Write([]byte("Error displaying 'signup' page"))
+						return
+					}
+					return
 				} else if message != "" {
 					p.Errors = append(p.Errors, message)
 				} else if err != nil {
