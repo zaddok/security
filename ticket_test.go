@@ -36,6 +36,7 @@ func TestTicketManager(t *testing.T) {
 			user.GetFirstName(),
 			user.GetLastName(),
 			user.GetEmail(),
+			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
 			"127.0.0.1",
