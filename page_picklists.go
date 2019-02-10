@@ -32,7 +32,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		value := strings.TrimSpace(r.FormValue("value"))
 		description := strings.TrimSpace(r.FormValue("description"))
 		index, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("index")), 10, 64)
-		if r.Method == "POST" && key != "" {
+		if r.Method == "POST" && key != "" && picklistName != "" {
 			if !session.HasRole("s4") {
 				ShowErrorForbidden(w, r, t, siteName)
 				return
@@ -45,7 +45,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		}
 
 		toggle := strings.TrimSpace(r.FormValue("toggle"))
-		if toggle != "" {
+		if toggle != "" && picklistName != "" {
 			if !session.HasRole("s4") {
 				ShowErrorForbidden(w, r, t, siteName)
 				return
@@ -135,7 +135,7 @@ var picklistTemplate = `
 {{define "picklist_admin"}}
 {{template "admin_header" .}}
 <div id="actions">
-<a href="javascript:document.getElementById('myModal').style.display='block'" class="note">Add Item</a>
+{{if $.Session.HasRole "s4"}}<a href="javascript:document.getElementById('myModal').style.display='block'" class="note">Add Item</a>{{end}}
 </div>
 
 <style type="text/css">
@@ -200,7 +200,7 @@ tr td a.not_deprecated::before:hover {
 tr td a.deprecated::before,
 tr td a.not_deprecated::before {
 	display: inline-block;
-	color: #ccc;
+	color: #888;
 	padding-right: 0.2em;
 	padding-left: 0.2em;
 	font-size: 0.9em;
@@ -213,6 +213,20 @@ tr td a.not_deprecated::before {
 	content: "\f06e";
 }
 
+.picklist_items h2 {
+	text-align: center;
+}
+.picklist_items h2::before {
+	padding-right: 0.3em;
+	padding-left: 0.2em;
+	font-size: 0.9em;
+	opacity: 0.3;
+	font-family: FontAwesomeSolid;
+	content: "\f022";
+
+}
+table tbody tr td:nth-child(4) { text-align: center; }
+table { margin-left: auto; margin-right: auto; }
 </style>
 
 
@@ -229,8 +243,8 @@ tr td a.not_deprecated::before {
 <table id="picklist_item_table">
 <thead>
 <tr>
-	<th>Code</th>
-	<th>Name</th>
+	<th>Key</th>
+	<th>Value</th>
 	<th>Description</th>
 	<th>Deprecated</th>
 	<th data-sort-method="number">Index</th>
