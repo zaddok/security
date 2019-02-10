@@ -96,6 +96,44 @@ func (t *GaeTicketManager) GetTicketsByPersonUuid(personUuid string, requestor S
 	return tickets, nil
 }
 
+func (t *GaeTicketManager) GetTicketsByParentUuid(parentType, parentUuid string, requestor Session) ([]Ticket, error) {
+	var tickets []Ticket
+
+	pkey := datastore.NameKey(parentType, parentUuid, nil)
+	pkey.Namespace = requestor.GetSite()
+
+	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Ancestor(pkey).Order("-Created").Limit(200)
+	it := t.client.Run(t.ctx, q)
+	for {
+		e := new(GaeTicket)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, e)
+	}
+
+	return tickets, nil
+}
+func (t *GaeTicketManager) GetTicketsByStatusParentUuid(status, parentType, parentUuid string, requestor Session) ([]Ticket, error) {
+	var tickets []Ticket
+
+	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Filter("Status =", status).Order("-Created").Limit(200)
+	it := t.client.Run(t.ctx, q)
+	for {
+		e := new(GaeTicket)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		tickets = append(tickets, e)
+	}
+
+	return tickets, nil
+}
+
 func (t *GaeTicketManager) GetTicketResponses(uuid string) ([]TicketResponse, error) {
 	var responses []TicketResponse
 
@@ -108,7 +146,11 @@ func (t *GaeTicketManager) SearchTickets(keyword string, requestor Session) ([]T
 	return tickets, nil
 }
 
-func (t *GaeTicketManager) AddTicket(status, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error) {
+func (t *GaeTicketManager) AddTicket(status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error) {
+	return t.AddTicketWithParent("", "", status, personUuid, firstName, lastName, email, ticketType, subject, message, ip, tags, assignedTo, watchedBy, userAgent, requestor)
+}
+
+func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid, status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error) {
 	var ticket GaeTicket
 
 	uuid, err := uuid.NewUUID()
@@ -123,6 +165,7 @@ func (t *GaeTicketManager) AddTicket(status, personUuid, firstName, lastName, em
 	ticket.LastName = lastName
 	ticket.Email = email
 	ticket.Subject = subject
+	ticket.Type = ticketType
 	ticket.Message = message
 	ticket.IP = ip
 	ticket.Tags = tags
@@ -165,6 +208,7 @@ type GaeTicket struct {
 	FirstName  string
 	LastName   string
 	Email      string
+	Type       string
 	Subject    string
 	Message    string
 	IP         string
@@ -192,6 +236,9 @@ func (t *GaeTicket) GetLastName() string {
 }
 func (t *GaeTicket) GetEmail() string {
 	return t.Email
+}
+func (t *GaeTicket) GetType() string {
+	return t.Type
 }
 func (t *GaeTicket) GetSubject() string {
 	return t.Subject

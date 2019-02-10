@@ -81,6 +81,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 				session.GetFirstName(),
 				session.GetLastName(),
 				session.GetEmail(),
+				"f",
 				p.MessageSubject+"\nURL: "+p.CurrentUrl,
 				p.MessageText,
 				p.CurrentIP,

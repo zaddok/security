@@ -11,12 +11,15 @@ type TicketManager interface {
 	GetTicketsByStatus(status string, requestor Session) ([]Ticket, error)
 	GetTicketsByEmail(email string, requestor Session) ([]Ticket, error)
 	GetTicketsByPersonUuid(personUuid string, requestor Session) ([]Ticket, error)
+	GetTicketsByParentUuid(parentType, parentUuid string, requestor Session) ([]Ticket, error)
+	GetTicketsByStatusParentUuid(status, parentType, parentUuid string, requestor Session) ([]Ticket, error)
 
 	GetTicketResponses(uuid string) ([]TicketResponse, error)
 
 	SearchTickets(keyword string, requestor Session) ([]Ticket, error)
 
-	AddTicket(status, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
+	AddTicketWithParent(parentType, parentUuid, status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
+	AddTicket(status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
 	AddTicketResponse(response TicketResponse, requestor Session) error
 
 	Log() log.Log
@@ -33,6 +36,7 @@ type Ticket interface {
 	GetLastName() string
 	GetEmail() string
 	GetSubject() string
+	GetType() string // New Feature, Bug, Enhancement, etc...
 	GetMessage() string
 	GetIP() string
 	GetTags() []string
