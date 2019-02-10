@@ -182,6 +182,17 @@ func FirstRequestOnSite(site string, am AccessManager) {
 			ps.AddPicklistItem(site, "day", "saturday", "Saturday", "", 7)
 		}
 
+		items := [][]string{
+			[]string{"ticket.type", "f", "Feedback", "General feedback comment"},
+			[]string{"ticket.type", "s", "Support", "General support request"},
+			[]string{"ticket.type", "c", "Complaint", "Customer complaint"},
+		}
+		for _, x := range items {
+			if i, _ := ps.GetPicklistItem(site, x[0], x[1]); i == nil || i.GetValue() == "" {
+				ps.AddPicklistItem(site, x[0], x[1], x[2], x[3], 0)
+			}
+		}
+
 		list, err = ps.GetPicklist(site, "country")
 		if err != nil {
 			return
