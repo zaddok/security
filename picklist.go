@@ -31,5 +31,6 @@ type PicklistStore interface {
 	AddPicklistItem(site, picklist, key, value, description string, index int64) error
 	AddPicklistItemDeprecated(site, picklist, key, value, description string, index int64) error
 	DeprecatePicklistItem(site, picklist, key string) error
+	TogglePicklistItem(site, picklist, key string) error
 	GetPicklists(site string) (map[string]map[string]PicklistItem, error)
 }

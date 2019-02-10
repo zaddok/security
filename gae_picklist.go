@@ -131,8 +131,61 @@ func (s *GaePicklistStore) GetPicklistItem(site, picklist, key string) (Picklist
 
 // Store a configuration setting. Stores in cache, and flushes through to database.
 func (s *GaePicklistStore) DeprecatePicklistItem(site, picklist, key string) error {
-	//picklist = strings.ToLower(picklist)
-	//key = strings.ToLower(key)
+	picklist = strings.ToLower(picklist)
+	key = strings.ToLower(key)
+
+	k := datastore.NameKey("PicklistItem", picklist+"|"+key, nil)
+	k.Namespace = site
+	var i GaePicklistItem
+	if err := s.client.Get(s.ctx, k, &i); err != nil {
+		return err
+	}
+	if i.Deprecated != true {
+		i.Deprecated = true
+		if _, err := s.client.Put(s.ctx, k, &i); err != nil {
+			return err
+		}
+		pl, err := s.GetPicklist(site, picklist)
+		if err != nil {
+			return err
+		}
+
+		value, exists := pl[key]
+		if exists {
+			value.(*GaePicklistItem).Deprecated = true
+			return nil
+		}
+	}
+
+	return nil
+}
+
+// Store a configuration setting. Stores in cache, and flushes through to database.
+func (s *GaePicklistStore) TogglePicklistItem(site, picklist, key string) error {
+	picklist = strings.ToLower(picklist)
+	key = strings.ToLower(key)
+
+	k := datastore.NameKey("PicklistItem", picklist+"|"+key, nil)
+	k.Namespace = site
+	var i GaePicklistItem
+	if err := s.client.Get(s.ctx, k, &i); err != nil {
+		return err
+	}
+
+	i.Deprecated = !i.Deprecated
+	if _, err := s.client.Put(s.ctx, k, &i); err != nil {
+		return err
+	}
+	pl, err := s.GetPicklist(site, picklist)
+	if err != nil {
+		return err
+	}
+
+	value, exists := pl[key]
+	if exists {
+		value.(*GaePicklistItem).Deprecated = i.Deprecated
+		return nil
+	}
 
 	return nil
 }

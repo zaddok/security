@@ -25,7 +25,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		parts := strings.Split(path, "/")
 		picklistName := parts[len(parts)-1]
 		if picklistName == "picklist" {
-			picklistName = ""
+			picklistName = "unknown"
 		}
 
 		key := strings.TrimSpace(r.FormValue("key"))
@@ -40,9 +40,9 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			}
 		}
 
-		delete := strings.TrimSpace(r.FormValue("delete"))
-		if delete != "" {
-			err := am.PicklistStore().DeprecatePicklistItem(session.GetSite(), picklistName, delete)
+		toggle := strings.TrimSpace(r.FormValue("toggle"))
+		if toggle != "" {
+			err := am.PicklistStore().TogglePicklistItem(session.GetSite(), picklistName, toggle)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -183,6 +183,27 @@ body {
 	background-size: 17em auto;
 	background-repeat: repeat-y;
 }
+
+tr td a.deprecated::before:hover,
+tr td a.not_deprecated::before:hover {
+	text-decoration: none;
+}
+tr td a.deprecated::before,
+tr td a.not_deprecated::before {
+	display: inline-block;
+	color: #ccc;
+	padding-right: 0.2em;
+	padding-left: 0.2em;
+	font-size: 0.9em;
+	font-family: FontAwesomeSolid;
+}
+tr td a.deprecated::before {
+	content: "\f070";
+}
+tr td a.not_deprecated::before {
+	content: "\f06e";
+}
+
 </style>
 
 
@@ -197,6 +218,7 @@ body {
 <div class="picklist_items">
 <h2>{{.Picklist}}</h2>
 <table>
+<thead>
 <tr>
 	<th>Code</th>
 	<th>Name</th>
@@ -204,15 +226,18 @@ body {
 	<th>Deprecated</th>
 	<th>Index</th>
 </tr>
+</thead>
+<tbody>
 {{range .PicklistItems}}
-<tr>
+<tr{{if .IsDeprecated}}class="deprecated"{{end}}>
 	<td>{{.Key}}</td>
 	<td>{{.Value}}</td>
 	<td>{{.Description}}</td>
-	<td>{{.IsDeprecated}}</td>
+	<td><a class="{{if .IsDeprecated}}deprecated{{else}}not_deprecated{{end}}" href="/z/picklist/{{.Picklist}}?toggle={{.Key}}"></a></td>
 	<td>{{.Index}}</td>
 </tr>
 {{end}}
+</tbody>
 </table>
 </div>
 
