@@ -7,7 +7,12 @@ import (
 )
 
 type TicketManager interface {
+	// GetTicket looks up a parentless ticket by ticked uuid
 	GetTicket(uuid string, requestor Session) (Ticket, error)
+
+	// GetTicketWithParent looks up a ticket by uuid with a specfic parent object
+	GetTicketWithParent(parentType, parentUuid, uuid string, requestor Session) (Ticket, error)
+
 	GetTicketsByStatus(status string, requestor Session) ([]Ticket, error)
 	GetTicketsByEmail(email string, requestor Session) ([]Ticket, error)
 	GetTicketsByPersonUuid(personUuid string, requestor Session) ([]Ticket, error)

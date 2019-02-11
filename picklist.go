@@ -8,6 +8,7 @@ const PICKLIST_CACHE_TIMEOUT = 120
 // but may appear in legacy data, and will appear in a picklist when
 // that data record has previously been set to include that deprecated.
 type PicklistItem interface {
+	// GetKey returns the short lowercase code for this picklist item
 	GetKey() string
 
 	// GetValue returns the visible human readable name of the picklist item
@@ -18,7 +19,11 @@ type PicklistItem interface {
 
 	// GetIndex returns a number used to override the natural alphabetical sort order
 	GetIndex() int64
+
 	IsDeprecated() bool
+
+	// GetPicklistName returns the name of the picklist this item belogs to
+	GetPicklistName() string
 }
 
 type PicklistStore interface {

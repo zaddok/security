@@ -156,40 +156,24 @@ func FirstRequestOnSite(site string, am AccessManager) {
 			ps.AddPicklistItem(site, "title", "ps", "Pastor", "", 0)
 		}
 
-		list, err = ps.GetPicklist(site, "sex")
-		if err != nil {
-			return
-		}
-		if list == nil || len(list) == 0 {
-			am.Log().Debug("Prefill picklist: sex")
-			ps.AddPicklistItem(site, "sex", "u", "Unspecified", "U", 3)
-			ps.AddPicklistItem(site, "sex", "m", "Male", "Male", 1)
-			ps.AddPicklistItem(site, "sex", "f", "Female", "F", 2)
-		}
-
-		list, err = ps.GetPicklist(site, "day")
-		if err != nil {
-			return
-		}
-		if list == nil || len(list) == 0 {
-			am.Log().Debug("Prefill picklist: day")
-			ps.AddPicklistItem(site, "day", "sunday", "Sunday", "", 1)
-			ps.AddPicklistItem(site, "day", "monday", "Monday", "", 2)
-			ps.AddPicklistItem(site, "day", "tuesday", "Tuesday", "", 3)
-			ps.AddPicklistItem(site, "day", "wednesday", "Wednesday", "", 4)
-			ps.AddPicklistItem(site, "day", "thursday", "Thursday", "", 5)
-			ps.AddPicklistItem(site, "day", "friday", "Friday", "", 6)
-			ps.AddPicklistItem(site, "day", "saturday", "Saturday", "", 7)
-		}
-
-		items := [][]string{
-			[]string{"ticket.type", "f", "Feedback", "General feedback comment"},
-			[]string{"ticket.type", "s", "Support", "General support request"},
-			[]string{"ticket.type", "c", "Complaint", "Customer complaint"},
+		items := []PicklistItem{
+			&GaePicklistItem{"sex", "m", "Male", "", false, 1},
+			&GaePicklistItem{"sex", "f", "Female", "", false, 2},
+			&GaePicklistItem{"sex", "u", "Unspecified", "", false, 3},
+			&GaePicklistItem{"day", "sunday", "Sunday", "", false, 1},
+			&GaePicklistItem{"day", "monday", "Monday", "", false, 2},
+			&GaePicklistItem{"day", "tuesday", "Tuesday", "", false, 3},
+			&GaePicklistItem{"day", "wednesday", "Wednesday", "", false, 4},
+			&GaePicklistItem{"day", "thursday", "Thursday", "", false, 5},
+			&GaePicklistItem{"day", "friday", "Friday", "", false, 6},
+			&GaePicklistItem{"day", "saturday", "Saturday", "", false, 7},
+			&GaePicklistItem{"ticket.type", "f", "Feedback", "General feedback comment", false, 1},
+			&GaePicklistItem{"ticket.type", "s", "Technical Support", "General support request", false, 2},
+			&GaePicklistItem{"ticket.type", "c", "Complaint", "Customer complaint", false, 3},
 		}
 		for _, x := range items {
-			if i, _ := ps.GetPicklistItem(site, x[0], x[1]); i == nil || i.GetValue() == "" {
-				ps.AddPicklistItem(site, x[0], x[1], x[2], x[3], 0)
+			if i, _ := ps.GetPicklistItem(site, x.GetPicklistName(), x.GetKey()); i == nil || i.GetValue() == "" {
+				ps.AddPicklistItem(site, x.GetPicklistName(), x.GetKey(), x.GetValue(), x.GetDescription(), x.GetIndex())
 			}
 		}
 

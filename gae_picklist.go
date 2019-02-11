@@ -46,6 +46,10 @@ func (pi *GaePicklistItem) IsDeprecated() bool {
 	return pi.Deprecated
 }
 
+func (pi *GaePicklistItem) GetPicklistName() string {
+	return pi.Picklist
+}
+
 func NewGaePicklistStore(projectID string, client *datastore.Client, ctx context.Context) PicklistStore {
 	ps := &GaePicklistStore{
 		client: client,

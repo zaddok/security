@@ -26,8 +26,8 @@ type GaeTicketManager struct {
 	am     AccessManager
 }
 
+// GetTicket looks up a parentless ticket by ticked uuid
 func (t *GaeTicketManager) GetTicket(uuid string, requestor Session) (Ticket, error) {
-
 	k := datastore.NameKey("Ticket", uuid, nil)
 	k.Namespace = requestor.GetSite()
 
@@ -42,6 +42,26 @@ func (t *GaeTicketManager) GetTicket(uuid string, requestor Session) (Ticket, er
 	return &ticket, nil
 }
 
+// GetTicketWithParent looks up a ticket by uuid with a specfic parent object
+func (t *GaeTicketManager) GetTicketWithParent(parentType, parentUuid, uuid string, requestor Session) (Ticket, error) {
+	pk := datastore.NameKey(parentType, parentUuid, nil)
+	pk.Namespace = requestor.GetSite()
+
+	k := datastore.NameKey("Ticket", uuid, pk)
+	k.Namespace = requestor.GetSite()
+
+	var ticket GaeTicket
+	err := t.client.Get(t.ctx, k, &ticket)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &ticket, nil
+}
+
+// GetTicketsByStatus returns all tickets with this status. For example: list all open tickets in the system.
 func (t *GaeTicketManager) GetTicketsByStatus(status string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
@@ -60,6 +80,7 @@ func (t *GaeTicketManager) GetTicketsByStatus(status string, requestor Session) 
 	return tickets[:], nil
 }
 
+// GetTicketsByEmail returns all tickets created by a specific person with this specific email address
 func (t *GaeTicketManager) GetTicketsByEmail(email string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
@@ -78,6 +99,7 @@ func (t *GaeTicketManager) GetTicketsByEmail(email string, requestor Session) ([
 	return tickets[:], nil
 }
 
+// GetTicketsByPersonUuid returns all tickets created by a specific person
 func (t *GaeTicketManager) GetTicketsByPersonUuid(personUuid string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
@@ -96,6 +118,7 @@ func (t *GaeTicketManager) GetTicketsByPersonUuid(personUuid string, requestor S
 	return tickets, nil
 }
 
+// GetTicketsByParentUuid returns all ticket
 func (t *GaeTicketManager) GetTicketsByParentUuid(parentType, parentUuid string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
@@ -119,7 +142,10 @@ func (t *GaeTicketManager) GetTicketsByParentUuid(parentType, parentUuid string,
 func (t *GaeTicketManager) GetTicketsByStatusParentUuid(status, parentType, parentUuid string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Filter("Status =", status).Order("-Created").Limit(200)
+	pkey := datastore.NameKey(parentType, parentUuid, nil)
+	pkey.Namespace = requestor.GetSite()
+
+	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Ancestor(pkey).Filter("Status =", status).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -174,7 +200,13 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid, status, p
 	ticket.UserAgent = userAgent
 	ticket.Created = time.Now()
 
-	k := datastore.NameKey("Ticket", ticket.Uuid, nil)
+	var pk *datastore.Key = nil
+	if parentType != "" && parentUuid != "" {
+		pk = datastore.NameKey(parentType, parentUuid, nil)
+		pk.Namespace = requestor.GetSite()
+	}
+
+	k := datastore.NameKey("Ticket", ticket.Uuid, pk)
 	k.Namespace = requestor.GetSite()
 	if _, err := t.client.Put(t.ctx, k, &ticket); err != nil {
 		t.Log().Error("AddTicket() failed. Error: %v", err)
