@@ -780,7 +780,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"mitzi", "mary", "mittie", "mitty"},
 	{"mitzie", "mittie", "mitty"},
 	{"monet", "nettie"},
-	{"monica", "monna", "monnie"},
+	{"monica", "monna", "monnie", "monika"},
 	{"monteleon", "monte"},
 	{"montesque", "monty"},
 	{"montgomery", "monty", "gum"},
