@@ -5,3 +5,15 @@ indexes:
   - name: LogUuid
   - name: Recorded
 
+- kind: Ticket
+  ancestor: yes
+  properties:
+  - name: Created
+    direction: desc
+
+- kind: Ticket
+  properties:
+  - name: Status
+  - name: Created
+    direction: desc
+

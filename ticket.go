@@ -45,6 +45,7 @@ type Ticket interface {
 	GetMessage() string
 	GetIP() string
 	GetTags() []string
+	GetResponseCount() int64
 	GetAssignedTo() []TicketViewer
 	GetWatchedBy() []TicketViewer
 	GetUserAgent() string

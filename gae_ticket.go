@@ -234,21 +234,22 @@ func (t *GaeTicketManager) PicklistStore() PicklistStore {
 
 // Information about a support ticket
 type GaeTicket struct {
-	Uuid       string
-	Status     string
-	PersonUuid string
-	FirstName  string
-	LastName   string
-	Email      string
-	Type       string
-	Subject    string
-	Message    string
-	IP         string
-	Tags       []string
-	AssignedTo []TicketViewer
-	WatchedBy  []TicketViewer
-	UserAgent  string
-	Created    time.Time
+	Uuid          string
+	Status        string
+	PersonUuid    string
+	FirstName     string
+	LastName      string
+	Email         string
+	Type          string
+	Subject       string
+	Message       string
+	IP            string
+	Tags          []string
+	AssignedTo    []TicketViewer
+	WatchedBy     []TicketViewer
+	UserAgent     string
+	ResponseCount int64
+	Created       time.Time
 }
 
 func (t *GaeTicket) GetUuid() string {
@@ -283,6 +284,9 @@ func (t *GaeTicket) GetIP() string {
 }
 func (t *GaeTicket) GetTags() []string {
 	return t.Tags
+}
+func (t *GaeTicket) GetResponseCount() int64 {
+	return t.ResponseCount
 }
 func (t *GaeTicket) GetAssignedTo() []TicketViewer {
 	return t.AssignedTo
