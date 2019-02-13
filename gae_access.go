@@ -1009,8 +1009,9 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		// Lookup session from cache if possible
 		var session *GaeSession
 		v, _ := g.sessionCache.Get(cookie)
-		session = v.(*GaeSession)
-		if session == nil {
+		if v != nil {
+			session = v.(*GaeSession)
+		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
 			if err == datastore.ErrNoSuchEntity || session.Expiry < time.Now().Unix() {
