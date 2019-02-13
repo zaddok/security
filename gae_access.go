@@ -517,7 +517,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			RoleMap:       nil,
 		}
 
-		return session, token, nil
+		return session, "", nil
 	}
 
 	// User lookup failed
