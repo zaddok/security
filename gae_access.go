@@ -176,6 +176,13 @@ func (s *GaeSession) IsAuthenticated() bool {
 }
 
 func (s *GaeSession) HasRole(uid string) bool {
+	if s.RoleMap == nil {
+		s.RoleMap = make(map[string]bool)
+		for _, v := range strings.FieldsFunc(s.Roles, func(c rune) bool { return c == ':' }) {
+			s.RoleMap[v] = true
+		}
+	}
+
 	_, found := s.RoleMap[uid]
 	return found
 }
@@ -507,13 +514,10 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			Roles:         items[0].Roles,
 			CSRF:          RandomString(8),
 			Authenticated: true,
-			RoleMap:       make(map[string]bool),
-		}
-		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-			session.RoleMap[v] = true
+			RoleMap:       nil,
 		}
 
-		return session, "", nil
+		return session, token, nil
 	}
 
 	// User lookup failed
@@ -989,10 +993,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 		Authenticated: true,
 		CSRF:          RandomString(8),
 		Roles:         "s1:s2:s3:s4",
-		RoleMap:       make(map[string]bool),
-	}
-	for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-		session.RoleMap[v] = true
+		RoleMap:       nil, // built on demand
 	}
 
 	g.systemSessions[site+"|"+firstname+"|"+lastname] = session
@@ -1023,17 +1024,15 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			// Fill the transient/non-persisted fields
 			session.Token = cookie
 			session.Site = site
-			for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-				session.RoleMap[v] = true
-			}
-
+			session.RoleMap = nil
 			g.sessionCache.Set(cookie, session)
 		}
 
-		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
+		expiry := g.setting.GetWithDefault(site, `session.expiry`, ``)
 		if expiry == "" {
-			expiry = "3600"
+			expiry = `3600`
 			g.log.Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
+			g.setting.Put(site, `session.expiry`, `3600`)
 		}
 		e, err := strconv.ParseInt(expiry, 10, 64)
 		if err != nil {
@@ -1089,6 +1088,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 	session, err := g.Session(site, cookie)
 
 	// Delete session information
+	g.sessionCache.Remove(cookie)
 
 	return session, err
 }
@@ -1286,6 +1286,7 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 	expiry := g.setting.GetWithDefault(site, "session.expiry", "")
 	if expiry == "" {
 		expiry = "3600"
+		g.setting.Put(site, `session.expiry`, `3600`)
 		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
 	}
 	e, err := strconv.ParseInt(expiry, 10, 64)
@@ -1302,29 +1303,29 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 		return "", err
 	}
 
-	ri := &GaeSession{
-		PersonUUID: personUuid.String(),
-		Token:      token,
-		FirstName:  firstName,
-		LastName:   lastName,
-		Email:      email,
-		Created:    now,
-		Expiry:     expires,
-		Roles:      roles,
-		RoleMap:    make(map[string]bool),
-		CSRF:       RandomString(8),
-	}
-	for _, v := range strings.FieldsFunc(ri.Roles, func(c rune) bool { return c == ':' }) {
-		ri.RoleMap[v] = true
-	}
-	k := datastore.NameKey("Session", token, nil)
-	k.Namespace = site
-	if _, err := g.client.Put(g.ctx, k, ri); err != nil {
-		return "", err
+	session := &GaeSession{
+		PersonUUID:    personUuid.String(),
+		Token:         token,
+		FirstName:     firstName,
+		LastName:      lastName,
+		Email:         email,
+		Created:       now,
+		Expiry:        expires,
+		Roles:         roles,
+		Authenticated: true,
+		RoleMap:       nil,
+		CSRF:          RandomString(8),
 	}
 
-	tkn := token[0:len(token)/2] + "..."
-	g.Log().Debug("Created session \"%s\" for user %v.", tkn, personUuid)
+	k := datastore.NameKey("Session", token, nil)
+	k.Namespace = site
+	if _, err := g.client.Put(g.ctx, k, session); err != nil {
+		return "", err
+	}
+	g.sessionCache.Set(token, session)
+
+	//tkn := token[0:len(token)/2] + "..."
+	//g.Log().Debug("Created session \"%s\" for user %v.", tkn, personUuid)
 
 	return token, err
 }

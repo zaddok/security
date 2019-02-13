@@ -30,14 +30,48 @@ func TestAccountManagement(t *testing.T) {
 
 		// Get people should fail with guest session
 		people, err := am.GetPeople(user)
-		if err == nil && err.Error() != "Permission deniedx" {
+		if err == nil && err.Error() != "Permission denied" {
 			t.Fatalf("am.GetPeople() should fail with permission denied. %v", err)
 		}
 
-		// Authenticate
-		user, _, err = am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
+		// Authenticate to get a session object
+		cookie := ""
+		user, cookie, err = am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Authenticate() failed: %v", err)
+		}
+		if !user.IsAuthenticated() {
+			t.Fatalf("am.Authenticate() user session should have been considered authenticated")
+		}
+		if !user.HasRole("s1") {
+			t.Fatalf("am.Authenticate() user role 's1' missing")
+		}
+		if !user.HasRole("s4") {
+			t.Fatalf("am.Authenticate() user role 's1' missing")
+		}
+		if user.HasRole("s100") {
+			t.Fatalf("am.Authenticate() user role 's100' not expected")
+		}
+
+		// Refetch the session object (it would have been cached)
+		user2, err := am.Session(TestSite, cookie)
+		if err != nil {
+			t.Fatalf("am.Session() failed: %v", err)
+		}
+		if user2 == nil {
+			t.Fatalf("am.Session() failed to return cached sesion object")
+		}
+		if !user2.IsAuthenticated() {
+			t.Fatalf("am.Authenticate() user session should have been considered authenticated")
+		}
+		if !user2.HasRole("s1") {
+			t.Fatalf("am.Authenticate() user role 's1' missing")
+		}
+		if !user2.HasRole("s4") {
+			t.Fatalf("am.Authenticate() user role 's1' missing")
+		}
+		if user2.HasRole("s100") {
+			t.Fatalf("am.Authenticate() user role 's100' not expected")
 		}
 
 		// Get people should now succeed
