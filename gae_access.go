@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"github.com/bluele/gcache"
 	"github.com/google/uuid"
 	"github.com/zaddok/log"
 	"google.golang.org/api/iterator"
@@ -31,6 +32,7 @@ type GaeAccessManager struct {
 	notificationEventHandlers []NotificationEventHandler
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
+	sessionCache              gcache.Cache
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -220,6 +222,7 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *
 		picklistStore:  picklistStore,
 		template:       t,
 		systemSessions: map[string]Session{},
+		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
 	}, nil, client, ctx
 }
 
@@ -1002,28 +1005,28 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
 		k := datastore.NameKey("Session", cookie, nil)
 		k.Namespace = site
-		i := new(GaeSession)
-		err := g.client.Get(g.ctx, k, i)
-		if err == datastore.ErrNoSuchEntity || i.Expiry < time.Now().Unix() {
-			return g.GuestSession(site), nil
-		} else if err != nil {
-			return g.GuestSession(site), err
-		}
 
-		session := &GaeSession{
-			Site:          site,
-			PersonUUID:    i.PersonUUID,
-			Token:         cookie,
-			FirstName:     i.FirstName,
-			LastName:      i.LastName,
-			Email:         i.Email,
-			Authenticated: true,
-			Roles:         i.Roles,
-			CSRF:          i.CSRF,
-			RoleMap:       make(map[string]bool),
-		}
-		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-			session.RoleMap[v] = true
+		// Lookup session from cache if possible
+		var session *GaeSession
+		v, _ := g.sessionCache.Get(cookie)
+		session = v.(*GaeSession)
+		if session == nil {
+			session = new(GaeSession)
+			err := g.client.Get(g.ctx, k, session)
+			if err == datastore.ErrNoSuchEntity || session.Expiry < time.Now().Unix() {
+				return g.GuestSession(site), nil
+			} else if err != nil {
+				return g.GuestSession(site), err
+			}
+
+			// Fill the transient/non-persisted fields
+			session.Token = cookie
+			session.Site = site
+			for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
+				session.RoleMap[v] = true
+			}
+
+			g.sessionCache.Set(cookie, session)
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -1040,17 +1043,18 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		// Check this user session hasn't hit its maximum hard limit
 		maxAge := g.setting.GetInt(site, "session.max_age", 2592000)
 		newExpiry := time.Now().Add(time.Second * time.Duration(e)).Unix()
-		if i.Created+int64(maxAge) < newExpiry {
+		if session.Created+int64(maxAge) < newExpiry {
 			g.log.Warning("User session hit \"session.max_age\".")
+			g.sessionCache.Remove(cookie)
 			return g.GuestSession(site), nil
 		}
 
 		// So "expires" is still in the future... Update the session expiry in the database
-		if newExpiry-i.Expiry > 30 {
+		if newExpiry-session.Expiry > 30 {
 			//g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
 
-			i.Expiry = newExpiry
-			if _, err := g.client.Put(g.ctx, k, i); err != nil {
+			session.Expiry = newExpiry
+			if _, err := g.client.Put(g.ctx, k, session); err != nil {
 				g.Log().Error("Session() Session expiry update failed: %v", err)
 				return session, nil
 			}
