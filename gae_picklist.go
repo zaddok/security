@@ -17,6 +17,15 @@ type GaePicklistStore struct {
 	picklists map[string]map[string]map[string]PicklistItem //host -> picklist -> values
 }
 
+func NewGaePicklistStore(projectID string, client *datastore.Client, ctx context.Context) PicklistStore {
+	// Expiry and picklist items begin empty/unset
+	ps := &GaePicklistStore{
+		client: client,
+		ctx:    ctx,
+	}
+	return ps
+}
+
 type GaePicklistItem struct {
 	Picklist    string
 	Key         string
@@ -48,14 +57,6 @@ func (pi *GaePicklistItem) IsDeprecated() bool {
 
 func (pi *GaePicklistItem) GetPicklistName() string {
 	return pi.Picklist
-}
-
-func NewGaePicklistStore(projectID string, client *datastore.Client, ctx context.Context) PicklistStore {
-	ps := &GaePicklistStore{
-		client: client,
-		ctx:    ctx,
-	}
-	return ps
 }
 
 func (s *GaePicklistStore) GetPicklists(site string) (map[string]map[string]PicklistItem, error) {
@@ -275,8 +276,8 @@ func (s *GaePicklistStore) refreshCache(site string) error {
 	if s.picklists == nil || s.picklists[site] == nil || s.expires.Before(time.Now()) {
 		if s.picklists == nil {
 			s.picklists = make(map[string]map[string]map[string]PicklistItem)
-			s.expires = time.Now().Add(time.Duration(PICKLIST_CACHE_TIMEOUT) * time.Second)
 		}
+		s.expires = time.Now().Add(time.Duration(PICKLIST_CACHE_TIMEOUT) * time.Second)
 		rs, err := s.load(site)
 		if err != nil {
 			s.picklists = nil
