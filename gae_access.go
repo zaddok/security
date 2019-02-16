@@ -125,6 +125,7 @@ func (p *GaePerson) HasRole(uid string) bool {
 }
 
 type GaeSession struct {
+	Site          string `datastore:"-"`
 	PersonUUID    string
 	FirstName     string
 	LastName      string
@@ -134,7 +135,6 @@ type GaeSession struct {
 	Authenticated bool
 	Token         string `datastore:"-"`
 	CSRF          string
-	Site          string `datastore:"-"`
 	Roles         string
 	RoleMap       map[string]bool `datastore:"-"`
 }
@@ -505,9 +505,9 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
 		session := &GaeSession{
+			Site:          site,
 			PersonUUID:    items[0].Uuid,
 			Token:         token,
-			Site:          site,
 			FirstName:     items[0].FirstName,
 			LastName:      items[0].LastName,
 			Email:         items[0].Email,
@@ -1073,8 +1073,8 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 
 func (g *GaeAccessManager) GuestSession(site string) Session {
 	return &GaeSession{
-		Token:         "",
 		Site:          site,
+		Token:         "",
 		FirstName:     "",
 		LastName:      "",
 		Authenticated: false,
@@ -1133,8 +1133,8 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 
 	if requestor == nil {
 		requestor = &GaeSession{
-			PersonUUID: si.Uuid,
 			Site:       site,
+			PersonUUID: si.Uuid,
 			FirstName:  firstName,
 			LastName:   lastName,
 			Email:      email,
@@ -1304,6 +1304,7 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 	}
 
 	session := &GaeSession{
+		Site:          site,
 		PersonUUID:    personUuid.String(),
 		Token:         token,
 		FirstName:     firstName,
