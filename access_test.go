@@ -42,6 +42,10 @@ func TestWatch(t *testing.T) {
 		t.Fatalf("am.GetWatching() failed: %v", err)
 	}
 	if len(items) != 2 {
+		log.Debug("Watching")
+		for _, item := range items {
+			log.Debug(" - %v", item)
+		}
 		t.Fatalf("Expected to find two watching items, found %d", len(items))
 	}
 

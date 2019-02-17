@@ -152,6 +152,11 @@ type EntityAudit interface {
 // EntityAuditLogCollection defines an interface used by the BulkUpdateEntityAuditLog() function.
 // It facilitates collecting together multiple updates to be persisted in one operation.
 type EntityAuditLogCollection interface {
+
+	// A unique identifier for this particular change
+	GetUuid() string
+
+	// The entity in the system that has been altered
 	GetEntityUuid() string
 	GetPersonUuid() string
 	GetPersonName() string

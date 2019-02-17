@@ -613,9 +613,15 @@ func (am *GaeAccessManager) AddEntityChangeLog(ec EntityAuditLogCollection, requ
 		return errors.New("Invalid entity uuid.")
 	}
 
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	e.Uuid = uuid.String()
+
 	pkey := datastore.NameKey("EntityChange", e.EntityUuid, nil)
 	pkey.Namespace = requestor.GetSite()
-	key := datastore.IncompleteKey("EntityChange", pkey)
+	key := datastore.NameKey("EntityChange", e.Uuid, pkey)
 	key.Namespace = requestor.GetSite()
 
 	if _, err := am.client.Put(am.ctx, key, e); err != nil {

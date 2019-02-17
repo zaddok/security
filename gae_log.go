@@ -392,11 +392,16 @@ func (e *GaeEntityAudit) GetPersonName() string {
 }
 
 type GaeEntityAuditLogCollection struct {
+	Uuid       string
 	EntityUuid string
 	PersonUuid string
 	PersonName string
 	Date       time.Time
 	Items      []GaeEntityAudit
+}
+
+func (ec *GaeEntityAuditLogCollection) GetUuid() string {
+	return ec.Uuid
 }
 
 func (ec *GaeEntityAuditLogCollection) SetEntityUuidPersonUuid(entityUuid, personUuid, personName string) {

@@ -23,7 +23,7 @@ func TestAccountManagement(t *testing.T) {
 	{
 
 		// Create account
-		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "Stacy@test.com", "s1:s2:s3:s4", HashPassword("fIr10g-!"), "127.0.0.1", nil)
+		_, err := am.AddPerson(TestSite, "Stacy", "Smith", "TACM.Stacy@test.com", "s1:s2:s3:s4", HashPassword("fIr10g-!"), "127.0.0.1", nil)
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
@@ -35,13 +35,13 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Authenticate to get a session object
-		cookie := ""
-		user, cookie, err = am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
+		msg := ""
+		user, msg, err = am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Authenticate() failed: %v", err)
 		}
 		if !user.IsAuthenticated() {
-			t.Fatalf("am.Authenticate() user session should have been considered authenticated")
+			t.Fatalf("am.Authenticate() user session should have been considered authenticated: " + msg)
 		}
 		if !user.HasRole("s1") {
 			t.Fatalf("am.Authenticate() user role 's1' missing")
@@ -54,7 +54,7 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Refetch the session object (it would have been cached)
-		user2, err := am.Session(TestSite, cookie)
+		user2, err := am.Session(TestSite, user.GetToken())
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -62,7 +62,7 @@ func TestAccountManagement(t *testing.T) {
 			t.Fatalf("am.Session() failed to return cached sesion object")
 		}
 		if !user2.IsAuthenticated() {
-			t.Fatalf("am.Authenticate() user session should have been considered authenticated")
+			t.Fatalf("am.Authenticate() user session should have been considered authenticated: " + user.GetToken())
 		}
 		if !user2.HasRole("s1") {
 			t.Fatalf("am.Authenticate() user role 's1' missing")
@@ -92,7 +92,7 @@ func TestAccountManagement(t *testing.T) {
 		if people[0].GetSite() != TestSite {
 			t.Fatalf("am.GetPeople() did not return correct site. Expected \"%s\", found %s", TestSite, people[0].GetSite())
 		}
-		if people[0].GetEmail() != "stacy@test.com" {
+		if people[0].GetEmail() != "tacm.stacy@test.com" {
 			t.Fatalf("am.GetPeople() did not return correct email. Expected \"stacy@test.com\", found %s", people[0].GetEmail())
 		}
 	}
@@ -115,7 +115,7 @@ func TestAccountManagement(t *testing.T) {
 
 	// Test updating an account
 	{
-		session, _, err := am.Authenticate(TestSite, "stacy@test.com", "fIr10g-!", "127.0.0.1")
+		session, _, err := am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1")
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
