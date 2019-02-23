@@ -518,6 +518,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"janice", "jan"},
 	{"jannett", "nettie"},
 	{"jasper", "jap", "casper"},
+	{"jason", "jayson"},
 	{"jayme", "jay"},
 	{"jean", "jane", "jeannie"},
 	{"jeanette", "jessie", "jean", "janet", "nettie"},
