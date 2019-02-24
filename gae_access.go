@@ -1350,15 +1350,7 @@ type GaeScheduledConnector struct {
 	Disabled    bool
 }
 
-func (s *GaeScheduledConnector) ToString() string {
-	b, err := json.Marshal(s)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
-
-func (s *GaeScheduledConnector) ToJson() string {
+func (s *GaeScheduledConnector) String() string {
 	b, err := json.Marshal(s)
 	if err != nil {
 		panic(err)

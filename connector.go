@@ -49,6 +49,14 @@ func (sc *ScheduledConnector) GetConfig(key string) string {
 	return ""
 }
 
+func (s *ScheduledConnector) String() string {
+	b, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
 func (sc *ScheduledConnector) SetConfig(key, value string) {
 	ukey := Underscorify(key)
 	if value == "" {
