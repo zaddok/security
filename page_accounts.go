@@ -221,7 +221,7 @@ var accountsTemplate = `
 	<tr>
 		<td><a href="/z/account.details/{{.Uuid}}?q={{$.Query}}">{{.FirstName}} {{.LastName}}</a></td>
 		<td><a href="/z/account.details/{{.Uuid}}?q={{$.Query}}">{{.Email}}</a></td>
-		<td><a href="/z/account.details/{{.Uuid}}?q={{$.Query}}"></a></td>
+		<td><a href="/z/account.details/{{.Uuid}}?q={{$.Query}}">{{.LastSignin | log_date}}</a></td>
 	</tr>
 {{end}}{{end}}
 </table>

@@ -16,7 +16,7 @@ type ConnectorInfo struct {
 	SystemIcon  string
 	DataType    string // Subject, Student, Course, etc...
 	Name        string
-	Description string
+	Description string // Description of the purpose of this connector
 	Label       string
 	Direction   int
 	Config      [][]string

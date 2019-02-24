@@ -44,13 +44,15 @@ var systemlogTemplate = `
 {{template "admin_header" .}}
 
 <style type="text/css">
+table#system_log tr.error td {
+	color: #e22;
+}
 table#system_log tr.warning td {
-	color: #c88;
+	color: #c55;
 }
-table#system_log tr.auth td {
-	color: #c88;
+table#system_log tr.notice td {
+	color: #e07d10;
 }
-table#system_log tr.debug+tr.auth td,
 table#system_log tr.debug td {
 	color: #aaa;
 }
@@ -69,7 +71,7 @@ table#system_log tr.debug td {
 	</tr>
 	{{range .Entries}}
 	<tr class="{{.GetLevel}} {{.GetComponent}}">
-		<td>{{.GetRecorded}}</td>
+		<td>{{.GetRecorded | audit_time}}</td>
 		<td>{{.GetIP}}</td>
 		<td>{{.GetLevel}}</td>
 		<td>{{.GetComponent}}</td>

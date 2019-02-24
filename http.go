@@ -21,7 +21,13 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		"safe": func(s string) template.CSS {
 			return template.CSS(s)
 		},
-		"log_date": func(t time.Time) string {
+		"audit_time": func(t time.Time) string {
+			return t.In(defaultTimezone).Format("2006-01-02 15:04.05")
+		},
+		"log_date": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
 			return t.In(defaultTimezone).Format("2006-01-02 15:04")
 		},
 		"timeout": func(site string) int {
