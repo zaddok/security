@@ -32,7 +32,11 @@ type ScheduledConnector struct {
 	Hour      int         `json:",omitempty"` // if hourly/weekly, what hour
 	Day       int         `json:",omitempty"` // if weekly, what day
 	LastRun   *time.Time  `json:",omitempty"`
-	Disabled  bool
+
+	// Describes the configuration of this connector. i.e. Where do we connect to? What server? What domain? etc...
+	Description string `json:",omitempty"`
+
+	Disabled bool
 }
 
 func (sc *ScheduledConnector) GetConfig(key string) string {

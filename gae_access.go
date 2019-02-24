@@ -1338,28 +1338,30 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 }
 
 type GaeScheduledConnector struct {
-	Uuid      string      `json:",omitempty"`
-	Label     string      `json:",omitempty"`
-	Config    []*KeyValue `json:",omitempty" datastore:",noindex"`
-	Data      []*KeyValue `json:",omitempty" datastore:",noindex"`
-	Frequency string      `json:",omitempty" datastore:",noindex"` // daily, hourly, weekly
-	Hour      int         `json:",omitempty" datastore:",noindex"` // if hourly/weekly, what hour
-	Day       int         `json:",omitempty" datastore:",noindex"` // if weekly, what day
-	LastRun   *time.Time  `json:",omitempty"`
-	Disabled  bool
+	Uuid        string      `json:",omitempty"`
+	Label       string      `json:",omitempty"`
+	Config      []*KeyValue `json:",omitempty" datastore:",noindex"`
+	Data        []*KeyValue `json:",omitempty" datastore:",noindex"`
+	Description string      `json:",omitempty" datastore:",noindex"`
+	Frequency   string      `json:",omitempty" datastore:",noindex"` // daily, hourly, weekly
+	Hour        int         `json:",omitempty" datastore:",noindex"` // if hourly/weekly, what hour
+	Day         int         `json:",omitempty" datastore:",noindex"` // if weekly, what day
+	LastRun     *time.Time  `json:",omitempty"`
+	Disabled    bool
 }
 
 func (s *GaeScheduledConnector) ToScheduledConnector() *ScheduledConnector {
 	return &ScheduledConnector{
-		Uuid:      s.Uuid,
-		Label:     s.Label,
-		Config:    s.Config,
-		Data:      s.Data,
-		Frequency: s.Frequency,
-		Hour:      s.Hour,
-		Day:       s.Day,
-		LastRun:   s.LastRun,
-		Disabled:  s.Disabled,
+		Uuid:        s.Uuid,
+		Label:       s.Label,
+		Config:      s.Config,
+		Data:        s.Data,
+		Frequency:   s.Frequency,
+		Hour:        s.Hour,
+		Day:         s.Day,
+		LastRun:     s.LastRun,
+		Description: s.Description,
+		Disabled:    s.Disabled,
 	}
 }
 
@@ -1405,15 +1407,16 @@ func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector,
 	k.Namespace = updator.GetSite()
 
 	i := &GaeScheduledConnector{
-		Uuid:      connector.Uuid,
-		Label:     connector.Label,
-		Config:    connector.Config,
-		Data:      connector.Data,
-		Frequency: connector.Frequency,
-		Hour:      connector.Hour,
-		Day:       connector.Day,
-		LastRun:   connector.LastRun,
-		Disabled:  connector.Disabled,
+		Uuid:        connector.Uuid,
+		Label:       connector.Label,
+		Config:      connector.Config,
+		Data:        connector.Data,
+		Frequency:   connector.Frequency,
+		Hour:        connector.Hour,
+		Day:         connector.Day,
+		LastRun:     connector.LastRun,
+		Description: connector.Description,
+		Disabled:    connector.Disabled,
 	}
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		return err
@@ -1450,6 +1453,16 @@ func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 	if connector.Frequency != current.Frequency {
 		bulk.AddItem("Frequency", current.Frequency, connector.Frequency)
 		current.Frequency = connector.Frequency
+	}
+
+	if connector.Description != current.Description {
+		bulk.AddItem("Description", current.Description, connector.Description)
+		current.Description = connector.Description
+	}
+
+	if connector.Disabled != current.Disabled {
+		bulk.AddBoolItem("Disabled", current.Disabled, connector.Disabled)
+		current.Disabled = connector.Disabled
 	}
 
 	if !MatchingDate(connector.LastRun, current.LastRun) {
