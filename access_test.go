@@ -183,6 +183,10 @@ func TestScheduledConnectors(t *testing.T) {
 		t.Fatalf("GetScheduledConnector() expected day=4. day=%d", search.Day)
 	}
 
+	if search.Uuid != ext2.Uuid {
+		t.Fatalf("GetScheduledConnector() expected uuid=%s. uuid was %s", ext2.Uuid, search.Uuid)
+	}
+
 	if search.Hour != 9 {
 		t.Fatalf("GetScheduledConnector() expected hour=4. hour=%d", search.Hour)
 	}
@@ -194,10 +198,16 @@ func TestScheduledConnectors(t *testing.T) {
 	search.Day = 3
 	search.Hour = 8
 	search.Frequency = "hourly"
+	search.Description = "my set"
 	search.SetData("c", "10")
 	err = am.UpdateScheduledConnector(search, user)
 	if err != nil {
 		t.Fatalf("UpdateScheduledConnector() failed: %s", err)
+		return
+	}
+	search, err = am.GetScheduledConnector(search.Uuid, user)
+	if err != nil {
+		t.Fatalf("GetScheduledConnector() failed: %s", err)
 		return
 	}
 	if search.Day != 3 {
@@ -206,6 +216,10 @@ func TestScheduledConnectors(t *testing.T) {
 
 	if search.Hour != 8 {
 		t.Fatalf("GetScheduledConnector() expected hour=8. hour=%d", search.Hour)
+	}
+
+	if search.Description != "my set" {
+		t.Fatalf("GetScheduledConnector() expected Description=\"my set\". Description was \"%s\"", search.Description)
 	}
 
 	if search.Frequency != "hourly" {

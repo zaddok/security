@@ -1383,6 +1383,10 @@ func (am *GaeAccessManager) GetScheduledConnectors(requestor Session) ([]*Schedu
 }
 
 func (am *GaeAccessManager) GetScheduledConnector(uuid string, requestor Session) (*ScheduledConnector, error) {
+	if uuid == "" {
+		return nil, errors.New("Invalid value for `uuid` parameter: " + uuid)
+	}
+
 	k := datastore.NameKey("ScheduledConnector", uuid, nil)
 	k.Namespace = requestor.GetSite()
 
@@ -1397,6 +1401,9 @@ func (am *GaeAccessManager) GetScheduledConnector(uuid string, requestor Session
 }
 
 func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	if connector.Uuid != "" {
+		return errors.New("Invalid value for `uuid` parameter: " + connector.Uuid)
+	}
 	uuid, err := uuid.NewUUID()
 	if err != nil {
 		return err
@@ -1426,6 +1433,9 @@ func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector,
 }
 
 func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnector, updator Session) error {
+	if connector.Uuid == "" {
+		return errors.New("Invalid value for `uuid` parameter: " + connector.Uuid)
+	}
 	k := datastore.NameKey("ScheduledConnector", connector.Uuid, nil)
 	k.Namespace = updator.GetSite()
 
