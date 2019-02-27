@@ -179,6 +179,13 @@ func MatchingDate(a, b *time.Time) bool {
 // smtp settings. Returns with a list of strings to present to the user if sending fails, or an
 // error object if a system error has occured.
 func SendEmail(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte) (*[]string, error) {
+	return SendEmailWithAttachment(am, site, subject, toEmail, toName, textContent, htmlContent, "", "", nil)
+}
+
+// SendEmail delivers an email message over smtp to the intended target using the preconfigured
+// smtp settings. Returns with a list of strings to present to the user if sending fails, or an
+// error object if a system error has occured.
+func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte, attachmentName, attachmentType string, attachment []byte) (*[]string, error) {
 	var results []string
 
 	smtpHostname := am.Setting().GetWithDefault(site, "smtp.hostname", "")
@@ -223,15 +230,20 @@ func SendEmail(am AccessManager, site, subject, toEmail, toName string, textCont
 	w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
 	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n\r\n"))
 	//w.Write([]byte("Content-Disposition: inline\r\n"))
-
 	w.Write(textContent)
 
 	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
 	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
 	w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
-	//w.Write([]byte("Content-Disposition: inline\r\n\r\n"))
-	//w.Write(htmlContent)
 	w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+
+	if attachmentName != "" && attachmentType != "" && len(attachment) > 0 {
+		w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
+		w.Write([]byte("Content-Type: " + attachmentType + "; charset=\"UTF-8\"\r\n"))
+		w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
+		w.Write([]byte("Content-Disposition: attachment; filename=\"" + attachmentName + "\""))
+		w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+	}
 
 	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s--\r\n", boundary)))
 
