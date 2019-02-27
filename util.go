@@ -240,9 +240,9 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 	if attachmentName != "" && attachmentType != "" && len(attachment) > 0 {
 		w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
 		w.Write([]byte("Content-Type: " + attachmentType + "; charset=\"UTF-8\"\r\n"))
-		w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
-		w.Write([]byte("Content-Disposition: attachment; filename=\"" + attachmentName + "\""))
-		w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+		w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
+		w.Write([]byte("Content-Disposition: attachment; filename=\"" + attachmentName + "\"\r\n\r\n"))
+		w.Write([]byte(base64.StdEncoding.EncodeToString(attachment)))
 	}
 
 	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s--\r\n", boundary)))
