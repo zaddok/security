@@ -49,6 +49,14 @@ func (es *GaeExternalSystemId) Value() string {
 	return es.EValue
 }
 
+func NewGaeExternalSystemId(i ExternalSystemId) *GaeExternalSystemId {
+	return &GaeExternalSystemId{
+		EExternalSystemUuid: i.ExternalSystemUuid(),
+		EType:               i.Type(),
+		EValue:              i.Value(),
+	}
+}
+
 func (am *GaeAccessManager) GetExternalSystemsByType(etype string, requestor Session) ([]ExternalSystem, error) {
 	results, err := am.GetExternalSystems(requestor)
 	if err != nil {
