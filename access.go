@@ -42,6 +42,13 @@ type AccessManager interface {
 	GetRecentLogCollections(requestor Session) ([]LogCollection, error)
 	GetLogCollection(uuid string, requestor Session) ([]LogEntry, error)
 
+	GetExternalSystems(requestor Session) ([]ExternalSystem, error)
+	GetExternalSystemsByType(etype string, requestor Session) ([]ExternalSystem, error)
+	GetExternalSystem(uuid string, requestor Session) (ExternalSystem, error)
+	AddExternalSystem(etype string, config []KeyValue, updator Session) (ExternalSystem, error)
+	UpdateExternalSystem(uuid string, config []KeyValue, updator Session) error
+	DeleteExternalSystem(uuid string, updator Session) error
+
 	// StartWatching records that a user is interested in notifications when an
 	// event of interest occurs
 	StartWatching(objectUuid, objectName, objectType string, user Session) error
@@ -171,6 +178,18 @@ type EntityAuditLogCollection interface {
 	AddBoolItem(attribute string, oldValue, newValue bool)
 	AddPicklistItem(attribute string, oldValue, newValue, valueType string)
 	HasUpdates() bool
+}
+
+type ExternalSystem interface {
+	Type() string
+	Uuid() string
+	Config() []KeyValue
+}
+
+type ExternalSystemId interface {
+	ExternalSystemUuid() string
+	Type() string
+	Value() string
 }
 
 const emailHtmlTemplates string = `
