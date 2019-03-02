@@ -16,7 +16,7 @@ import (
 type GaeExternalSystem struct {
 	EUuid   string     `datastore:"Uuid"`
 	EType   string     `datastore:"Type"` // Moodle, Blackboard, D2L, Wordpress, Formsite, etc...
-	EConfig []KeyValue `datastore:"Config"`
+	EConfig []KeyValue `datastore:"Config,noindex"`
 }
 
 func (es *GaeExternalSystem) Type() string {
