@@ -25,14 +25,15 @@ type ConnectorInfo struct {
 }
 
 type ScheduledConnector struct {
-	Uuid      string      `json:",omitempty"`
-	Label     string      `json:",omitempty"`
-	Config    []*KeyValue `json:",omitempty"`
-	Data      []*KeyValue `json:",omitempty"`
-	Frequency string      `json:",omitempty"` // daily, hourly, weekly
-	Hour      int         `json:",omitempty"` // if hourly/weekly, what hour
-	Day       int         `json:",omitempty"` // if weekly, what day
-	LastRun   *time.Time  `json:",omitempty"`
+	Uuid               string      `json:",omitempty"`
+	ExternalSystemUuid string      `json:",omitempty"`
+	Label              string      `json:",omitempty"`
+	Config             []*KeyValue `json:",omitempty"`
+	Data               []*KeyValue `json:",omitempty"`
+	Frequency          string      `json:",omitempty"` // daily, hourly, weekly
+	Hour               int         `json:",omitempty"` // if hourly/weekly, what hour
+	Day                int         `json:",omitempty"` // if weekly, what day
+	LastRun            *time.Time  `json:",omitempty"`
 
 	// Describes the configuration of this connector. i.e. Where do we connect to? What server? What domain? etc...
 	Description string `json:",omitempty"`
