@@ -32,21 +32,21 @@ func (es *GaeExternalSystem) Config() []KeyValue {
 }
 
 type GaeExternalSystemId struct {
-	externalSystemUuid string `datastore:"ExternalSystemUuid"`
-	etype              string `datastore:"Type"` // Moodle,  Formsite, etc
-	value              string `datastore:"Value"`
+	EExternalSystemUuid string `datastore:"ExternalSystemUuid"`
+	EType               string `datastore:"Type"` // Moodle,  Formsite, etc
+	EValue              string `datastore:"Value"`
 }
 
-func (es *GaeExternalSystemId) Uuid() string {
-	return es.externalSystemUuid
+func (es *GaeExternalSystemId) ExternalSystemUuid() string {
+	return es.EExternalSystemUuid
 }
 
 func (es *GaeExternalSystemId) Type() string {
-	return es.etype
+	return es.EType
 }
 
 func (es *GaeExternalSystemId) Value() string {
-	return es.value
+	return es.EValue
 }
 
 func (am *GaeAccessManager) GetExternalSystemsByType(etype string, requestor Session) ([]ExternalSystem, error) {
