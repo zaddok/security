@@ -31,6 +31,40 @@ func (es *GaeExternalSystem) Config() []KeyValue {
 	return es.EConfig
 }
 
+func (es *GaeExternalSystem) GetConfig(key string) string {
+	key = Underscorify(key)
+	for _, k := range es.EConfig {
+		if key == Underscorify(k.Key) {
+			return k.Value
+		}
+	}
+	return ""
+}
+
+func (es *GaeExternalSystem) SetConfig(key, value string) {
+	ukey := Underscorify(key)
+	if value == "" {
+		del := -1
+		for i, k := range es.EConfig {
+			if ukey == Underscorify(k.Key) {
+				del = i
+				break
+			}
+		}
+		if del >= 0 {
+			es.EConfig = append(es.EConfig[:del], es.EConfig[del+1:]...)
+		}
+		return
+	}
+	for _, k := range es.EConfig {
+		if ukey == Underscorify(k.Key) {
+			k.Value = value
+			return
+		}
+	}
+	es.EConfig = append(es.EConfig, KeyValue{key, value})
+}
+
 type GaeExternalSystemId struct {
 	EExternalSystemUuid string `datastore:"ExternalSystemUuid"`
 	EType               string `datastore:"Type"` // Moodle,  Formsite, etc

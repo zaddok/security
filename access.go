@@ -184,6 +184,8 @@ type ExternalSystem interface {
 	Type() string
 	Uuid() string
 	Config() []KeyValue
+	GetConfig(key string) string
+	SetConfig(key, value string)
 }
 
 type ExternalSystemId interface {
