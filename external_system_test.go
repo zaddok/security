@@ -47,9 +47,9 @@ func TestExternalSystem(t *testing.T) {
 	}
 
 	config = []KeyValue{
-		KeyValue{"server", "test.com"},
+		KeyValue{"server", "http://test.com/fish"},
 		KeyValue{"form", "form44"}}
-	_, err = am.AddExternalSystem("formsite", config, user)
+	ext3, err := am.AddExternalSystem("formsite", config, user)
 	if err != nil {
 		t.Fatalf("AddExternalSystem() failed: %s", err)
 		return
@@ -134,5 +134,9 @@ func TestExternalSystem(t *testing.T) {
 	}
 	if search == nil {
 		t.Fatalf("GetExternalSystem() external system should still exist: %s", ext2.Type())
+	}
+
+	if ext3.Describe() != "test.com" {
+		t.Fatalf("GetExternalSystem() external system Describe() should return \"test.com\", not %s", ext3.Describe())
 	}
 }

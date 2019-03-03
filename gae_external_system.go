@@ -7,6 +7,8 @@ package security
 
 import (
 	"errors"
+	"net/url"
+	"strings"
 
 	"cloud.google.com/go/datastore"
 	"github.com/google/uuid"
@@ -25,6 +27,24 @@ func (es *GaeExternalSystem) Type() string {
 
 func (es *GaeExternalSystem) Uuid() string {
 	return es.EUuid
+}
+
+func (es *GaeExternalSystem) Describe() string {
+	for _, e := range es.EConfig {
+		val := strings.ToLower(e.Value)
+		if strings.HasPrefix(strings.ToLower(e.Value), "http://") || strings.HasPrefix(strings.ToLower(e.Value), "https://") {
+			u, err := url.Parse(val)
+			if err == nil && u.Hostname() != "" {
+				return u.Hostname()
+			}
+
+			return val
+		}
+	}
+	if len(es.EConfig) > 0 {
+		return es.EConfig[0].Value
+	}
+	return es.EType
 }
 
 func (es *GaeExternalSystem) Config() []KeyValue {

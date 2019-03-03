@@ -184,8 +184,12 @@ type ExternalSystem interface {
 	Type() string
 	Uuid() string
 	Config() []KeyValue
+
 	GetConfig(key string) string
 	SetConfig(key, value string)
+
+	// Describe returns a brief string that will identify the external system against another one.
+	Describe() string
 }
 
 type ExternalSystemId interface {
