@@ -446,6 +446,11 @@ func (am *CqlAccessManager) GetSystemSession(site, firstname, lastname string) (
 	return nil, errors.New("unimplemented")
 }
 
+// Request the session information associated the site hostname and cookie in the web request
+func (am *CqlAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, roles string) (Session, error) {
+	return nil, errors.New("unimplemented")
+}
+
 func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 	if len(cookie) > 0 {
 		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles, email, csrf from session_token where site=? and uid=?", site, cookie).Iter()

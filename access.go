@@ -27,6 +27,7 @@ type AccessManager interface {
 	GuestSession(site string) Session
 	Invalidate(host, cookie string) (Session, error)
 	GetSystemSession(host, firstname, lastname string) (Session, error)
+	GetSystemSessionWithRoles(host, firstname, lastname, roles string) (Session, error)
 
 	Log() log.Log
 	Setting() Setting

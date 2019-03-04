@@ -948,6 +948,11 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 
 // Request the session information associated the site hostname and cookie in the web request
 func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
+	return g.GetSystemSessionWithRoles(site, firstname, lastname, "s1:s2:s3:s4")
+}
+
+// Request the session information associated the site hostname and cookie in the web request
+func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, roles string) (Session, error) {
 	found, ok := g.systemSessions[site+"|"+firstname+"|"+lastname]
 	if ok {
 		return found, nil
@@ -965,28 +970,32 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 	if person != nil {
 		puuid = person.GetUuid()
 	}
-	if person == nil {
+	if person == nil || (person.(*GaePerson)).Roles != roles {
 
-		uuid, err := uuid.NewUUID()
-		if err != nil {
-			return nil, err
+		if person == nil {
+			uuid, err := uuid.NewUUID()
+			if err != nil {
+				return nil, err
+			}
+			person = &GaePerson{
+				Uuid:      uuid.String(),
+				Site:      site,
+				FirstName: firstname,
+				LastName:  lastname,
+				Roles:     roles,
+				NameKey:   strings.ToLower(firstname + "|" + lastname),
+				Created:   &now,
+			}
 		}
-		person := &GaePerson{
-			Uuid:      uuid.String(),
-			Site:      site,
-			FirstName: firstname,
-			LastName:  lastname,
-			Roles:     "s1:s2:s3:s4",
-			NameKey:   strings.ToLower(firstname + "|" + lastname),
-			Created:   &now,
-		}
-		k := datastore.NameKey("Person", uuid.String(), nil)
+		(person.(*GaePerson)).Roles = roles
+
+		k := datastore.NameKey("Person", person.GetUuid(), nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, person); err != nil {
 			g.Log().Error("GetSystemSession() Person creation failed. Error: %v", err)
 			return nil, err
 		}
-		puuid = uuid.String()
+		puuid = person.GetUuid()
 	}
 
 	token := RandomString(32)
@@ -998,7 +1007,7 @@ func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (S
 		LastName:      lastname,
 		Authenticated: true,
 		CSRF:          RandomString(8),
-		Roles:         "s1:s2:s3:s4",
+		Roles:         roles,
 		RoleMap:       nil, // built on demand
 	}
 
