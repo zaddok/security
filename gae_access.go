@@ -1114,12 +1114,14 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 		return "", errors.New("Permission denied.")
 	}
 
-	if password != nil {
-		passwordCheck := PasswordStrength(*password)
-		if len(passwordCheck) > 0 {
-			return "", errors.New("Password is insecure. " + passwordCheck[0])
-		}
-	}
+	// Password is hashed, this doesnt make sense
+	/*
+		if password != nil {
+			passwordCheck := PasswordStrength(*password)
+			if len(passwordCheck) > 0 {
+				return "", errors.New("Password is insecure. " + passwordCheck[0])
+			}
+	}*/
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
