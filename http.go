@@ -108,6 +108,9 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 var firsts map[string]bool
 
 func FirstRequestOnSite(site string, am AccessManager) {
+	FirstRequestOnSiteWait(site, am, false)
+}
+func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 	if firsts == nil {
 		firsts = make(map[string]bool)
 	}
@@ -191,7 +194,7 @@ func FirstRequestOnSite(site string, am AccessManager) {
 			am.Log().Debug("Prefill picklist: country")
 			var c int64 = 10
 			for _, r := range IsoCountryList {
-				fmt.Println("add", r[1])
+				//fmt.Println("add", r[1])
 				if r[0] == "AUS" {
 					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 1)
 				} else if r[0] == "GBR" {
@@ -207,9 +210,13 @@ func FirstRequestOnSite(site string, am AccessManager) {
 		ps.AddPicklistItem(site, "country", "xxx0", "–", "", 9)
 	}()
 
-	go func() {
+	if wait {
 		am.RunVirtualHostSetupHandler(site)
-	}()
+	} else {
+		go func() {
+			am.RunVirtualHostSetupHandler(site)
+		}()
+	}
 }
 
 // Serve the contents of a binary file back to the web browser
