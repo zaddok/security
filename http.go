@@ -147,7 +147,6 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 		am.Setting().Put(site, "support_team.email", "support@example.com")
 	}
 
-
 	if wait {
 		prefilPicklists(site, am)
 		am.RunVirtualHostSetupHandler(site)
@@ -162,66 +161,66 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 }
 
 func prefilPicklists(site string, am AccessManager) {
-		ps := am.PicklistStore()
+	ps := am.PicklistStore()
 
-		list, err := ps.GetPicklist(site, "title")
-		if err != nil {
-			return
-		}
-		if list == nil || len(list) == 0 {
-			am.Log().Debug("Prefill picklist: title")
-			ps.AddPicklistItem(site, "title", "u", "", "", 0)
-			ps.AddPicklistItem(site, "title", "mr", "Mr", "", 0)
-			ps.AddPicklistItem(site, "title", "ms", "Ms", "", 0)
-			ps.AddPicklistItem(site, "title", "mrs", "Mrs", "", 0)
-			ps.AddPicklistItem(site, "title", "miss", "Miss", "", 0)
-			ps.AddPicklistItem(site, "title", "dr", "Dr", "U", 0)
-			ps.AddPicklistItem(site, "title", "ps", "Pastor", "", 0)
-		}
+	list, err := ps.GetPicklist(site, "title")
+	if err != nil {
+		return
+	}
+	if list == nil || len(list) == 0 {
+		am.Log().Debug("Prefill picklist: title")
+		ps.AddPicklistItem(site, "title", "u", "", "", 0)
+		ps.AddPicklistItem(site, "title", "mr", "Mr", "", 0)
+		ps.AddPicklistItem(site, "title", "ms", "Ms", "", 0)
+		ps.AddPicklistItem(site, "title", "mrs", "Mrs", "", 0)
+		ps.AddPicklistItem(site, "title", "miss", "Miss", "", 0)
+		ps.AddPicklistItem(site, "title", "dr", "Dr", "U", 0)
+		ps.AddPicklistItem(site, "title", "ps", "Pastor", "", 0)
+	}
 
-		items := []PicklistItem{
-			&GaePicklistItem{"sex", "m", "Male", "", false, 1},
-			&GaePicklistItem{"sex", "f", "Female", "", false, 2},
-			&GaePicklistItem{"sex", "u", "Unspecified", "", false, 3},
-			&GaePicklistItem{"day", "sunday", "Sunday", "", false, 1},
-			&GaePicklistItem{"day", "monday", "Monday", "", false, 2},
-			&GaePicklistItem{"day", "tuesday", "Tuesday", "", false, 3},
-			&GaePicklistItem{"day", "wednesday", "Wednesday", "", false, 4},
-			&GaePicklistItem{"day", "thursday", "Thursday", "", false, 5},
-			&GaePicklistItem{"day", "friday", "Friday", "", false, 6},
-			&GaePicklistItem{"day", "saturday", "Saturday", "", false, 7},
-			&GaePicklistItem{"ticket.type", "f", "Feedback", "General feedback comment", false, 1},
-			&GaePicklistItem{"ticket.type", "s", "Technical Support", "General support request", false, 2},
-			&GaePicklistItem{"ticket.type", "c", "Complaint", "Customer complaint", false, 3},
+	items := []PicklistItem{
+		&GaePicklistItem{"sex", "m", "Male", "", false, 1},
+		&GaePicklistItem{"sex", "f", "Female", "", false, 2},
+		&GaePicklistItem{"sex", "u", "Unspecified", "", false, 3},
+		&GaePicklistItem{"day", "sunday", "Sunday", "", false, 1},
+		&GaePicklistItem{"day", "monday", "Monday", "", false, 2},
+		&GaePicklistItem{"day", "tuesday", "Tuesday", "", false, 3},
+		&GaePicklistItem{"day", "wednesday", "Wednesday", "", false, 4},
+		&GaePicklistItem{"day", "thursday", "Thursday", "", false, 5},
+		&GaePicklistItem{"day", "friday", "Friday", "", false, 6},
+		&GaePicklistItem{"day", "saturday", "Saturday", "", false, 7},
+		&GaePicklistItem{"ticket.type", "f", "Feedback", "General feedback comment", false, 1},
+		&GaePicklistItem{"ticket.type", "s", "Technical Support", "General support request", false, 2},
+		&GaePicklistItem{"ticket.type", "c", "Complaint", "Customer complaint", false, 3},
+	}
+	for _, x := range items {
+		if i, _ := ps.GetPicklistItem(site, x.GetPicklistName(), x.GetKey()); i == nil || i.GetValue() == "" {
+			ps.AddPicklistItem(site, x.GetPicklistName(), x.GetKey(), x.GetValue(), x.GetDescription(), x.GetIndex())
 		}
-		for _, x := range items {
-			if i, _ := ps.GetPicklistItem(site, x.GetPicklistName(), x.GetKey()); i == nil || i.GetValue() == "" {
-				ps.AddPicklistItem(site, x.GetPicklistName(), x.GetKey(), x.GetValue(), x.GetDescription(), x.GetIndex())
+	}
+
+	list, err = ps.GetPicklist(site, "country")
+	if err != nil {
+		return
+	}
+	if list == nil || len(IsoCountryList) == 0 {
+		am.Log().Debug("Prefill picklist: country")
+		var c int64 = 10
+		for _, r := range IsoCountryList {
+			//fmt.Println("add", r[1])
+			if r[0] == "AUS" {
+				ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 1)
+			} else if r[0] == "GBR" {
+				ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 2)
+			} else if r[0] == "USA" {
+				ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 3)
+			} else {
+				ps.AddPicklistItem(site, "country", r[0], r[1], r[1], c)
+				c = c + 1
 			}
 		}
-
-		list, err = ps.GetPicklist(site, "country")
-		if err != nil {
-			return
-		}
-		if list == nil || len(IsoCountryList) == 0 {
-			am.Log().Debug("Prefill picklist: country")
-			var c int64 = 10
-			for _, r := range IsoCountryList {
-				//fmt.Println("add", r[1])
-				if r[0] == "AUS" {
-					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 1)
-				} else if r[0] == "GBR" {
-					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 2)
-				} else if r[0] == "USA" {
-					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], 3)
-				} else {
-					ps.AddPicklistItem(site, "country", r[0], r[1], r[1], c)
-					c = c + 1
-				}
-			}
-		}
-		ps.AddPicklistItem(site, "country", "xxx0", "–", "", 9)
+	}
+	ps.AddPicklistItem(site, "country", "xxx0", "–", "", 9)
 }
 
 // Serve the contents of a binary file back to the web browser
