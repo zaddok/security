@@ -147,7 +147,21 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 		am.Setting().Put(site, "support_team.email", "support@example.com")
 	}
 
-	go func() {
+
+	if wait {
+		prefilPicklists(site, am)
+		am.RunVirtualHostSetupHandler(site)
+	} else {
+		go func() {
+			prefilPicklists(site, am)
+		}()
+		go func() {
+			am.RunVirtualHostSetupHandler(site)
+		}()
+	}
+}
+
+func prefilPicklists(site string, am AccessManager) {
 		ps := am.PicklistStore()
 
 		list, err := ps.GetPicklist(site, "title")
@@ -208,15 +222,6 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 			}
 		}
 		ps.AddPicklistItem(site, "country", "xxx0", "–", "", 9)
-	}()
-
-	if wait {
-		am.RunVirtualHostSetupHandler(site)
-	} else {
-		go func() {
-			am.RunVirtualHostSetupHandler(site)
-		}()
-	}
 }
 
 // Serve the contents of a binary file back to the web browser
