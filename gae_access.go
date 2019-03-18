@@ -725,6 +725,15 @@ func (am *GaeAccessManager) GetConnectorInfo() []*ConnectorInfo {
 	return am.connectorInfo[:]
 }
 
+func (am *GaeAccessManager) GetConnectorInfoByLabel(label string) *ConnectorInfo {
+	for _, connector := range am.connectorInfo {
+		if connector.Label == label {
+			return connector
+		}
+	}
+	return nil
+}
+
 func (am *GaeAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
 	am.connectorInfo = append(am.connectorInfo, connector)
 }

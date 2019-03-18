@@ -70,6 +70,7 @@ type AccessManager interface {
 	RegisterNotificationEventHandler(handler NotificationEventHandler)
 
 	GetConnectorInfo() []*ConnectorInfo
+	GetConnectorInfoByLabel(label string) *ConnectorInfo
 	RegisterConnectorInfo(connector *ConnectorInfo)
 
 	GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error)
