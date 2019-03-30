@@ -278,10 +278,11 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 		w.Write([]byte("Content-Disposition: attachment; filename=\"=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(attachmentName)) + "?=\"\r\n\r\n"))
 		for _, chunk := range Base64Split(base64.StdEncoding.EncodeToString(attachment), 76) {
 			w.Write([]byte(chunk))
+			w.Write([]byte("\r\n"))
 		}
 	}
 
-	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s--\r\n", boundary)))
+	w.Write([]byte(fmt.Sprintf("\r\n--%s--\r\n", boundary)))
 
 	var auth smtp.Auth
 	if smtpUser != "" && smtpPassword != "" {
