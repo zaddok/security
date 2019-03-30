@@ -276,7 +276,9 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 		w.Write([]byte("Content-Type: " + attachmentType + "; charset=\"UTF-8\"; name=\"=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(attachmentName)) + "?=\"\r\n"))
 		w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
 		w.Write([]byte("Content-Disposition: attachment; filename=\"=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(attachmentName)) + "?=\"\r\n\r\n"))
-		w.Write([]byte(base64.StdEncoding.EncodeToString(attachment)))
+		for _, chunk := range Base64Split(base64.StdEncoding.EncodeToString(attachment), 76) {
+			w.Write([]byte(chunk))
+		}
 	}
 
 	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s--\r\n", boundary)))
@@ -295,4 +297,16 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 	}
 
 	return &results, nil
+}
+
+func Base64Split(s string, size int) []string {
+	ss := make([]string, 0, len(s)/size+1)
+	for len(s) > 0 {
+		if len(s) < size {
+			size = len(s)
+		}
+		ss, s = append(ss, s[:size]), s[size:]
+
+	}
+	return ss
 }
