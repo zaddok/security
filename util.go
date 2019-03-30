@@ -9,6 +9,7 @@ import (
 	"hash"
 	"math/rand"
 	"net/smtp"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -67,6 +68,39 @@ func VerifyPassword(actualPassword string, password string) bool {
 	b := base64.StdEncoding.EncodeToString(h.Sum(nil))
 
 	return b == part[1]
+}
+
+// InferTimezone accepts a location string, and a timezone offset string, and returns a location
+// object that best matches this information. If location cannot be determined, server default timezone
+// is returned. i.e.  security.InferTimezone(`Australia/Melbourne`,`+1100`)
+func InferTimezone(locale string, zone string) *time.Location {
+
+	// Use location string if one is available
+	if locale != "" {
+		tz, err := time.LoadLocation(locale)
+		if err == nil {
+			return tz
+		}
+	}
+
+	if zone == "" {
+		return time.Now().Location()
+	}
+
+	// Use timezone offset string if available
+	i, _ := strconv.ParseInt(zone, 10, 64)
+	hour := int(i / 100)
+	minutes := int(i) - hour*100
+
+	offset := hour*60*60 + minutes*60
+	pm := "+"
+	if i < 0 {
+		pm = "-"
+		minutes = 0 - minutes
+		hour = 0 - hour
+	}
+	s := fmt.Sprintf("UTC%s%02d%02d", pm, hour, minutes)
+	return time.FixedZone(s, offset)
 }
 
 func NowMilliseconds() int64 {
