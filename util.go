@@ -36,6 +36,9 @@ func RandomString(size int) string {
 	return string(bytes)
 }
 
+// RandomPassword differs from RandomString in that it ensures we dont have
+// a series of repeated or incrementing characters, and ensures we have at
+// least one uppercase lowercase, and number character.
 func RandomPassword(size int) string {
 	if !seeded {
 		seeded = true
@@ -70,11 +73,11 @@ func RandomPassword(size int) string {
 				c = '0' + uint8(rand.Int31n(9))
 			}
 		}
-		if last != c {
+		if c == last || c == last+1 {
+			i = i - 1
+		} else {
 			bytes[i] = c
 			last = c
-		} else {
-			i = i - 1
 		}
 	}
 	return string(bytes)
