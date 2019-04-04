@@ -52,25 +52,22 @@ func RandomPassword(size int) string {
 	for i := 0; i < size; i++ {
 		b := uint8(rand.Int31n(62))
 		var c uint8
-		if b < 26 {
-			c = 'A' + b
-			hasUppercase = true
-		} else if b < 52 {
-			c = 'a' + (b - 26)
-			hasLowercase = true
+		if size > 2 && i == size-1 && hasUppercase == false {
+			c = 'A' + uint8(rand.Int31n(26))
+		} else if size > 3 && i == size-2 && hasLowercase == false {
+			c = 'a' + uint8(rand.Int31n(26))
+		} else if size > 4 && i == size-3 && hasNumber == false {
+			c = '0' + uint8(rand.Int31n(10))
 		} else {
-			c = '0' + (b - 52)
-			hasNumber = true
-		}
-		if size > 4 {
-			if i == size-1 && hasUppercase == false {
-				c = 'A' + uint8(rand.Int31n(26))
-			}
-			if i == size-2 && hasLowercase == false {
-				c = 'a' + uint8(rand.Int31n(26))
-			}
-			if i == size-3 && hasNumber == false {
-				c = '0' + uint8(rand.Int31n(9))
+			if b < 26 {
+				c = 'A' + b
+				hasUppercase = true
+			} else if b < 52 {
+				c = 'a' + (b - 26)
+				hasLowercase = true
+			} else {
+				c = '0' + (b - 52)
+				hasNumber = true
 			}
 		}
 		if c == last || c == last+1 {
