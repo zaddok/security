@@ -68,6 +68,7 @@ type AccessManager interface {
 	// It is reponsible for examining who may need to be notified and invoke any event handlers
 	TriggerNotificationEvent(objectUuid string, session Session) error
 	RegisterNotificationEventHandler(handler NotificationEventHandler)
+	RegisterAuthenticationHandler(handler AuthenticationHandler)
 
 	GetConnectorInfo() []*ConnectorInfo
 	GetConnectorInfoByLabel(label string) *ConnectorInfo
@@ -199,6 +200,12 @@ type ExternalSystemId interface {
 	Type() string
 	Value() string
 }
+
+// Check a username and password against an external authentication source
+type AuthenticationHandler func(string, string) (bool, error)
+
+// Register a callback handler when a an event occurs on a particular atched item
+type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)
 
 const emailHtmlTemplates string = `
 {{define "signup_confirmation_html"}}

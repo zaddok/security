@@ -30,6 +30,7 @@ type GaeAccessManager struct {
 	roleTypes                 []*GaeRoleType
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
+	authenticationHandlers    []AuthenticationHandler
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
 	sessionCache              gcache.Cache
@@ -481,10 +482,28 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
+		// Check internal password
 		if !VerifyPassword(*items[0].Password, password) {
-			g.throttle.Increment(email)
-			syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
-			return g.GuestSession(site), "Invalid email address or password.", nil
+			// Internal password check failed
+
+			externallyAuthenticated := false
+			for _, auth := range g.authenticationHandlers {
+				ok, err := auth(email, password)
+				if ok {
+					externallyAuthenticated = true
+					break
+				}
+				if err != nil {
+					syslog.Add(`auth`, ip, `warning`, fmt.Sprintf("External Authentication for '%s' failed. Error: %v", email, err))
+					return g.GuestSession(site), "Communication with authentication service failed. Please try again.", nil
+				}
+			}
+
+			if !externallyAuthenticated {
+				g.throttle.Increment(email)
+				syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
+				return g.GuestSession(site), "Invalid email address or password.", nil
+			}
 		}
 
 		now := time.Now()
@@ -738,10 +757,12 @@ func (am *GaeAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
 	am.connectorInfo = append(am.connectorInfo, connector)
 }
 
-type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)
-
 func (am *GaeAccessManager) RegisterNotificationEventHandler(handler NotificationEventHandler) {
 	am.notificationEventHandlers = append(am.notificationEventHandlers, handler)
+}
+
+func (am *GaeAccessManager) RegisterAuthenticationHandler(handler AuthenticationHandler) {
+	am.authenticationHandlers = append(am.authenticationHandlers, handler)
 }
 
 func (am *GaeAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {

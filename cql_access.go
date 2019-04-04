@@ -26,6 +26,7 @@ type CqlAccessManager struct {
 	roleTypes                 []*CqlRoleType
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
+	authenticationHandlers    []AuthenticationHandler
 	connectorInfo             []*ConnectorInfo
 }
 
@@ -387,6 +388,10 @@ func (am *CqlAccessManager) StopWatching(objectUuid, objectType string, requesto
 
 func (am *CqlAccessManager) RegisterNotificationEventHandler(handler NotificationEventHandler) {
 	am.notificationEventHandlers = append(am.notificationEventHandlers, handler)
+}
+
+func (am *CqlAccessManager) RegisterAuthenticationHandler(handler AuthenticationHandler) {
+	am.authenticationHandlers = append(am.authenticationHandlers, handler)
 }
 
 func (am *CqlAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {
