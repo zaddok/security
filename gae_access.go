@@ -31,6 +31,7 @@ type GaeAccessManager struct {
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
 	authenticationHandlers    []AuthenticationHandler
+	preAuthenticationHandlers []PreAuthenticationHandler
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
 	sessionCache              gcache.Cache
@@ -457,6 +458,9 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if email == "" {
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
+	for _, auth := range g.preAuthenticationHandlers {
+		auth(site, email)
+	}
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
@@ -763,6 +767,10 @@ func (am *GaeAccessManager) RegisterNotificationEventHandler(handler Notificatio
 
 func (am *GaeAccessManager) RegisterAuthenticationHandler(handler AuthenticationHandler) {
 	am.authenticationHandlers = append(am.authenticationHandlers, handler)
+}
+
+func (am *GaeAccessManager) RegisterPreAuthenticationHandler(handler PreAuthenticationHandler) {
+	am.preAuthenticationHandlers = append(am.preAuthenticationHandlers, handler)
 }
 
 func (am *GaeAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {

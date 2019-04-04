@@ -69,6 +69,7 @@ type AccessManager interface {
 	TriggerNotificationEvent(objectUuid string, session Session) error
 	RegisterNotificationEventHandler(handler NotificationEventHandler)
 	RegisterAuthenticationHandler(handler AuthenticationHandler)
+	RegisterPreAuthenticationHandler(handler PreAuthenticationHandler)
 
 	GetConnectorInfo() []*ConnectorInfo
 	GetConnectorInfoByLabel(label string) *ConnectorInfo
@@ -201,8 +202,12 @@ type ExternalSystemId interface {
 	Value() string
 }
 
-// Check a username and password against an external authentication source
+// Check an email (username)  and password against an external authentication source
 type AuthenticationHandler func(string, string) (bool, error)
+
+// Signal that an email address is about to be sent to the Authentication method for a particular site.
+// Can be used to trigger 'just in time' account creation.
+type PreAuthenticationHandler func(string, string) (bool, error)
 
 // Register a callback handler when a an event occurs on a particular atched item
 type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)

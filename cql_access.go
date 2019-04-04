@@ -27,6 +27,7 @@ type CqlAccessManager struct {
 	virtualHostSetup          VirtualHostSetup // setup function pointer
 	notificationEventHandlers []NotificationEventHandler
 	authenticationHandlers    []AuthenticationHandler
+	preAuthenticationHandlers []PreAuthenticationHandler
 	connectorInfo             []*ConnectorInfo
 }
 
@@ -281,6 +282,12 @@ func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 }
 
 func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
+	if email == "" {
+		return g.GuestSession(site), "Invalid email address or password.", nil
+	}
+	for _, auth := range g.preAuthenticationHandlers {
+		auth(site, email)
+	}
 
 	var actualPassword string
 	var firstName string
@@ -392,6 +399,10 @@ func (am *CqlAccessManager) RegisterNotificationEventHandler(handler Notificatio
 
 func (am *CqlAccessManager) RegisterAuthenticationHandler(handler AuthenticationHandler) {
 	am.authenticationHandlers = append(am.authenticationHandlers, handler)
+}
+
+func (am *CqlAccessManager) RegisterPreAuthenticationHandler(handler PreAuthenticationHandler) {
+	am.preAuthenticationHandlers = append(am.preAuthenticationHandlers, handler)
 }
 
 func (am *CqlAccessManager) TriggerNotificationEvent(objectUuid string, session Session) error {
