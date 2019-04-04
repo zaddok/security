@@ -985,6 +985,31 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 	return &items[0], nil
 }
 
+func (g *GaeAccessManager) GetPersonByEmail(site, email string, requestor Session) (Person, error) {
+	if requestor != nil && !requestor.HasRole("s1") {
+		return nil, errors.New("Permission denied.")
+	}
+
+	email = strings.TrimSpace(email)
+	email = strings.ToLower(email)
+
+	var items []GaePerson
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email =", email).Limit(2)
+	_, err := g.client.GetAll(g.ctx, q, &items)
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, nil
+	}
+	if len(items) > 1 {
+		return nil, errors.New("Multiple accounts have this first and last name")
+	}
+
+	items[0].Site = site
+	return &items[0], nil
+}
+
 // Request the session information associated the site hostname and cookie in the web request
 func (g *GaeAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
 	return g.GetSystemSessionWithRoles(site, firstname, lastname, "s1:s2:s3:s4")

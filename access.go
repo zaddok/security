@@ -17,6 +17,7 @@ type AccessManager interface {
 
 	GetPerson(uuid string, requestor Session) (Person, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error)
+	GetPersonByEmail(site, email string, requestor Session) (Person, error)
 	GetPeople(requestor Session) ([]Person, error)
 	AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error)
 	UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error

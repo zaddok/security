@@ -466,6 +466,10 @@ func (am *CqlAccessManager) GetPersonByFirstNameLastName(site, firstname, lastna
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) GetPersonByEmail(site, email string, requestor Session) (Person, error) {
+	return nil, errors.New("unimplemented")
+}
+
 // Request the session information associated the site hostname and cookie in the web request
 func (am *CqlAccessManager) GetSystemSession(site, firstname, lastname string) (Session, error) {
 	return nil, errors.New("unimplemented")
