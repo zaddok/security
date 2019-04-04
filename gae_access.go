@@ -494,6 +494,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			for _, auth := range g.authenticationHandlers {
 				ok, err := auth(email, password)
 				if ok {
+					syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("External Authentication for '%s' succeeded.", email))
 					externallyAuthenticated = true
 					break
 				}
