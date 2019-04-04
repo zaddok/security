@@ -24,13 +24,57 @@ func RandomString(size int) string {
 	}
 	bytes := make([]byte, size)
 	for i := 0; i < size; i++ {
-		b := uint8(rand.Int31n(36))
+		b := uint8(rand.Int31n(62))
 		if b < 26 {
 			bytes[i] = 'A' + b
 		} else if b < 52 {
 			bytes[i] = 'a' + (b - 26)
 		} else {
 			bytes[i] = '0' + (b - 52)
+		}
+	}
+	return string(bytes)
+}
+
+func RandomPassword(size int) string {
+	if !seeded {
+		seeded = true
+		rand.Seed(time.Now().UTC().UnixNano())
+	}
+	bytes := make([]byte, size)
+	hasNumber := false
+	hasLowercase := false
+	hasUppercase := false
+	var last uint8 = 0
+	for i := 0; i < size; i++ {
+		b := uint8(rand.Int31n(62))
+		var c uint8
+		if b < 26 {
+			c = 'A' + b
+			hasUppercase = true
+		} else if b < 52 {
+			c = 'a' + (b - 26)
+			hasLowercase = true
+		} else {
+			c = '0' + (b - 52)
+			hasNumber = true
+		}
+		if size > 4 {
+			if i == size-1 && hasUppercase == false {
+				c = 'A' + uint8(rand.Int31n(26))
+			}
+			if i == size-2 && hasLowercase == false {
+				c = 'a' + uint8(rand.Int31n(26))
+			}
+			if i == size-3 && hasNumber == false {
+				c = '0' + uint8(rand.Int31n(9))
+			}
+		}
+		if last != c {
+			bytes[i] = c
+			last = c
+		} else {
+			i = i - 1
 		}
 	}
 	return string(bytes)
