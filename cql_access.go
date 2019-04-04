@@ -286,7 +286,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
 	for _, auth := range g.preAuthenticationHandlers {
-		auth(site, email)
+		auth(g, site, email)
 	}
 
 	var actualPassword string

@@ -459,7 +459,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
 	for _, auth := range g.preAuthenticationHandlers {
-		auth(site, email)
+		auth(g, site, email)
 	}
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
@@ -492,7 +492,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 			externallyAuthenticated := false
 			for _, auth := range g.authenticationHandlers {
-				ok, err := auth(email, password)
+				ok, err := auth(g, email, password)
 				if ok {
 					syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("External Authentication for '%s' succeeded.", email))
 					externallyAuthenticated = true
