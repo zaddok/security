@@ -36,6 +36,8 @@ func RandomString(size int) string {
 	return string(bytes)
 }
 
+const rst = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
+
 // RandomPassword differs from RandomString in that it ensures we dont have
 // a series of repeated or incrementing characters, and ensures we have at
 // least one uppercase lowercase, and number character.
@@ -48,16 +50,79 @@ func RandomPassword(size int) string {
 	hasNumber := false
 	hasLowercase := false
 	hasUppercase := false
+	var last byte = 0
+	for i := 0; i < size; i++ {
+
+		if size > 2 && i == size-1 && hasUppercase == false {
+			c := 'B' + uint8(rand.Int31n(25))
+			if c == 'O' {
+				c = 'A'
+			}
+			//fmt.Println("Force uppercase", string(c), "for", string(bytes))
+			bytes[i] = c
+			continue
+		}
+		if size > 3 && i == size-2 && hasLowercase == false {
+			c := 'b' + uint8(rand.Int31n(25))
+			if c == 'l' {
+				c = 'a'
+			}
+			//fmt.Println("Force lowercase", string(c), "for", string(bytes))
+			bytes[i] = c
+			continue
+		}
+		if size > 4 && i == size-3 && hasNumber == false {
+			c := '2' + uint8(rand.Int31n(8))
+			//fmt.Println("Force number", string(c), "for", string(bytes))
+			bytes[i] = c
+			continue
+		}
+
+		x := rand.Intn(len(rst))
+		c := rst[x]
+
+		if c == 'O' || c == 'l' {
+			i = i - 1
+			continue
+		}
+		if c == last || c == last+1 {
+			i = i - 1
+			continue
+		}
+
+		if c <= '9' {
+			hasNumber = true
+		} else if c <= 'Z' {
+			hasUppercase = true
+		} else {
+			hasLowercase = true
+		}
+
+		bytes[i] = c
+		last = c
+	}
+	return string(bytes)
+}
+
+func RandomPassword(size int) string {
+	if !seeded {
+		seeded = true
+		rand.Seed(time.Now().UTC().UnixNano())
+	}
+	bytes := make([]byte, size)
+	hasNumber := false
+	hasLowercase := false
+	hasUppercase := false
 	var last uint8 = 0
 	for i := 0; i < size; i++ {
-		b := uint8(rand.Int31n(62))
+		b := uint8(rand.Int31n(61))
 		var c uint8
 		if size > 2 && i == size-1 && hasUppercase == false {
 			c = 'A' + uint8(rand.Int31n(26))
 		} else if size > 3 && i == size-2 && hasLowercase == false {
 			c = 'a' + uint8(rand.Int31n(26))
 		} else if size > 4 && i == size-3 && hasNumber == false {
-			c = '0' + uint8(rand.Int31n(10))
+			c = '1' + uint8(rand.Int31n(9))
 		} else {
 			if b < 26 {
 				c = 'A' + b
@@ -66,7 +131,7 @@ func RandomPassword(size int) string {
 				c = 'a' + (b - 26)
 				hasLowercase = true
 			} else {
-				c = '0' + (b - 52)
+				c = '1' + (b - 52)
 				hasNumber = true
 			}
 		}
