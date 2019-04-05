@@ -2,8 +2,10 @@ package security
 
 import (
 	"bytes"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash"
@@ -18,13 +20,11 @@ import (
 var seeded = false
 
 func RandomString(size int) string {
-	if !seeded {
-		seeded = true
-		rand.Seed(time.Now().UTC().UnixNano())
-	}
+	random := rand.New(NewCryptoSeededSource())
+
 	bytes := make([]byte, size)
 	for i := 0; i < size; i++ {
-		b := uint8(rand.Int31n(62))
+		b := uint8(random.Int31n(62))
 		if b < 26 {
 			bytes[i] = 'A' + b
 		} else if b < 52 {
@@ -38,14 +38,18 @@ func RandomString(size int) string {
 
 const rst = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789"
 
+func NewCryptoSeededSource() rand.Source {
+	var seed int64
+	binary.Read(crand.Reader, binary.BigEndian, &seed)
+	return rand.NewSource(seed)
+}
+
 // RandomPassword differs from RandomString in that it ensures we dont have
 // a series of repeated or incrementing characters, and ensures we have at
 // least one uppercase lowercase, and number character.
 func RandomPassword(size int) string {
-	if !seeded {
-		seeded = true
-		rand.Seed(time.Now().UTC().UnixNano())
-	}
+	random := rand.New(NewCryptoSeededSource())
+
 	bytes := make([]byte, size)
 	hasNumber := false
 	hasLowercase := false
@@ -54,7 +58,7 @@ func RandomPassword(size int) string {
 	for i := 0; i < size; i++ {
 
 		if size > 2 && i == size-1 && hasUppercase == false {
-			c := 'B' + uint8(rand.Int31n(25))
+			c := 'B' + uint8(random.Int31n(25))
 			if c == 'O' {
 				c = 'A'
 			}
@@ -63,7 +67,7 @@ func RandomPassword(size int) string {
 			continue
 		}
 		if size > 3 && i == size-2 && hasLowercase == false {
-			c := 'b' + uint8(rand.Int31n(25))
+			c := 'b' + uint8(random.Int31n(25))
 			if c == 'l' {
 				c = 'a'
 			}
@@ -72,13 +76,13 @@ func RandomPassword(size int) string {
 			continue
 		}
 		if size > 4 && i == size-3 && hasNumber == false {
-			c := '2' + uint8(rand.Int31n(8))
+			c := '2' + uint8(random.Int31n(8))
 			//fmt.Println("Force number", string(c), "for", string(bytes))
 			bytes[i] = c
 			continue
 		}
 
-		x := rand.Intn(len(rst))
+		x := random.Intn(len(rst))
 		c := rst[x]
 
 		if c == last || c == last+1 {
