@@ -81,12 +81,9 @@ func RandomPassword(size int) string {
 		x := rand.Intn(len(rst))
 		c := rst[x]
 
-		if c == 'O' || c == 'l' {
-			i = i - 1
-			continue
-		}
 		if c == last || c == last+1 {
 			i = i - 1
+			//fmt.Println("avoid increment", last, c)
 			continue
 		}
 
@@ -100,47 +97,6 @@ func RandomPassword(size int) string {
 
 		bytes[i] = c
 		last = c
-	}
-	return string(bytes)
-}
-
-func RandomPassword(size int) string {
-	if !seeded {
-		seeded = true
-		rand.Seed(time.Now().UTC().UnixNano())
-	}
-	bytes := make([]byte, size)
-	hasNumber := false
-	hasLowercase := false
-	hasUppercase := false
-	var last uint8 = 0
-	for i := 0; i < size; i++ {
-		b := uint8(rand.Int31n(61))
-		var c uint8
-		if size > 2 && i == size-1 && hasUppercase == false {
-			c = 'A' + uint8(rand.Int31n(26))
-		} else if size > 3 && i == size-2 && hasLowercase == false {
-			c = 'a' + uint8(rand.Int31n(26))
-		} else if size > 4 && i == size-3 && hasNumber == false {
-			c = '1' + uint8(rand.Int31n(9))
-		} else {
-			if b < 26 {
-				c = 'A' + b
-				hasUppercase = true
-			} else if b < 52 {
-				c = 'a' + (b - 26)
-				hasLowercase = true
-			} else {
-				c = '1' + (b - 52)
-				hasNumber = true
-			}
-		}
-		if c == last || c == last+1 {
-			i = i - 1
-		} else {
-			bytes[i] = c
-			last = c
-		}
 	}
 	return string(bytes)
 }
