@@ -161,3 +161,40 @@ func TestAccountManagement(t *testing.T) {
 	}
 
 }
+
+// Test access account manager
+func TestAccountCheckEmail(t *testing.T) {
+
+	log := log.NewStdoutLogDebug()
+	defer log.Close()
+
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), log)
+	if err != nil {
+		t.Fatalf("NewGaeAccessManager() failed: %v", err)
+	}
+
+	{
+		exists, err := am.CheckEmailExists(TestSite, "Check0092.Stacy@test.com")
+		if err != nil {
+			t.Fatalf("am.CheckEmailExists() Failed: %v", err)
+		}
+		if exists {
+			t.Fatalf("am.CheckEmailExists() Failed: Email should not exist!")
+		}
+	}
+
+	{
+		_, err := am.AddPerson(TestSite, "Check", "Smith", "Check0092.Stacy@test.com", "s1:s2:s3:s4", HashPassword("fIr10g-!"), "127.0.0.1", nil)
+		if err != nil {
+			t.Fatalf("am.AddPerson() failed: %v", err)
+		}
+
+		exists, err := am.CheckEmailExists(TestSite, "Check0092.Stacy@test.com")
+		if err != nil {
+			t.Fatalf("am.CheckEmailExists() Failed: %v", err)
+		}
+		if !exists {
+			t.Fatalf("am.CheckEmailExists() Failed: Email should exist!")
+		}
+	}
+}

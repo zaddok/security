@@ -985,6 +985,21 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 	return &items[0], nil
 }
 
+func (g *GaeAccessManager) CheckEmailExists(site, email string) (bool, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+
+	var items []GaePerson
+	q := datastore.NewQuery("Person").Namespace(site).Filter("Email =", email).Limit(1)
+	_, err := g.client.GetAll(g.ctx, q, &items)
+	if err != nil {
+		return false, err
+	}
+	if len(items) == 0 {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (g *GaeAccessManager) GetPersonByEmail(site, email string, requestor Session) (Person, error) {
 	if requestor != nil && !requestor.HasRole("s1") {
 		return nil, errors.New("Permission denied.")

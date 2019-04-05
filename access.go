@@ -23,6 +23,7 @@ type AccessManager interface {
 	UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error
 	DeletePerson(uuid string, updator Session) error
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
+	CheckEmailExists(site, email string) (bool, error)
 
 	Session(host, cookie string) (Session, error)
 	GuestSession(site string) Session
