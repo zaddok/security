@@ -81,12 +81,13 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/reset.password/", ResetPasswordPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/api/", ApiPage(st, am, siteName, siteDescription))
 	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/connectors", ConnectorsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/feedback", FeedbackPage(st, am, tm, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/run_connectors", RunConnectorsPage(st, am, defaultTimezone))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/api/", ApiPage(st, am, siteName, siteDescription))
 
 	http.HandleFunc("/i/loading.gif", BinaryFile(&loadingGif, 604800))
 
