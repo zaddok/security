@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,6 +43,15 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 				return template.HTML("Unknown (" + code + ")"), nil
 			}
 			return template.HTML(i.GetValue()), nil
+		},
+		"ampm": func(hour int) string {
+			if hour < 12 {
+				return strconv.Itoa(hour) + "am"
+			}
+			if hour == 12 {
+				return "12pm"
+			}
+			return strconv.Itoa(hour-12) + "pm"
 		},
 	}
 	st = st.Funcs(fm)
