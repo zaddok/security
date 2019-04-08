@@ -35,6 +35,8 @@ type GaeAccessManager struct {
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
 	sessionCache              gcache.Cache
+	projectId                 string
+	locationId                string
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -207,7 +209,7 @@ func (r *GaeRoleType) GetDescription() string {
 	return r.Description
 }
 
-func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
+func NewGaeAccessManager(projectId, locationId string, log log.Log) (AccessManager, error, *datastore.Client, context.Context) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
 	throttle := NewGaeThrottle(settings, client, ctx)
@@ -232,6 +234,8 @@ func NewGaeAccessManager(projectId string, log log.Log) (AccessManager, error, *
 		template:       t,
 		systemSessions: map[string]Session{},
 		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
+		projectId:      projectId,
+		locationId:     locationId,
 	}, nil, client, ctx
 }
 

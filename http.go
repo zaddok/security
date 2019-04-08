@@ -51,6 +51,9 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		accountHistoryTemplate,
 		accountDetailsTemplate,
 		accountCreateTemplate,
+		connectorTemplate,
+		connectorAddTemplate,
+		connectorEditTemplate,
 		ErrorTemplates,
 		ForgotTemplate,
 		feedbackTemplate,
@@ -79,6 +82,7 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/connectors", ConnectorsPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/feedback", FeedbackPage(st, am, tm, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
 	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))

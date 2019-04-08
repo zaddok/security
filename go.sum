@@ -232,6 +232,8 @@ github.com/zaddok/log v0.0.0-20181204025159-298eaace4328/go.mod h1:91o9I7iHMu1ZD
 github.com/zaddok/moodle v0.1.1 h1:XT2q0wbqb5Sr3Nem7JfeeIYoCVJOTKgQVci18Cc+Bv4=
 github.com/zaddok/moodle v0.1.1/go.mod h1:QE1GmdFOtgl3TgL+Gvcm1KYBHQZxuud4EmnUvwkYqXM=
 github.com/zaddok/moodle v0.1.6/go.mod h1:L5lTUL7nvDJMpnCT7rasbg2spOk+FrJIY3Xf+fQMs5Q=
+github.com/zaddok/moodle v0.1.10 h1:7oE1m9+z8UYylvdnmJOqJyaPtwN/Ep6e1cRJr2pwnjE=
+github.com/zaddok/moodle v0.1.10/go.mod h1:L5lTUL7nvDJMpnCT7rasbg2spOk+FrJIY3Xf+fQMs5Q=
 go.opencensus.io v0.18.0 h1:Mk5rgZcggtbvtAun5aJzAtjKKN/t0R3jJPlWILlv938=
 go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=
 go.opencensus.io v0.19.0 h1:+jrnNy8MR4GZXvwF9PEuSyHxA4NaTf6601oNRwCSXq0=

@@ -22,6 +22,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20190227231451-bbced9601137 // indirect
 	github.com/rogpeppe/fastuuid v1.0.0 // indirect
 	github.com/zaddok/log v0.0.0-20181204025159-298eaace4328
+	github.com/zaddok/moodle v0.1.10 // indirect
 	go4.org v0.0.0-20190218023631-ce4c26f7be8e // indirect
 	golang.org/x/build v0.0.0-20190301201919-f7b27185a0a4 // indirect
 	golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25 // indirect
@@ -32,5 +33,5 @@ require (
 	golang.org/x/sys v0.0.0-20190228124157-a34e9553db1e // indirect
 	golang.org/x/tools v0.0.0-20190228203856-589c23e65e65 // indirect
 	google.golang.org/api v0.1.0
-	google.golang.org/genproto v0.0.0-20190227213309-4f5b463f9597 // indirect
+	google.golang.org/genproto v0.0.0-20190227213309-4f5b463f9597
 )

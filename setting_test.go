@@ -14,6 +14,15 @@ func requireEnv(name string, t *testing.T) string {
 	return value
 }
 
+func inferLocation(t *testing.T) string {
+	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	location := "australia-southeast1"
+	if project == "sis-us" {
+		location = "us-west2"
+	}
+	return location
+}
+
 // Test settings
 func TestSettings(t *testing.T) {
 

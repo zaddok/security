@@ -55,7 +55,7 @@ func TestEntityAudit(t *testing.T) {
 	l := log.NewStdoutLogDebug()
 	defer l.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), l)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), l)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

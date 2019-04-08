@@ -36,6 +36,7 @@ type AccessManager interface {
 	PicklistStore() PicklistStore
 	SetVirtualHostSetupHandler(fn VirtualHostSetup)
 	RunVirtualHostSetupHandler(site string)
+	CreateTask(queueID, message string) (string, error)
 
 	GetCustomRoleTypes() []RoleType
 	AddCustomRoleType(uid, name, description string)

@@ -12,7 +12,7 @@ func TestTicketManager(t *testing.T) {
 	defer l.Close()
 
 	// Initialize helper API objects
-	am, err, client, context := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), l)
+	am, err, client, context := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), l)
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

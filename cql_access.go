@@ -762,3 +762,7 @@ func (am *CqlAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 func (am *CqlAccessManager) DeleteScheduledConnector(uuid string, updator Session) error {
 	return errors.New("unimplemented")
 }
+
+func (am *CqlAccessManager) CreateTask(queueID, message string) (string, error) {
+	return "Unimplemented", errors.New("unimplemented")
+}
