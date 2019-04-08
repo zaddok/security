@@ -157,11 +157,14 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				ConnectorType:      cType,
 				ScheduledConnector: connector,
 			}
-			p.ExternalSystem, err = am.GetExternalSystem(p.ScheduledConnector.ExternalSystemUuid, session)
-			if err != nil {
-				am.Log().Error("Scheduled Connector '%s' references unknown ExternalSystemUuid '%s'", p.ScheduledConnector.Uuid, p.ScheduledConnector.ExternalSystemUuid)
-				ShowErrorNotFound(w, r, t, siteName)
-				return
+
+			if cType.ExternalSystemPicker == true {
+				p.ExternalSystem, err = am.GetExternalSystem(p.ScheduledConnector.ExternalSystemUuid, session)
+				if err != nil {
+					am.Log().Error("Scheduled Connector '%s' references unknown ExternalSystemUuid '%s'", p.ScheduledConnector.Uuid, p.ScheduledConnector.ExternalSystemUuid)
+					ShowErrorNotFound(w, r, t, siteName)
+					return
+				}
 			}
 			for _, x := range cType.Config {
 				cs := &ConfSet{
@@ -226,11 +229,6 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					Config          []*ConfSet
 					Feedback        []string
 				}
-				current, err := am.GetExternalSystemsByType(cType.SystemType, session)
-				if err != nil {
-					ShowError(w, r, t, err, siteName)
-					return
-				}
 				hour, _ := strconv.Atoi(r.FormValue(`hour`))
 				day, _ := strconv.Atoi(r.FormValue(`day`))
 				p := &Page{
@@ -240,13 +238,20 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					Session:         session,
 					Connector:       cType,
 					Uuid:            r.FormValue(`uuid`),
-					ExternalSystems: current,
 					Hour:            hour,
 					Day:             day,
 					Feedback:        feedback,
 				}
-				if len(current) > 0 && p.Uuid == "" {
-					p.Uuid = current[0].Uuid()
+				if cType.ExternalSystemPicker == true {
+					current, err := am.GetExternalSystemsByType(cType.SystemType, session)
+					if err != nil {
+						ShowError(w, r, t, err, siteName)
+						return
+					}
+					p.ExternalSystems = current
+				}
+				if len(p.ExternalSystems) > 0 && p.Uuid == "" {
+					p.Uuid = p.ExternalSystems[0].Uuid()
 					//fmt.Println("uuid", p.Uuid)
 				}
 				for _, x := range cType.Config {
@@ -409,6 +414,7 @@ td a.add::before {
 <input type="hidden" name="add" value="{{.Connector.Label}}" />
 <input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
 <table id="connector_add" class="form">
+{{if .Connector.ExternalSystemPicker}}
 	<tr><td colspan="2"><h3 class="external">External System</h3></td></tr>
 	<tr>
 		<td colspan="2"><select name="external_system_uuid">
@@ -420,6 +426,7 @@ td a.add::before {
 		</td>
 	</tr>
 	<tr><td>&nbsp;</td><td></td></tr>
+{{end}}
 
 	<tr><td colspan="2"><h3 class="schedule">Schedule</h3></td></tr>
 	<tr><td>Frequency</td><td style="vertical-align:middle">
@@ -528,6 +535,7 @@ h3.config::before {
 <input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
 
 <table id="connector_edit" class="form">
+{{if .ConnectorType.ExternalSystemPicker}}
 	<tr><td colspan="2"><h3 class="external">External System</h3></td></tr>
 	<tr>
 		<td colspan="2"><input type="hidden" name="external_system_uuid" value="{{.ExternalSystem.Uuid}}" />
@@ -535,6 +543,7 @@ h3.config::before {
 		</td>
 	</tr>
 	<tr><td>&nbsp;</td><td></td></tr>
+{{end}}
 
 	<tr><td colspan="2"><h3 class="schedule">Schedule</h3></td></tr>
 	<tr><td>Frequency</td><td style="vertical-align:middle">

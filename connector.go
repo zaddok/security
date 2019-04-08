@@ -13,15 +13,16 @@ type KeyValue struct {
 type ConnectorFunction func(AccessManager, *ScheduledConnector, Session) error
 
 type ConnectorInfo struct {
-	SystemType  string // Moodle, GoogleSheets, Formsite
-	SystemIcon  string
-	DataType    string // Subject, Student, Course, etc...
-	Name        string
-	Description string // Description of the purpose of this connector
-	Label       string
-	Direction   int
-	Config      [][]string
-	Run         func(AccessManager, *ScheduledConnector, Session) error
+	SystemType           string // Moodle, GoogleSheets, Formsite
+	SystemIcon           string
+	DataType             string // Subject, Student, Course, etc...
+	Name                 string
+	Description          string // Description of the purpose of this connector
+	Label                string
+	Direction            int
+	Config               [][]string
+	ExternalSystemPicker bool
+	Run                  func(AccessManager, *ScheduledConnector, Session) error
 }
 
 type ScheduledConnector struct {
