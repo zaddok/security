@@ -1,5 +1,9 @@
 package security
 
+import (
+	"strings"
+)
+
 type UN struct {
 	Id     string
 	Alpha2 string
