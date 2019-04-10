@@ -1268,15 +1268,6 @@ Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}. <a href="/z
 {{end}}
 `
 
-func IsCountryName(country string) bool {
-	for _, c := range IsoCountryList {
-		if c[1] == country {
-			return true
-		}
-	}
-	return false
-}
-
 var IsoCountryList [][]string = [][]string{
 	{"AFG", "Afghanistan"},
 	{"ALA", "Åland Islands"},
