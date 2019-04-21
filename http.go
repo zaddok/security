@@ -345,6 +345,23 @@ func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Temp
 	}
 }
 
+type ErrUnauthenticated struct {
+	Requestor Session
+}
+
+func (e *ErrUnauthenticated) Error() string {
+	return fmt.Sprintf("Permission Denied. Unauthenticated request from %s", e.Requestor.GetDisplayName())
+}
+
+type ErrUnauthorised struct {
+	Requestor Session
+	Message   string
+}
+
+func (e *ErrUnauthorised) Error() string {
+	return fmt.Sprintf("Permission Denied. Unauthorised request from %s", e.Requestor.GetDisplayName())
+}
+
 func DecodeOrPanic(data string) []byte {
 	bin, berr := base64.StdEncoding.DecodeString(data)
 	if berr != nil {
