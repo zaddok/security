@@ -609,12 +609,10 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 	return items[:], nil
 }
 
+// GetEntityChangeLog returns the change records for a particular entity. Authorisation to use this function should
+// be implied by authorisation to access the object the change log is associated with.
 func (am *GaeAccessManager) GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error) {
 	var items []EntityAuditLogCollection
-
-	if !requestor.HasRole("s1") {
-		return nil, errors.New("Permission denied.")
-	}
 
 	pkey := datastore.NameKey("EntityChange", uuid, nil)
 	pkey.Namespace = requestor.GetSite()
