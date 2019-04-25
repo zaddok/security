@@ -370,6 +370,10 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	syslog := NewGaeSyslogBundle(site, a.client, a.ctx)
 	defer syslog.Put()
 
+	for _, preauth := range a.preAuthenticationHandlers {
+		preauth(a, site, email)
+	}
+
 	syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest '%s'", email))
 
 	var items []GaePerson
@@ -462,8 +466,8 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if email == "" {
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
-	for _, auth := range g.preAuthenticationHandlers {
-		auth(g, site, email)
+	for _, preauth := range g.preAuthenticationHandlers {
+		preauth(g, site, email)
 	}
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)

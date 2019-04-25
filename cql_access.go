@@ -262,6 +262,10 @@ func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, 
 
 func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
 
+	for _, preauth := range a.preAuthenticationHandlers {
+		preauth(a, site, email)
+	}
+
 	var actualPassword string
 	var firstName string
 	var lastName string
@@ -285,8 +289,8 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if email == "" {
 		return g.GuestSession(site), "Invalid email address or password.", nil
 	}
-	for _, auth := range g.preAuthenticationHandlers {
-		auth(g, site, email)
+	for _, preauth := range g.preAuthenticationHandlers {
+		preauth(g, site, email)
 	}
 
 	var actualPassword string
