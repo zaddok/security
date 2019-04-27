@@ -60,6 +60,7 @@ func (s *ScheduledConnector) String() string {
 	return string(b)
 }
 
+// SetConfig adds, updates, or removes a config setting.
 func (sc *ScheduledConnector) SetConfig(key, value string) {
 	ukey := Underscorify(key)
 	if value == "" {

@@ -755,13 +755,10 @@ func (am *GaeAccessManager) GetConnectorInfo() []*ConnectorInfo {
 	return am.connectorInfo[:]
 }
 
-// GetConnectorInfoByLabel returns the information about a specific connector. When on google
-// appengine the google.project and google.location variables are inserted or updated.
+// GetConnectorInfoByLabel returns the information about a specific connector.
 func (am *GaeAccessManager) GetConnectorInfoByLabel(label string) *ConnectorInfo {
 	for _, connector := range am.connectorInfo {
 		if connector.Label == label {
-			connector.SetConfig("google.project", am.projectId)
-			connector.SetConfig("google.location", am.locationId)
 			return connector
 		}
 	}
@@ -769,8 +766,6 @@ func (am *GaeAccessManager) GetConnectorInfoByLabel(label string) *ConnectorInfo
 }
 
 func (am *GaeAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
-	connector.SetConfig("google.project", am.projectId)
-	connector.SetConfig("google.location", am.locationId)
 	am.connectorInfo = append(am.connectorInfo, connector)
 }
 
@@ -1489,6 +1484,10 @@ func (am *GaeAccessManager) GetScheduledConnectors(requestor Session) ([]*Schedu
 	results := make([]*ScheduledConnector, len(items), len(items))
 	for i, o := range items {
 		results[i] = o.ToScheduledConnector()
+
+		// This is only known at runtime, dont persist
+		results[i].SetConfig("google.project", am.projectId)
+		results[i].SetConfig("google.location", am.locationId)
 	}
 
 	return results, nil
@@ -1509,7 +1508,14 @@ func (am *GaeAccessManager) GetScheduledConnector(uuid string, requestor Session
 		}
 		return nil, err
 	}
-	return i.ToScheduledConnector(), nil
+
+	s := i.ToScheduledConnector()
+
+	// This is only known at runtime, dont persist
+	s.SetConfig("google.project", am.projectId)
+	s.SetConfig("google.location", am.locationId)
+
+	return s, nil
 }
 
 func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector, updator Session) error {
@@ -1521,6 +1527,10 @@ func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector,
 		return err
 	}
 	connector.Uuid = uuid.String()
+
+	// Ensure transient data is not persisted
+	connector.SetConfig("google.project", "")
+	connector.SetConfig("google.location", "")
 
 	k := datastore.NameKey("ScheduledConnector", uuid.String(), nil)
 	k.Namespace = updator.GetSite()
@@ -1551,6 +1561,10 @@ func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 	}
 	k := datastore.NameKey("ScheduledConnector", connector.Uuid, nil)
 	k.Namespace = updator.GetSite()
+
+	// Ensure transient data is not persisted
+	connector.SetConfig("google.project", "")
+	connector.SetConfig("google.location", "")
 
 	var current GaeScheduledConnector
 	if err := am.client.Get(am.ctx, k, &current); err != nil {

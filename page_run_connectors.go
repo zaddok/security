@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -47,7 +48,8 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 					w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
 					if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
 						am.Log().Notice("Cannot run connectors in development environment as a task.")
-						err := found.Run(am, connector, session)
+						found := am.GetConnectorInfoByLabel(s.Label)
+						err := found.Run(am, s, session)
 						if err != nil {
 							w.Write([]byte("Unhandled error: " + err.Error() + "\n"))
 
