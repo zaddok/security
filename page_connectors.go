@@ -99,19 +99,40 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				ShowError(w, r, t, err, siteName)
 				return
 			}
-			_, err = am.CreateTask("connector", s.Uuid)
-			if err == nil {
-				now := time.Now()
-				s.LastRun = &now
-				err = am.UpdateScheduledConnector(s, session)
-				if err != nil {
-					w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+
+			// Task queue is only available on appengine. Handle tasks differently on localhost
+			if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+				// When on DEV
+				am.Log().Notice("Cannot run connectors in development environment.")
+				found := am.GetConnectorInfoByLabel(s.Label)
+				if found != nil {
+
+					if found.Run != nil {
+						err := found.Run(am, s, session)
+						if err != nil {
+							am.Log().Error("Failed executing connector %s %v", s.Label, err)
+						} else {
+							am.Log().Debug("Executed connector %s successfully", s.Label)
+						}
+					}
 				}
-				http.Redirect(w, r, "/z/connectors", http.StatusSeeOther)
-				return
+
 			} else {
-				ShowError(w, r, t, err, siteName)
-				return
+				// When not on DEV
+				_, err = am.CreateTask("connector", s.Uuid)
+				if err == nil {
+					now := time.Now()
+					s.LastRun = &now
+					err = am.UpdateScheduledConnector(s, session)
+					if err != nil {
+						w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+					}
+					http.Redirect(w, r, "/z/connectors", http.StatusSeeOther)
+					return
+				} else {
+					ShowError(w, r, t, err, siteName)
+					return
+				}
 			}
 		}
 

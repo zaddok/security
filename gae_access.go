@@ -755,9 +755,13 @@ func (am *GaeAccessManager) GetConnectorInfo() []*ConnectorInfo {
 	return am.connectorInfo[:]
 }
 
+// GetConnectorInfoByLabel returns the information about a specific connector. When on google
+// appengine the google.project and google.location variables are inserted or updated.
 func (am *GaeAccessManager) GetConnectorInfoByLabel(label string) *ConnectorInfo {
 	for _, connector := range am.connectorInfo {
 		if connector.Label == label {
+			connector.SetConfig("google.project", am.projectId)
+			connector.SetConfig("google.location", am.locationId)
 			return connector
 		}
 	}
@@ -765,6 +769,8 @@ func (am *GaeAccessManager) GetConnectorInfoByLabel(label string) *ConnectorInfo
 }
 
 func (am *GaeAccessManager) RegisterConnectorInfo(connector *ConnectorInfo) {
+	connector.SetConfig("google.project", am.projectId)
+	connector.SetConfig("google.location", am.locationId)
 	am.connectorInfo = append(am.connectorInfo, connector)
 }
 

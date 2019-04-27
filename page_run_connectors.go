@@ -45,18 +45,25 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 				if s.LastRun == nil || s.LastRun.In(defaultTimezone).Hour() != now.Hour() {
 					// Connector has never run, or was run in a different hour of the day
 					w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
-					//s.SetConfig("google.project", projectId)
-					//s.SetConfig("google.location", locationId)
-					_, err := am.CreateTask("connector", s.Uuid)
-					if err == nil {
-						s.LastRun = &now
-						err = am.UpdateScheduledConnector(s, session)
+					if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+						am.Log().Notice("Cannot run connectors in development environment as a task.")
+						err := found.Run(am, connector, session)
 						if err != nil {
-							w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+							w.Write([]byte("Unhandled error: " + err.Error() + "\n"))
 
 						}
 					} else {
-						w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+						_, err := am.CreateTask("connector", s.Uuid)
+						if err == nil {
+							s.LastRun = &now
+							err = am.UpdateScheduledConnector(s, session)
+							if err != nil {
+								w.Write([]byte("Unhandled error: " + err.Error() + "\n"))
+
+							}
+						} else {
+							w.Write([]byte("Unhandled error: " + err.Error() + "\n"))
+						}
 					}
 					continue
 				}
@@ -67,18 +74,20 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 						// Connector has never run, we are on the correct hour of the day, and it
 						// has not yet run today.
 						w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
-						//s.SetConfig("google.project", projectId)
-						//s.SetConfig("google.location", locationId)
-						_, err := am.CreateTask("connector", s.Uuid)
-						if err == nil {
-							s.LastRun = &now
-							err = am.UpdateScheduledConnector(s, session)
-							if err != nil {
-								w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
-
-							}
+						if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+							am.Log().Notice("Cannot run connectors in development environment.")
 						} else {
-							w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+							_, err := am.CreateTask("connector", s.Uuid)
+							if err == nil {
+								s.LastRun = &now
+								err = am.UpdateScheduledConnector(s, session)
+								if err != nil {
+									w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+
+								}
+							} else {
+								w.Write([]byte("AAARGH!!!! " + err.Error() + "\n"))
+							}
 						}
 						continue
 					}
