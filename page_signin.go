@@ -12,6 +12,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// HTTP GET to the signin page should return the full signin/signup page
+		fmt.Println("request method", r.Method)
 		if r.Method == "GET" {
 			SignupPage(t, am, siteName, siteDescription, supplimentalCss)(w, r)
 			return
