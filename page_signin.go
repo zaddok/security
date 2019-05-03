@@ -10,6 +10,13 @@ import (
 
 func SigninPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		// HTTP GET to the signin page should return the full signin/signup page
+		if r.Method == "GET" {
+			SignupPage(t, am, siteName, siteDescription, supplimentalCss)(w, r)
+			return
+		}
+
 		AddSafeHeaders(w)
 
 		ip := IpFromRequest(r)

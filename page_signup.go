@@ -28,7 +28,7 @@ type SignupPageData struct {
 func SignupPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
-		am.Log().Debug("Singup page")
+
 		session, err := LookupSession(r, am)
 		if err != nil {
 			am.Log().Notice("Error fetching session data %s", err)
