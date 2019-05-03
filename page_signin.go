@@ -2,7 +2,6 @@ package security
 
 import (
 	"errors"
-	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -13,8 +12,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		// HTTP GET to the signin page should return the full signin/signup page
-		fmt.Println("request method", r.Method)
-		if r.Method == "GET" {
+		if r.Method != "POST" {
 			SignupPage(t, am, siteName, siteDescription, supplimentalCss)(w, r)
 			return
 		}
@@ -67,11 +65,19 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		}
 
 		// Signin successful
-		refer := ""
-		if r.FormValue("referer") != "" {
-			if strings.Index(r.FormValue("referer"), "/") < 0 {
-				refer = r.FormValue("referer")
-			}
+		refer := r.FormValue("r")
+		if strings.Index(refer, "://") >= 0 {
+			am.Log().Notice("Signin with invalid referrer URL: %v", refer)
+			refer = ""
+		}
+		if strings.Index(refer, "?") >= 0 {
+			am.Log().Notice("Signin with invalid referrer URL: %v", refer)
+			refer = refer[0:strings.Index(refer, "?")]
+			am.Log().Notice("Invalid referrer URL trimmed to: %v", refer)
+		}
+
+		if refer != "" && refer[0] != '/' {
+			refer = "/" + refer
 		}
 
 		cookie := &http.Cookie{
@@ -84,6 +90,6 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			MaxAge:   60 * 60 * 24 * COOKIE_DAYS,
 		}
 		http.SetCookie(w, cookie)
-		http.Redirect(w, r, "/"+refer, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, refer, http.StatusTemporaryRedirect)
 	}
 }

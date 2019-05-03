@@ -151,7 +151,7 @@ var SignupTemplate = `
 </div>
 
 <form method="post" action="/signin" id="signin">
-<input type="hidden" name="referer" value="{{.Referer}}">
+<input type="hidden" name="r" value="{{.Referer}}">
 <h3>Sign in</h3>
 
 <label for="signin_username">
