@@ -16,11 +16,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 			return
 		}
 		if !session.IsAuthenticated() {
-			http.Redirect(w, r, "/signup", http.StatusTemporaryRedirect)
-			return
-		}
-		if !session.HasRole("c3") {
-			ShowErrorForbidden(w, r, t, siteName)
+			http.Redirect(w, r, "/signin", http.StatusTemporaryRedirect)
 			return
 		}
 		AddSafeHeaders(w)
@@ -75,6 +71,13 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 		}
 
 		if r.Method == "POST" {
+			csrf := r.FormValue("csrf")
+			if csrf != session.GetCSRF() {
+				am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
+
 			_, err = tm.AddTicket(
 				"open",
 				session.GetPersonUuid(),
@@ -92,9 +95,9 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 
 			if err == nil {
 				if p.CurrentUrl == "" {
-					http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+					http.Redirect(w, r, "/", http.StatusSeeOther)
 				} else {
-					http.Redirect(w, r, p.CurrentUrl, http.StatusTemporaryRedirect)
+					http.Redirect(w, r, p.CurrentUrl, http.StatusSeeOther)
 				}
 				return
 			} else {
