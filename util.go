@@ -224,7 +224,7 @@ func PasswordStrength(password string) []string {
 		messages = append(messages, "Passwords must be at least 8 characters")
 	}
 
-	if len(password) < 12 {
+	if len(password) < 10 {
 		if !hasLetter || !hasNumber || !hasPunctuation {
 			messages = append(messages, "Passwords less than 10 characters must contain letters, numbers, and punctuation")
 		}
