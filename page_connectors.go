@@ -237,11 +237,6 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 
 			if cType != nil {
 				var feedback []string
-				type ConfSet struct {
-					English   string
-					FieldName string
-					Value     string
-				}
 				type Page struct {
 					SiteName        string
 					SiteDescription string
@@ -285,6 +280,9 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					cs := &ConfSet{
 						English:   x[0],
 						FieldName: "cv_" + strings.ToLower(strings.Replace(x[0], " ", "_", -1)),
+					}
+					if len(x) > 1 {
+						cs.Type = x[1]
 					}
 					cs.Value = r.FormValue(cs.FieldName)
 					p.Config = append(p.Config, cs)
