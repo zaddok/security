@@ -9,14 +9,14 @@ import (
 	"time"
 )
 
-func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
+type ConfSet struct {
+	English   string
+	FieldName string
+	Value     string
+	Type      string
+}
 
-	type ConfSet struct {
-		English   string
-		FieldName string
-		Value     string
-		Type      string
-	}
+func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)

@@ -8,12 +8,6 @@ import (
 	"strings"
 )
 
-type ConfSet struct {
-	English   string
-	FieldName string
-	Value     string
-}
-
 func ExternalSystemCreatePage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
 
 	type Page struct {
@@ -55,18 +49,18 @@ func ExternalSystemCreatePage(t *template.Template, am AccessManager, siteName, 
 			ConnectorLabel:  r.FormValue(`connector`),
 		}
 		if p.SystemType == `Mailchimp` {
-			p.Config = append(p.Config, &ConfSet{"Mailchimp API Key", "mailchimp.key", ""})
+			p.Config = append(p.Config, &ConfSet{"Mailchimp API Key", "mailchimp.key", "", "string"})
 		}
 		if p.SystemType == `Moodle` {
-			p.Config = append(p.Config, &ConfSet{"Moodle URL", "moodle.url", ""})
-			p.Config = append(p.Config, &ConfSet{"Moodle API Key", "moodle.key", ""})
+			p.Config = append(p.Config, &ConfSet{"Moodle URL", "moodle.url", "", "string"})
+			p.Config = append(p.Config, &ConfSet{"Moodle API Key", "moodle.key", "", "string"})
 		}
 		if p.SystemType == `Formsite` {
-			p.Config = append(p.Config, &ConfSet{"Formsite URL", "formsite.url", ""})
-			p.Config = append(p.Config, &ConfSet{"Formsite API Key", "formsite.key", ""})
+			p.Config = append(p.Config, &ConfSet{"Formsite URL", "formsite.url", "", "string"})
+			p.Config = append(p.Config, &ConfSet{"Formsite API Key", "formsite.key", "", "string"})
 		}
 		if p.SystemType == `GoogleSheets` {
-			p.Config = append(p.Config, &ConfSet{"Client Secret", "client.secret", ""})
+			p.Config = append(p.Config, &ConfSet{"Client Secret", "client.secret", "", "string"})
 		}
 
 		if r.Method == "POST" {
