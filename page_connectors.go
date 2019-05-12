@@ -11,6 +11,13 @@ import (
 
 func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
 
+	type ConfSet struct {
+		English   string
+		FieldName string
+		Value     string
+		Type      string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
@@ -154,11 +161,6 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				}
 			}
 
-			type ConfSet struct {
-				English   string
-				FieldName string
-				Value     string
-			}
 			type Page struct {
 				SiteName           string
 				SiteDescription    string
@@ -170,6 +172,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				Config             []*ConfSet
 				Feedback           []string
 			}
+
 			p := &Page{
 				SiteName:           siteName,
 				SiteDescription:    siteDescription,
@@ -191,6 +194,9 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				cs := &ConfSet{
 					English:   x[0],
 					FieldName: "cv_" + strings.ToLower(strings.Replace(x[0], " ", "_", -1)),
+				}
+				if len(x) > 1 {
+					cs.Type = x[1]
 				}
 				cs.Value = p.ScheduledConnector.GetConfig(x[0])
 				//cs.Value = r.FormValue(cs.FieldName)
@@ -478,7 +484,13 @@ td a.add::before {
 {{else}}
 	<tr>
 		<th>{{.English}}</th>
-		<td><input type="text" name="{{.FieldName}}" value="{{.Value}}"></td>
+		<td>
+{{if eq .Type "bool"}}
+			<input type="checkbox" name="{{.FieldName}}" value="true"{{if eq .Value "true"}} checked{{end}}>
+{{else}}
+			<input type="text" name="{{.FieldName}}" value="{{.Value}}">
+{{end}}
+		</td>
 	</tr>
 {{end}}
 {{end}}

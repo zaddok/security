@@ -3,7 +3,6 @@ module git.tai.io/zadok/security
 require (
 	cloud.google.com/go v0.36.0
 	dmitri.shuralyov.com/service/change v0.0.0-20190301072032-c25fb47d71b3 // indirect
-	git.tai.io/zadok/sis v0.8.12 // indirect
 	github.com/Shopify/sarama v1.21.0 // indirect
 	github.com/bluele/gcache v0.0.0-20190301044115-79ae3b2d8680
 	github.com/gliderlabs/ssh v0.1.3 // indirect
@@ -12,7 +11,6 @@ require (
 	github.com/golang/lint v0.0.0-20190301231843-5614ed5bae6f // indirect
 	github.com/golang/protobuf v1.3.0 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
-	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/pprof v0.0.0-20190228041337-2ef8d84b2e3c // indirect
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
