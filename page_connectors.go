@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -274,7 +273,6 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				}
 				if len(p.ExternalSystems) > 0 && p.Uuid == "" {
 					p.Uuid = p.ExternalSystems[0].Uuid()
-					//fmt.Println("uuid", p.Uuid)
 				}
 				for _, x := range cType.Config {
 					cs := &ConfSet{
@@ -287,7 +285,6 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					cs.Value = r.FormValue(cs.FieldName)
 					p.Config = append(p.Config, cs)
 				}
-				fmt.Println(p.Uuid, p.Connector.SystemType)
 
 				if r.Method == "POST" {
 					hour, _ := strconv.Atoi(r.FormValue("hour"))
@@ -602,9 +599,16 @@ h3.config::before {
 	<tr><td colspan="2"><h3 class="config">Configuration</h3></td></tr>
 {{range .Config}}{{if eq "-" .English}}
 	<tr><td>&nbsp;</td><td></td></tr>
+{{else}}
 	<tr>
 		<th>{{.English}}</th>
-		<td><input type="text" name="{{.FieldName}}" value="{{.Value}}"></td>
+		<td>
+{{if eq .Type "bool"}}
+			<input type="checkbox" name="{{.FieldName}}" value="true"{{if eq .Value "true"}} checked{{end}}>
+{{else}}
+			<input type="text" name="{{.FieldName}}" value="{{.Value}}">
+{{end}}
+		</td>
 	</tr>
 {{end}}
 {{end}}
