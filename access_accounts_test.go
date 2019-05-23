@@ -83,17 +83,17 @@ func TestAccountManagement(t *testing.T) {
 		if len(people) != 1 {
 			t.Fatalf("am.GetPeople() should return one result, not %d", len(people))
 		}
-		if people[0].GetFirstName() != "Stacy" {
-			t.Fatalf("am.GetPeople() did not return correct first name. Expected \"Stacy\", found %s", people[0].GetFirstName())
+		if people[0].FirstName() != "Stacy" {
+			t.Fatalf("am.GetPeople() did not return correct first name. Expected \"Stacy\", found %s", people[0].FirstName())
 		}
-		if people[0].GetLastName() != "Smith" {
-			t.Fatalf("am.GetPeople() did not return correct last name. Expected \"Smith\", found %s", people[0].GetLastName())
+		if people[0].LastName() != "Smith" {
+			t.Fatalf("am.GetPeople() did not return correct last name. Expected \"Smith\", found %s", people[0].LastName())
 		}
-		if people[0].GetSite() != TestSite {
-			t.Fatalf("am.GetPeople() did not return correct site. Expected \"%s\", found %s", TestSite, people[0].GetSite())
+		if people[0].Site() != TestSite {
+			t.Fatalf("am.GetPeople() did not return correct site. Expected \"%s\", found %s", TestSite, people[0].Site())
 		}
-		if people[0].GetEmail() != "tacm.stacy@test.com" {
-			t.Fatalf("am.GetPeople() did not return correct email. Expected \"stacy@test.com\", found %s", people[0].GetEmail())
+		if people[0].Email() != "tacm.stacy@test.com" {
+			t.Fatalf("am.GetPeople() did not return correct email. Expected \"stacy@test.com\", found %s", people[0].Email())
 		}
 	}
 
@@ -128,7 +128,7 @@ func TestAccountManagement(t *testing.T) {
 			t.Fatalf("am.GetPerson() failed: %v", err)
 		}
 
-		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.GetEmail(), "s1:s2:s4", "pea fish 1! apple", session)
+		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.Email(), "s1:s2:s4", "pea fish 1! apple", session)
 		if err != nil {
 			t.Fatalf("am.UpdatePerson() failed: %v", err)
 		}
@@ -137,17 +137,17 @@ func TestAccountManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("am.GetPerson() failed: %v", err)
 		}
-		if len(person2.GetRoles()) != 3 {
-			t.Fatalf("am.UpdatePerson/GetPerson() role update failed. expect three roles, not %d", len(person2.GetRoles()))
+		if len(person2.Roles()) != 3 {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed. expect three roles, not %d", len(person2.Roles()))
 		}
-		if person2.GetRoles()[0] != "s1" {
-			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 1 is \"s1\" not %s", person2.GetRoles()[0])
+		if person2.Roles()[0] != "s1" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 1 is \"s1\" not %s", person2.Roles()[0])
 		}
-		if person2.GetRoles()[1] != "s2" {
-			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 2 is \"s2\" not %s", person2.GetRoles()[1])
+		if person2.Roles()[1] != "s2" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 2 is \"s2\" not %s", person2.Roles()[1])
 		}
-		if person2.GetRoles()[2] != "s4" {
-			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 3 is \"s4\" not %s", person2.GetRoles()[2])
+		if person2.Roles()[2] != "s4" {
+			t.Fatalf("am.UpdatePerson/GetPerson() role update failed: expect role 3 is \"s4\" not %s", person2.Roles()[2])
 		}
 
 		entries, err := am.GetRecentSystemLog(session)

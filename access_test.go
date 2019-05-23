@@ -74,7 +74,100 @@ func TestWatch(t *testing.T) {
 
 }
 
-// Test access manager
+func TestPersonManagement(t *testing.T) {
+
+	log := log.NewStdoutLogDebug()
+	defer log.Close()
+
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), log)
+	if err != nil {
+		t.Fatalf("NewGaeAccessManager() failed: %v", err)
+	}
+	//user := am.GuestSession(TestSite)
+
+	session, err := am.GetSystemSession(TestSite, "Person", "Tester")
+	if err != nil {
+		t.Fatalf("am.GetSystemSession() failed: %v", err)
+	}
+	if session == nil {
+		t.Fatalf("am.GetSystemSession() failed: %v", err)
+	}
+
+	{
+		p1, err := am.AddPerson(TestSite, "John", "Smythe", "John.smythe@example.com", "s1:s3", HashPassword("fish cat 190!"), "127.0.0.2", session)
+		if err != nil {
+			t.Fatalf("am.AddPerson() failed: %v", err)
+		}
+		if p1 == "" {
+			t.Fatalf("am.AddPerson() failed: %v", err)
+		}
+
+		person, err := am.GetPerson(p1, session)
+		if err != nil {
+			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+		if person == nil {
+			t.Fatalf("am.GetPerson() failed to return record")
+		}
+		if person.FirstName() != "John" {
+			t.Fatalf("am.AddPerson() failed to return correct first name. Returned '%s' instead of \"John\"", person.FirstName())
+		}
+		if person.LastName() != "Smythe" {
+			t.Fatalf("am.AddPerson() failed to return correct last name")
+		}
+		if person.Email() != "john.smythe@example.com" {
+			t.Fatalf("am.AddPerson() failed to return correct email address")
+		}
+		if person.LastSigninIP() != "" {
+			t.Fatalf("am.AddPerson() failed to return blank last signin ip")
+		}
+		if len(person.Roles()) != 2 {
+			t.Fatalf("am.AddPerson() failed to return two exact roles")
+		}
+		if !person.HasRole("s1") {
+			t.Fatalf("am.AddPerson() failed to return role s1")
+		}
+		if !person.HasRole("s3") {
+			t.Fatalf("am.AddPerson() failed to return role s3")
+		}
+		if person.HasRole("x") {
+			t.Fatalf("am.AddPerson() should not have this role")
+		}
+		if person.LastSignin() != nil {
+			t.Fatalf("am.AddPerson() should not not immediatly have a last sign in value")
+		}
+	}
+
+	{
+		user, _, err := am.Authenticate(TestSite, "john.smythe@example.com", "fish cat 190!", "127.0.0.10")
+		if err != nil {
+			t.Fatalf("Authenticate() failed: %v", err)
+		}
+		person, err := am.GetPerson(user.GetPersonUuid(), session)
+		if err != nil {
+			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+		if person.LastSignin() == nil {
+			t.Fatalf("am.GetPerson() should return last signin time after successful authentication")
+		}
+		if person.LastSigninIP() != "127.0.0.10" {
+			t.Fatalf("am.GetPerson() did not save last signin ip")
+		}
+		if person.FirstName() != "John" {
+			t.Fatalf("am.GetPerson() failed to return correct first name. Returned '%s' instead of \"John\"", person.FirstName())
+		}
+		if person.LastName() != "Smythe" {
+			t.Fatalf("am.GetPerson() failed to return correct last name")
+		}
+		if person.Email() != "john.smythe@example.com" {
+			t.Fatalf("am.GetPerson() failed to return correct email address")
+		}
+		if len(person.Roles()) != 2 {
+			t.Fatalf("am.GetPerson() failed to return two exact roles")
+		}
+	}
+}
+
 func TestSystemSessionManagement(t *testing.T) {
 
 	log := log.NewStdoutLogDebug()

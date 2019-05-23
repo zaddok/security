@@ -19,6 +19,8 @@ type AccessManager interface {
 	GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error)
 	GetPersonByEmail(site, email string, requestor Session) (Person, error)
 	GetPeople(requestor Session) ([]Person, error)
+
+	// AddPerson creates a new user account. Email must be unique. Password must already be hashed, or nil. Returns the uuid of the created account
 	AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error)
 	UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error
 	DeletePerson(uuid string, updator Session) error
@@ -99,17 +101,8 @@ type Person interface {
 	Email() string
 	Roles() []string
 	LastSignin() *time.Time
+	LastSigninIP() string
 	Created() *time.Time
-
-	GetUuid() string
-	GetSite() string
-	GetFirstName() string
-	GetLastName() string
-	GetEmail() string
-	GetRoles() []string
-	GetLastSignin() *time.Time
-	GetCreated() *time.Time
-
 	DisplayName() string
 	HasRole(uid string) bool
 }

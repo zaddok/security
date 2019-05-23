@@ -88,6 +88,99 @@ type GaePerson struct {
 	roleMap      map[string]bool `datastore:"-"`
 }
 
+func (p *GaePerson) Load(ps []datastore.Property) error {
+	for _, i := range ps {
+		switch i.Name {
+		case "Uuid":
+			p.uuid = i.Value.(string)
+			break
+		case "FirstName":
+			p.firstName = i.Value.(string)
+			break
+		case "LastName":
+			p.lastName = i.Value.(string)
+			break
+		case "Email":
+			p.email = i.Value.(string)
+			break
+		case "LastSigninIP":
+			p.lastSigninIP = i.Value.(string)
+			break
+		case "NameKey":
+			p.nameKey = i.Value.(string)
+			break
+		case "Roles":
+			p.roles = i.Value.(string)
+			break
+		case "Site":
+			p.site = i.Value.(string)
+			break
+		case "Password":
+			v := i.Value.(string)
+			p.password = &v
+			break
+		case "Created":
+			t := i.Value.(time.Time)
+			p.created = &t
+			break
+		case "LastSignin":
+			t := i.Value.(time.Time)
+			p.lastSignin = &t
+			break
+		}
+	}
+	return nil
+}
+
+func (p *GaePerson) Save() ([]datastore.Property, error) {
+	props := []datastore.Property{
+		{
+			Name:  "Uuid",
+			Value: p.uuid,
+		},
+		{
+			Name:  "FirstName",
+			Value: p.firstName,
+		},
+		{
+			Name:  "LastName",
+			Value: p.lastName,
+		},
+		{
+			Name:  "Email",
+			Value: p.email,
+		},
+		{
+			Name:  "LastSigninIP",
+			Value: p.lastSigninIP,
+		},
+		{
+			Name:  "NameKey",
+			Value: p.nameKey,
+		},
+		{
+			Name:  "Roles",
+			Value: p.roles,
+		},
+		{
+			Name:  "Site",
+			Value: p.site,
+		},
+	}
+
+	if p.password != nil {
+		props = append(props, datastore.Property{Name: "Password", Value: p.password})
+	}
+	if p.created != nil {
+		props = append(props, datastore.Property{Name: "Created", Value: p.created})
+	}
+	if p.lastSignin != nil {
+		props = append(props, datastore.Property{Name: "LastSignin", Value: p.lastSignin})
+	}
+
+	return props, nil
+}
+
 func (p *GaePerson) Uuid() string {
 	return p.uuid
 }
@@ -108,6 +201,10 @@ func (p *GaePerson) Email() string {
 	return p.email
 }
 
+func (p *GaePerson) LastSigninIP() string {
+	return p.lastSigninIP
+}
+
 func (p *GaePerson) LastSignin() *time.Time {
 	return p.lastSignin
 }
@@ -117,42 +214,6 @@ func (p *GaePerson) Created() *time.Time {
 }
 
 func (p *GaePerson) Roles() []string {
-	return strings.FieldsFunc(p.roles, func(c rune) bool { return c == ':' })
-}
-
-func (p *GaePerson) GetUuid() string {
-	return p.uuid
-}
-
-func (p *GaePerson) GetFirstName() string {
-	return p.firstName
-}
-
-func (p *GaePerson) GetLastName() string {
-	return p.lastName
-}
-
-func (p *GaePerson) GetDisplayName() string {
-	return p.DisplayName()
-}
-
-func (p *GaePerson) GetSite() string {
-	return p.site
-}
-
-func (p *GaePerson) GetEmail() string {
-	return p.email
-}
-
-func (p *GaePerson) GetLastSignin() *time.Time {
-	return p.lastSignin
-}
-
-func (p *GaePerson) GetCreated() *time.Time {
-	return p.created
-}
-
-func (p *GaePerson) GetRoles() []string {
 	return strings.FieldsFunc(p.roles, func(c rune) bool { return c == ':' })
 }
 
@@ -1112,7 +1173,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 	}
 	puuid := ""
 	if person != nil {
-		puuid = person.GetUuid()
+		puuid = person.Uuid()
 	}
 	if person == nil || (person.(*GaePerson)).roles != roles {
 
@@ -1139,7 +1200,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 			g.Log().Error("GetSystemSession() Person creation failed. Error: %v", err)
 			return nil, err
 		}
-		puuid = person.GetUuid()
+		puuid = person.Uuid()
 	}
 
 	token := RandomString(32)
@@ -1252,7 +1313,7 @@ func (g *GaeAccessManager) Invalidate(site, cookie string) (Session, error) {
 	return session, err
 }
 
-// Password must already be hashed
+// AddPerson creates a new user account. Email must be unique to the system. Password must already be hashed, or nil. Returns the uuid of the created account
 func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error) {
 	if requestor != nil && !requestor.HasRole("s1") {
 		return "", errors.New("Permission denied.")

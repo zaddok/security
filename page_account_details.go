@@ -175,7 +175,7 @@ func updateAccountWithFormValues(am AccessManager, person Person, session Sessio
 	}
 
 	if len(warnings) == 0 {
-		return warnings, am.UpdatePerson(person.GetUuid(), firstName, lastName, email, roles, password, session)
+		return warnings, am.UpdatePerson(person.Uuid(), firstName, lastName, email, roles, password, session)
 	} else {
 		return warnings, nil
 	}
