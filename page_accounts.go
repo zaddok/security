@@ -125,14 +125,20 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				return
 			}
 		}
-		cut := 0
+		cut := -1
 		for x, a := range accounts {
 			if a.GetUuid() == r.FormValue("delete") {
 				cut = x
 				break
 			}
 		}
-		accounts = append(accounts[0:cut], accounts[cut+1:]...)
+		if cut >= 0 {
+			if len(accounts) == 1 {
+				accounts = []Person{}
+			} else {
+				accounts = append(accounts[0:cut], accounts[cut+1:]...)
+			}
+		}
 
 		sort.Slice(accounts, func(i, j int) bool {
 			return accounts[j].GetFirstName() > accounts[i].GetFirstName()
