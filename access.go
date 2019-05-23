@@ -92,15 +92,25 @@ type AccessManager interface {
 
 // Information about a verified user
 type Person interface {
+	Uuid() string
+	Site() string
+	FirstName() string
+	LastName() string
+	Email() string
+	Roles() []string
+	LastSignin() *time.Time
+	Created() *time.Time
+
 	GetUuid() string
 	GetSite() string
 	GetFirstName() string
 	GetLastName() string
 	GetEmail() string
-	GetDisplayName() string
 	GetRoles() []string
 	GetLastSignin() *time.Time
 	GetCreated() *time.Time
+
+	DisplayName() string
 	HasRole(uid string) bool
 }
 

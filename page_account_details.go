@@ -62,7 +62,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 			p := &Page{
 				siteName,
 				siteDescription,
-				[]string{"Account History", person.GetDisplayName(), "Accounts"},
+				[]string{"Account History", person.DisplayName(), "Accounts"},
 				session,
 				person,
 				r.FormValue("q"),
@@ -89,7 +89,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		p := &Page{
 			SiteName:        siteName,
 			SiteDescription: siteDescription,
-			Title:           []string{person.GetDisplayName(), "Accounts"},
+			Title:           []string{person.DisplayName(), "Accounts"},
 			Session:         session,
 			Person:          person,
 			Query:           r.FormValue("q"),
@@ -186,7 +186,7 @@ var accountDetailsTemplate = `
 {{template "admin_header" .}}
 <div id="actions">
 <a href="/z/account.details/{{.Person.Uuid}}?q={{.Query}}&audit=history" class="history">History</a>
-{{if not .Person.GetLastSignin}}
+{{if not .Person.LastSignin}}
 <a href="/z/accounts?q={{.Query}}&delete={{.Person.Uuid}}&csrf={{.Session.GetCSRF}}" class="delete">Delete</a>
 {{end}}
 </div>
@@ -210,7 +210,7 @@ var accountDetailsTemplate = `
 <div style="margin-top: -1.7rem"><a class="back" href="/z/accounts?q={{.Query}}">Back</a></div>
 
 <div id="editform">
-<h1>{{.Person.GetFirstName}} {{.Person.GetLastName}}</h1>
+<h1>{{.Person.FirstName}} {{.Person.LastName}}</h1>
 
 {{if .Feedback}}<div class="feedback error">{{if eq 1 (len .Feedback)}}<p>{{index .Feedback 0}}</p>{{else}}<ul>{{range .Feedback}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
 
@@ -220,15 +220,15 @@ var accountDetailsTemplate = `
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>
-		<td><input type="text" name="first_name" value="{{.Person.GetFirstName}}".></td>
+		<td><input type="text" name="first_name" value="{{.Person.FirstName}}".></td>
 	</tr>
 	<tr>
 		<th>Last Name</th>
-		<td><input type="text" name="last_name" value="{{.Person.GetLastName}}"/></td>
+		<td><input type="text" name="last_name" value="{{.Person.LastName}}"/></td>
 	</tr>
 	<tr>
 		<th>Email</th>
-		<td><input type="email" name="email" value="{{.Person.GetEmail}}" style="width: 18em"></td>
+		<td><input type="email" name="email" value="{{.Person.Email}}" style="width: 18em"></td>
 	</tr>
 
 	<tr><td>&nbsp;</td><td></td></tr>
@@ -283,7 +283,7 @@ var accountHistoryTemplate = `
 {{template "admin_header" .}}
 <div style="margin-top: -0.9rem"><a class="back" href="/z/account.details/{{.Person.Uuid}}?q={{.Query}}">Back</a></div>
 
-<h1>Change History for {{.Person.GetFirstName}} {{.Person.GetLastName}}</h1>
+<h1>Change History for {{.Person.FirstName}} {{.Person.LastName}}</h1>
 
 {{template "show_history" .}}
 

@@ -74,34 +74,62 @@ type GaeRequestToken struct {
 }
 
 type GaePerson struct {
-	Uuid         string
-	FirstName    string
-	LastName     string
-	Email        string
-	Password     *string
-	Created      *time.Time
-	LastSignin   *time.Time
-	LastSigninIP string
-	NameKey      string
-	Roles        string
-	Site         string          `datastore:"-"`
-	RoleMap      map[string]bool `datastore:"-"`
+	uuid         string
+	firstName    string
+	lastName     string
+	email        string
+	password     *string
+	created      *time.Time
+	lastSignin   *time.Time
+	lastSigninIP string
+	nameKey      string
+	roles        string
+	site         string          `datastore:"-"`
+	roleMap      map[string]bool `datastore:"-"`
+}
+
+func (p *GaePerson) Uuid() string {
+	return p.uuid
+}
+
+func (p *GaePerson) FirstName() string {
+	return p.firstName
+}
+
+func (p *GaePerson) LastName() string {
+	return p.lastName
+}
+
+func (p *GaePerson) Site() string {
+	return p.site
+}
+
+func (p *GaePerson) Email() string {
+	return p.email
+}
+
+func (p *GaePerson) LastSignin() *time.Time {
+	return p.lastSignin
+}
+
+func (p *GaePerson) Created() *time.Time {
+	return p.created
+}
+
+func (p *GaePerson) Roles() []string {
+	return strings.FieldsFunc(p.roles, func(c rune) bool { return c == ':' })
 }
 
 func (p *GaePerson) GetUuid() string {
-	return p.Uuid
+	return p.uuid
 }
 
 func (p *GaePerson) GetFirstName() string {
-	return p.FirstName
+	return p.firstName
 }
 
 func (p *GaePerson) GetLastName() string {
-	return p.LastName
-}
-
-func (p *GaePerson) DisplayName() string {
-	return p.FirstName + " " + p.LastName
+	return p.lastName
 }
 
 func (p *GaePerson) GetDisplayName() string {
@@ -109,34 +137,38 @@ func (p *GaePerson) GetDisplayName() string {
 }
 
 func (p *GaePerson) GetSite() string {
-	return p.Site
+	return p.site
 }
 
 func (p *GaePerson) GetEmail() string {
-	return p.Email
+	return p.email
 }
 
 func (p *GaePerson) GetLastSignin() *time.Time {
-	return p.LastSignin
+	return p.lastSignin
 }
 
 func (p *GaePerson) GetCreated() *time.Time {
-	return p.Created
+	return p.created
 }
 
 func (p *GaePerson) GetRoles() []string {
-	return strings.FieldsFunc(p.Roles, func(c rune) bool { return c == ':' })
+	return strings.FieldsFunc(p.roles, func(c rune) bool { return c == ':' })
+}
+
+func (p *GaePerson) DisplayName() string {
+	return p.firstName + " " + p.lastName
 }
 
 func (p *GaePerson) HasRole(uid string) bool {
-	if p.RoleMap == nil {
-		p.RoleMap = make(map[string]bool)
-		for _, v := range strings.FieldsFunc(p.Roles, func(c rune) bool { return c == ':' }) {
-			p.RoleMap[v] = true
+	if p.roleMap == nil {
+		p.roleMap = make(map[string]bool)
+		for _, v := range strings.FieldsFunc(p.roles, func(c rune) bool { return c == ':' }) {
+			p.roleMap[v] = true
 		}
 	}
 
-	_, found := p.RoleMap[uid]
+	_, found := p.roleMap[uid]
 	return found
 }
 
@@ -400,7 +432,7 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with unknown email address: %s", email))
 		return "", nil
 	}
-	if items[0].Password == nil || *items[0].Password == "" {
+	if items[0].password == nil || *items[0].password == "" {
 		a.Log().Info("Forgot Password Request ignored for account with an empty password field. Email: " + email)
 		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with an empty password.  Email address: %s", email))
 		return "", nil
@@ -431,10 +463,10 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	t := &EmailTemplateData{}
 	t.Site = site
 	t.ToEmail = email
-	t.ToName = strings.TrimSpace(items[0].FirstName + " " + items[0].LastName)
+	t.ToName = strings.TrimSpace(items[0].FirstName() + " " + items[0].LastName())
 	t.Token = token.String()
-	t.FirstName = items[0].FirstName
-	t.LastName = items[0].LastName
+	t.FirstName = items[0].FirstName()
+	t.LastName = items[0].LastName()
 	t.Subject = "Lost password retrieval"
 	t.FromEmail = supportEmail
 	t.FromName = supportName
@@ -446,7 +478,7 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 
 	k := datastore.NameKey("RequestToken", token.String(), nil)
 	k.Namespace = site
-	i := GaeRequestToken{Uuid: token.String(), PersonUuid: items[0].Uuid, Type: `password_reset`, IP: ip, Expiry: time.Now().Unix(), Data: ""}
+	i := GaeRequestToken{Uuid: token.String(), PersonUuid: items[0].Uuid(), Type: `password_reset`, IP: ip, Expiry: time.Now().Unix(), Data: ""}
 	if _, err := a.client.Put(a.ctx, k, &i); err != nil {
 		return "Unable to process password reset request. Please try again.", err
 	}
@@ -500,14 +532,14 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		return g.GuestSession(site), "", err
 	}
 	if len(items) > 0 {
-		if items[0].Password == nil || *items[0].Password == "" {
+		if items[0].password == nil || *items[0].password == "" {
 			g.throttle.Increment(email)
 			syslog.Add(`auth`, ip, `warn`, fmt.Sprintf("Authentication for '%s' blocked. Account has no password.", email))
 			return g.GuestSession(site), "Invalid email address or password.", nil
 		}
 
 		// Check internal password
-		if !VerifyPassword(*items[0].Password, password) {
+		if !VerifyPassword(*items[0].password, password) {
 			// Internal password check failed
 
 			externallyAuthenticated := false
@@ -532,16 +564,16 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		}
 
 		now := time.Now()
-		items[0].LastSignin = &now
-		items[0].LastSigninIP = ip
-		k := datastore.NameKey("Person", items[0].Uuid, nil)
+		items[0].lastSignin = &now
+		items[0].lastSigninIP = ip
+		k := datastore.NameKey("Person", items[0].uuid, nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, &items[0]); err != nil {
 			g.Log().Error("Authenticate() Person update Error: %v", err)
 			return g.GuestSession(site), "", err
 		}
 
-		token, err2 := g.createSession(site, items[0].Uuid, items[0].FirstName, items[0].LastName, items[0].Email, items[0].Roles, ip)
+		token, err2 := g.createSession(site, items[0].Uuid(), items[0].FirstName(), items[0].LastName(), items[0].Email(), items[0].roles, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
 			return g.GuestSession(site), "", err2
@@ -550,12 +582,12 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 		session := &GaeSession{
 			Site:          site,
-			PersonUUID:    items[0].Uuid,
+			PersonUUID:    items[0].Uuid(),
 			Token:         token,
-			FirstName:     items[0].FirstName,
-			LastName:      items[0].LastName,
-			Email:         items[0].Email,
-			Roles:         items[0].Roles,
+			FirstName:     items[0].FirstName(),
+			LastName:      items[0].LastName(),
+			Email:         items[0].Email(),
+			Roles:         items[0].roles,
 			CSRF:          RandomString(8),
 			Authenticated: true,
 			RoleMap:       nil,
@@ -891,7 +923,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		e.Site = requestor.GetSite()
+		e.site = requestor.GetSite()
 		items = append(items, e)
 	}
 
@@ -922,32 +954,32 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 
 	// Normal users may not update their own system roles
 	if !updator.HasRole("s3") && updator.GetPersonUuid() == uuid {
-		if roles != i.Roles {
+		if roles != i.roles {
 			return errors.New("Permission denied.")
 		}
 	}
 
 	bulk := &GaeEntityAuditLogCollection{}
 	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid(), updator.GetDisplayName())
-	if firstName != i.FirstName {
-		bulk.AddItem("FirstName", i.FirstName, firstName)
-		i.FirstName = firstName
+	if firstName != i.FirstName() {
+		bulk.AddItem("FirstName", i.firstName, firstName)
+		i.firstName = firstName
 	}
-	if lastName != i.LastName {
-		bulk.AddItem("LastName", i.LastName, lastName)
-		i.LastName = lastName
+	if lastName != i.lastName {
+		bulk.AddItem("LastName", i.lastName, lastName)
+		i.lastName = lastName
 	}
-	if email != i.Email {
-		bulk.AddItem("Email", i.Email, email)
-		i.Email = email
+	if email != i.email {
+		bulk.AddItem("Email", i.email, email)
+		i.email = email
 	}
-	if roles != i.Roles {
-		bulk.AddItem("Roles", i.Roles, roles)
-		i.Roles = roles
+	if roles != i.roles {
+		bulk.AddItem("Roles", i.roles, roles)
+		i.roles = roles
 	}
 	if len(password) > 0 {
 		bulk.AddItem("Password", "", "")
-		i.Password = HashPassword(password)
+		i.password = HashPassword(password)
 	}
 	if bulk.HasUpdates() {
 		if err = am.AddEntityChangeLog(bulk, updator); err != nil {
@@ -1006,7 +1038,7 @@ func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastnam
 		return nil, errors.New("Multiple accounts have this first and last name")
 	}
 
-	items[0].Site = site
+	items[0].site = site
 	return &items[0], nil
 }
 
@@ -1046,7 +1078,7 @@ func (g *GaeAccessManager) GetPersonByEmail(site, email string, requestor Sessio
 		return nil, errors.New("Multiple accounts have this first and last name")
 	}
 
-	items[0].Site = site
+	items[0].site = site
 	return &items[0], nil
 }
 
@@ -1074,7 +1106,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 	if person != nil {
 		puuid = person.GetUuid()
 	}
-	if person == nil || (person.(*GaePerson)).Roles != roles {
+	if person == nil || (person.(*GaePerson)).roles != roles {
 
 		if person == nil {
 			uuid, err := uuid.NewUUID()
@@ -1082,18 +1114,18 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 				return nil, err
 			}
 			person = &GaePerson{
-				Uuid:      uuid.String(),
-				Site:      site,
-				FirstName: firstname,
-				LastName:  lastname,
-				Roles:     roles,
-				NameKey:   strings.ToLower(firstname + "|" + lastname),
-				Created:   &now,
+				uuid:      uuid.String(),
+				site:      site,
+				firstName: firstname,
+				lastName:  lastname,
+				roles:     roles,
+				nameKey:   strings.ToLower(firstname + "|" + lastname),
+				created:   &now,
 			}
 		}
-		(person.(*GaePerson)).Roles = roles
+		(person.(*GaePerson)).roles = roles
 
-		k := datastore.NameKey("Person", person.GetUuid(), nil)
+		k := datastore.NameKey("Person", person.Uuid(), nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, person); err != nil {
 			g.Log().Error("GetSystemSession() Person creation failed. Error: %v", err)
@@ -1241,21 +1273,21 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 
 	now := time.Now()
 	si := &GaePerson{
-		Uuid:      uuid.String(),
-		Site:      site,
-		FirstName: firstName,
-		LastName:  lastName,
-		Email:     email,
-		Roles:     roles,
-		Password:  password,
-		NameKey:   strings.ToLower(firstName + "|" + lastName),
-		Created:   &now,
+		uuid:      uuid.String(),
+		site:      site,
+		firstName: firstName,
+		lastName:  lastName,
+		email:     email,
+		roles:     roles,
+		password:  password,
+		nameKey:   strings.ToLower(firstName + "|" + lastName),
+		created:   &now,
 	}
 
 	if requestor == nil {
 		requestor = &GaeSession{
 			Site:       site,
-			PersonUUID: si.Uuid,
+			PersonUUID: si.uuid,
 			FirstName:  firstName,
 			LastName:   lastName,
 			Email:      email,
@@ -1392,7 +1424,7 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 		g.Log().Error("ResetPassword() email lookup failure: " + err.Error())
 		return false, "Reset password service failed, please try again.", err
 	}
-	person.Password = HashPassword(password)
+	person.password = HashPassword(password)
 	_, err = g.client.Put(g.ctx, k, &person)
 
 	return true, "Your password has been reset", nil
