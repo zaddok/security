@@ -28,6 +28,7 @@ type PicklistItem interface {
 
 type PicklistStore interface {
 	GetPicklistItem(site, picklist, key string) (PicklistItem, error)
+	GetPicklistValue(site, picklist, key string) (string, error)
 	GetPicklist(site, picklist string) (map[string]PicklistItem, error)
 
 	// GetPicklistOrdered returns all items in the list sorted numerically by `index`, then alphabetically by `value`.

@@ -134,6 +134,17 @@ func (s *GaePicklistStore) GetPicklistItem(site, picklist, key string) (Picklist
 	return i, nil
 }
 
+func (s *GaePicklistStore) GetPicklistValue(site, picklist, key string) (string, error) {
+	i, err := s.GetPicklistItem(site, picklist, key)
+	if err != nil {
+		return "", err
+	}
+	if i == nil {
+		return "", nil
+	}
+	return i.GetValue(), nil
+}
+
 // Store a configuration setting. Stores in cache, and flushes through to database.
 func (s *GaePicklistStore) DeprecatePicklistItem(site, picklist, key string) error {
 	picklist = strings.ToLower(picklist)
