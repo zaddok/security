@@ -100,8 +100,12 @@ func (p *GaePerson) GetLastName() string {
 	return p.LastName
 }
 
-func (p *GaePerson) GetDisplayName() string {
+func (p *GaePerson) DisplayName() string {
 	return p.FirstName + " " + p.LastName
+}
+
+func (p *GaePerson) GetDisplayName() string {
+	return p.DisplayName()
 }
 
 func (p *GaePerson) GetSite() string {
@@ -110,6 +114,14 @@ func (p *GaePerson) GetSite() string {
 
 func (p *GaePerson) GetEmail() string {
 	return p.Email
+}
+
+func (p *GaePerson) GetLastSignin() *time.Time {
+	return p.LastSignin
+}
+
+func (p *GaePerson) GetCreated() *time.Time {
+	return p.Created
 }
 
 func (p *GaePerson) GetRoles() []string {

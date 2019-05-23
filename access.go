@@ -99,6 +99,8 @@ type Person interface {
 	GetEmail() string
 	GetDisplayName() string
 	GetRoles() []string
+	GetLastSignin() *time.Time
+	GetCreated() *time.Time
 	HasRole(uid string) bool
 }
 
