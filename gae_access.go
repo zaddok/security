@@ -1250,6 +1250,18 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 		return "", errors.New("Permission denied.")
 	}
 
+	firstName = strings.TrimSpace(firstName)
+	lastName = strings.TrimSpace(lastName)
+	email = strings.ToLower(strings.TrimSpace(email))
+
+	check, err := g.GetPersonByEmail(site, email, requestor)
+	if err != nil {
+		return "", err
+	}
+	if check != nil {
+		return "", errors.New("A user account already exists with this email address.")
+	}
+
 	// Password is hashed, this doesnt make sense
 	/*
 		if password != nil {
@@ -1261,10 +1273,6 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
-
-	firstName = strings.TrimSpace(firstName)
-	lastName = strings.TrimSpace(lastName)
-	email = strings.ToLower(strings.TrimSpace(email))
 
 	uuid, err := uuid.NewUUID()
 	if err != nil {
