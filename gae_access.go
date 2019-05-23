@@ -74,16 +74,16 @@ type GaeRequestToken struct {
 }
 
 type GaePerson struct {
-	uuid         string
-	firstName    string
-	lastName     string
-	email        string
-	password     *string
-	created      *time.Time
-	lastSignin   *time.Time
-	lastSigninIP string
-	nameKey      string
-	roles        string
+	uuid         string          `datastore:"Uuid"`
+	firstName    string          `datastore:"FirstName"`
+	lastName     string          `datastore:"LastName"`
+	email        string          `datastore:"Email"`
+	password     *string         `datastore:"Password"`
+	created      *time.Time      `datastore:"Created"`
+	lastSignin   *time.Time      `datastore:"LastSignin"`
+	lastSigninIP string          `datastore:"LastSigninIP"`
+	nameKey      string          `datastore:"NameKey"`
+	roles        string          `datastore:"Roles"`
 	site         string          `datastore:"-"`
 	roleMap      map[string]bool `datastore:"-"`
 }
@@ -942,10 +942,18 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 		}
 	}
 
+	check, err := am.GetPersonByEmail(updator.GetSite(), email, updator)
+	if err != nil {
+		return err
+	}
+	if check != nil && check.Uuid() != uuid {
+		return errors.New("A user account already exists with this email address.")
+	}
+
 	k := datastore.NameKey("Person", uuid, nil)
 	k.Namespace = updator.GetSite()
 	i := new(GaePerson)
-	err := am.client.Get(am.ctx, k, i)
+	err = am.client.Get(am.ctx, k, i)
 	if err == datastore.ErrNoSuchEntity {
 		return errors.New("Person not found.")
 	} else if err != nil {
