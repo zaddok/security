@@ -74,16 +74,16 @@ type GaeRequestToken struct {
 }
 
 type GaePerson struct {
-	uuid         string          `datastore:"Uuid"`
+	uuid         string          `datastore:"Uuid,noindex"`
 	firstName    string          `datastore:"FirstName"`
 	lastName     string          `datastore:"LastName"`
 	email        string          `datastore:"Email"`
-	password     *string         `datastore:"Password"`
-	created      *time.Time      `datastore:"Created"`
-	lastSignin   *time.Time      `datastore:"LastSignin"`
+	password     *string         `datastore:"Password,noindex"`
+	created      *time.Time      `datastore:"Created,noindex"`
+	lastSignin   *time.Time      `datastore:"LastSignin,noindex"`
 	lastSigninIP string          `datastore:"LastSigninIP"`
 	nameKey      string          `datastore:"NameKey"`
-	roles        string          `datastore:"Roles"`
+	roles        string          `datastore:"Roles,noindex"`
 	site         string          `datastore:"-"`
 	roleMap      map[string]bool `datastore:"-"`
 }
