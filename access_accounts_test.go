@@ -119,16 +119,8 @@ func TestAccountManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
-		//session, err := am.Session(TestSite, cookie)
-		//if err != nil {
-		//	t.Fatalf("am.Session() failed: %v", err)
-		//}
-		person, err := am.GetPerson(uuid, session)
-		if err != nil {
-			t.Fatalf("am.GetPerson() failed: %v", err)
-		}
 
-		err = am.UpdatePerson(uuid, "Jason2", "Smith2", person.Email(), "s1:s2:s4", "pea fish 1! apple", session)
+		err = am.UpdatePerson(uuid, "Jason2", "Smith2", "tacm.stacy@test.com2", "s1:s2:s4", "pea fish 1! apple", session)
 		if err != nil {
 			t.Fatalf("am.UpdatePerson() failed: %v", err)
 		}
@@ -136,6 +128,15 @@ func TestAccountManagement(t *testing.T) {
 		person2, err := am.GetPerson(uuid, session)
 		if err != nil {
 			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+		if person2.FirstName() != "Jason2" {
+			t.Fatalf("am.UpdatePerson/GetPerson() first name update failed")
+		}
+		if person2.LastName() != "Smith2" {
+			t.Fatalf("am.UpdatePerson/GetPerson() first name update failed")
+		}
+		if person2.Email() != "tacm.stacy@test.com2" {
+			t.Fatalf("am.UpdatePerson/GetPerson() first name update failed")
 		}
 		if len(person2.Roles()) != 3 {
 			t.Fatalf("am.UpdatePerson/GetPerson() role update failed. expect three roles, not %d", len(person2.Roles()))
