@@ -967,7 +967,13 @@ func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {
 		return errors.New("Permission denied.")
 	}
 
-	return errors.New("unimplemented")
+	k := datastore.NameKey("Person", uuid, nil)
+	k.Namespace = updator.GetSite()
+
+	if err := am.client.Delete(am.ctx, k); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (am *GaeAccessManager) SearchPeople(keyword string, requestor Session) ([]Person, error) {

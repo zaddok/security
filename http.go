@@ -1135,6 +1135,9 @@ var AdminTemplate = `
 			div#actions a.history::before {
 				content: "\f543";
 			}
+			div#actions a.delete::before {
+				content: "\f2ed";
+			}
 			div#actions a.new_person::before {
 				font-family: MaterialIcons;
 				content: "\e7fe";

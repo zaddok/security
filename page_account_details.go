@@ -187,7 +187,7 @@ var accountDetailsTemplate = `
 <div id="actions">
 <a href="/z/account.details/{{.Person.Uuid}}?q={{.Query}}&audit=history" class="history">History</a>
 {{if not .Person.GetLastSignin}}
-<a href="/z/accounts/?q={{.Query}}&delete={{.Person.Uuid}}" class="history">History</a>
+<a href="/z/accounts?q={{.Query}}&delete={{.Person.Uuid}}&csrf={{.Session.GetCSRF}}" class="delete">Delete</a>
 {{end}}
 </div>
 

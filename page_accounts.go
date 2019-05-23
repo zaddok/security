@@ -80,7 +80,6 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			}
 
 			Render(r, w, t, "account_create", p)
-
 			return
 		}
 
@@ -93,6 +92,22 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			Query           string
 			Accounts        []Person
 			CustomRoleTypes []RoleType
+			Feedback        []string
+		}
+		var feedback []string
+
+		if r.FormValue("delete") != "" {
+			if !session.HasRole("s3") || r.FormValue("csrf") != session.GetCSRF() {
+				ShowErrorForbidden(w, r, t, siteName)
+				return
+			}
+			uuid := r.FormValue("delete")
+			err := am.DeletePerson(uuid, session)
+			if err != nil {
+				ShowError(w, r, t, err, siteName)
+				return
+			}
+			feedback = append(feedback, "User account has been deleted.")
 		}
 
 		err = r.ParseForm()
@@ -110,6 +125,14 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				return
 			}
 		}
+		cut := 0
+		for x, a := range accounts {
+			if a.GetUuid() == r.FormValue("delete") {
+				cut = x
+				break
+			}
+		}
+		accounts = append(accounts[0:cut], accounts[cut+1:]...)
 
 		sort.Slice(accounts, func(i, j int) bool {
 			return accounts[j].GetFirstName() > accounts[i].GetFirstName()
@@ -123,6 +146,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			q,
 			accounts,
 			am.GetCustomRoleTypes(),
+			feedback,
 		}
 
 		Render(r, w, t, "accounts", p)
@@ -198,6 +222,8 @@ var accountsTemplate = `
 {{end}}
 </div>
 {{end}}
+
+{{if .Feedback}}<div class="feedback success">{{if eq 1 (len .Feedback) }}<p>{{index .Feedback 0}}</p>{{else}}<ul>{{range .Feedback}}<li>{{.}}</li>{{end}}</ul>{{end}}</div>{{end}}
 
 <div class="search_layout">
 {{if .Accounts}}{{else}}
