@@ -116,16 +116,22 @@ func (p *GaePerson) Load(ps []datastore.Property) error {
 			p.site = i.Value.(string)
 			break
 		case "Password":
-			v := i.Value.(string)
-			p.password = &v
+			if i.Value != nil {
+				v := i.Value.(string)
+				p.password = &v
+			}
 			break
 		case "Created":
-			t := i.Value.(time.Time)
-			p.created = &t
+			if i.Value != nil {
+				t := i.Value.(time.Time)
+				p.created = &t
+			}
 			break
 		case "LastSignin":
-			t := i.Value.(time.Time)
-			p.lastSignin = &t
+			if i.Value != nil {
+				t := i.Value.(time.Time)
+				p.lastSignin = &t
+			}
 			break
 		}
 	}
@@ -168,7 +174,7 @@ func (p *GaePerson) Save() ([]datastore.Property, error) {
 		},
 	}
 
-	if p.password != nil {
+	if p.password != nil && *p.password != "" {
 		props = append(props, datastore.Property{Name: "Password", Value: p.password})
 	}
 	if p.created != nil {
