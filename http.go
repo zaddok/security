@@ -379,6 +379,11 @@ func AddSafeHeaders(w http.ResponseWriter) {
 	w.Header().Set("Strict-Transport-Security", "max-age=2592000; includeSubDomains")
 }
 
+var hostMap [][]string
+
+// HostFromRequest extracts the virthual host name from the http request. This is typically used
+// to ensure that http requests serve and update data belonging to a particular client. See also
+// RegisterHostMapping for combining requests under multiple virtualhosts into a single hostname.
 func HostFromRequest(r *http.Request) string {
 	host := r.Host
 
@@ -390,7 +395,19 @@ func HostFromRequest(r *http.Request) string {
 		return "localhost"
 	}
 
+	for _, x := range hostMap {
+		if host == x[0] {
+			return x[1]
+		}
+	}
+
 	return host
+}
+
+// RegisterHostMapping internally maps one hostname to another hostname. When a site has muliple
+// hostnames, all data can be mapped into the data store under one hostname.
+func RegisterHostMapping(from, to string) {
+	hostMap = append(hostMap, []string{from, to})
 }
 
 // Extract user IP address from the http request header. Trust proxy or load balancer header information when connection is behind local network device such as proxy or load balancer.
