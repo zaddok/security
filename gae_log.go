@@ -471,6 +471,13 @@ func (ec *GaeEntityAuditLogCollection) AddIntItem(attribute string, oldValue, ne
 	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), "int64", ec.PersonUuid, ec.PersonName})
 }
 
+func (ec *GaeEntityAuditLogCollection) AddFloatItem(attribute string, oldValue, newValue float64) {
+	if ec.EntityUuid == "" || ec.PersonUuid == "" {
+		panic(errors.New("GaeEntityAuditLogCollection.AddIntItem() called prior to SetEntityUuidPersonUuid()."))
+	}
+	ec.Items = append(ec.Items, GaeEntityAudit{ec.Date, ec.EntityUuid, attribute, fmt.Sprintf("%v", oldValue), fmt.Sprintf("%v", newValue), "float64", ec.PersonUuid, ec.PersonName})
+}
+
 func (ec *GaeEntityAuditLogCollection) AddMoneyItem(attribute string, oldValue, newValue int64) {
 	if ec.EntityUuid == "" || ec.PersonUuid == "" {
 		panic(errors.New("GaeEntityAuditLogCollection.AddMoneyItem() called piror to SetEntityUuidPersonUuid()."))
