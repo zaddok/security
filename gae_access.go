@@ -1444,7 +1444,6 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			g.sessionCache.Remove(cookie)
 			return g.GuestSession(site), nil
 		}
-		g.log.Debug("Session for %s not hit \"session.max_age\": %v seconds / %v / %v", session.DisplayName(), maxAge, session.Created(), session.Created().Add(time.Duration(time.Duration(maxAge)*time.Second)))
 
 		// So "expires" is still in the future... Update the session expiry in the database
 		if newExpiry.Unix()-session.Expiry().Unix() > 30 {
