@@ -348,7 +348,7 @@ func (s *GaeSession) HasRole(uid string) bool {
 func (p *GaeSession) Load(ps []datastore.Property) error {
 	for _, i := range ps {
 		switch i.Name {
-		case "PersonUuid":
+		case "PersonUUID":
 			p.personUUID = i.Value.(string)
 			break
 		case "FirstName":
