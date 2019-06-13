@@ -1405,7 +1405,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
-			if err == datastore.ErrNoSuchEntity || session.expiry.Before(time.Now()) {
+			if err == datastore.ErrNoSuchEntity {
 				return g.GuestSession(site), nil
 			} else if err != nil {
 				return g.GuestSession(site), err
@@ -1418,16 +1418,17 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			g.sessionCache.Set(cookie, session)
 		}
 
-		expiry := g.setting.GetWithDefault(site, `session.expiry`, ``)
-		if expiry == "" {
-			expiry = `3600`
-			g.log.Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
-			g.setting.Put(site, `session.expiry`, `3600`)
+		if session.expiry.Before(time.Now()) {
+			g.log.Debug("Session expired for %s: %v", session.DisplayName(), session.expiry)
+			g.client.Delete(g.ctx, k)
+			g.sessionCache.Remove(cookie)
+			return g.GuestSession(site), nil
 		}
-		e, err := strconv.ParseInt(expiry, 10, 64)
-		if err != nil {
-			e = 3600
-			g.log.Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.")
+
+		expiry := g.setting.GetInt(site, `session.expiry`, 0)
+		if expiry == 0 {
+			expiry = 3600
+			g.setting.Put(site, `session.expiry`, strconv.Itoa(expiry))
 		}
 
 		// Check this user session hasn't hit its maximum hard limit
@@ -1436,12 +1437,14 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 			maxAge = 2592000
 			g.setting.Put(site, "session.max_age", strconv.Itoa(maxAge))
 		}
-		newExpiry := time.Now().Add(time.Second * time.Duration(e))
-		if session.Created().Add(time.Duration(maxAge) * time.Second).Before(newExpiry) {
-			g.log.Warning("User session hit \"session.max_age\".")
+		newExpiry := time.Now().Add(time.Second * time.Duration(expiry))
+		if session.Created().Add(time.Duration(maxAge) * time.Second).Before(time.Now()) {
+			g.log.Warning("Session for %s hit \"session.max_age\". Session created: %v Max Age: %v", session.DisplayName(), session.Created(), session.Created().Add(time.Duration(maxAge)*time.Second))
+			g.client.Delete(g.ctx, k)
 			g.sessionCache.Remove(cookie)
 			return g.GuestSession(site), nil
 		}
+		g.log.Debug("Session for %s not hit \"session.max_age\": %v seconds / %v / %v", session.DisplayName(), maxAge, session.Created(), session.Created().Add(time.Duration(time.Duration(maxAge)*time.Second)))
 
 		// So "expires" is still in the future... Update the session expiry in the database
 		if newExpiry.Unix()-session.Expiry().Unix() > 30 {
