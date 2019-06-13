@@ -1431,7 +1431,11 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		}
 
 		// Check this user session hasn't hit its maximum hard limit
-		maxAge := g.setting.GetInt(site, "session.max_age", 2592000)
+		maxAge := g.setting.GetInt(site, "session.max_age", 0)
+		if maxAge == 0 {
+			maxAge = 2592000
+			g.setting.Put(site, "session.max_age", maxAge)
+		}
 		newExpiry := time.Now().Add(time.Second * time.Duration(e))
 		if session.Created().Add(time.Duration(maxAge) * time.Second).Before(newExpiry) {
 			g.log.Warning("User session hit \"session.max_age\".")
