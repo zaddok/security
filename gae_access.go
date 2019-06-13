@@ -1434,7 +1434,7 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		maxAge := g.setting.GetInt(site, "session.max_age", 0)
 		if maxAge == 0 {
 			maxAge = 2592000
-			g.setting.Put(site, "session.max_age", maxAge)
+			g.setting.Put(site, "session.max_age", strconv.Itoa(maxAge))
 		}
 		newExpiry := time.Now().Add(time.Second * time.Duration(e))
 		if session.Created().Add(time.Duration(maxAge) * time.Second).Before(newExpiry) {
