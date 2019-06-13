@@ -130,7 +130,7 @@ func (am *GaeAccessManager) GetExternalSystemsByType(etype string, requestor Ses
 func (am *GaeAccessManager) GetExternalSystems(requestor Session) ([]ExternalSystem, error) {
 	var items []ExternalSystem
 
-	q := datastore.NewQuery("ExternalSystem").Namespace(requestor.GetSite()).Limit(500)
+	q := datastore.NewQuery("ExternalSystem").Namespace(requestor.Site()).Limit(500)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaeExternalSystem)
@@ -151,7 +151,7 @@ func (am *GaeAccessManager) GetExternalSystem(uuid string, session Session) (Ext
 	}
 
 	k := datastore.NameKey("ExternalSystem", uuid, nil)
-	k.Namespace = session.GetSite()
+	k.Namespace = session.Site()
 
 	i := new(GaeExternalSystem)
 	err := am.client.Get(am.ctx, k, i)
@@ -177,7 +177,7 @@ func (am *GaeAccessManager) AddExternalSystem(etype string, config []KeyValue, u
 	}
 
 	k := datastore.NameKey("ExternalSystem", i.Uuid(), nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (am *GaeAccessManager) AddExternalSystem(etype string, config []KeyValue, u
 
 func (am *GaeAccessManager) DeleteExternalSystem(uuid string, updator Session) error {
 	k := datastore.NameKey("ExternalSystem", uuid, nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	if err := am.client.Delete(am.ctx, k); err != nil {
 		return err

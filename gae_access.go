@@ -15,8 +15,9 @@ import (
 	"cloud.google.com/go/datastore"
 	"github.com/bluele/gcache"
 	"github.com/google/uuid"
-	"github.com/zaddok/log"
 	"google.golang.org/api/iterator"
+
+	"github.com/zaddok/log"
 )
 
 type GaeAccessManager struct {
@@ -184,6 +185,39 @@ func (p *GaePerson) Save() ([]datastore.Property, error) {
 		props = append(props, datastore.Property{Name: "LastSignin", Value: p.lastSignin})
 	}
 
+	var searchTags []interface{}
+	searchTags = append(searchTags, strings.ToLower(p.email))
+	idx := strings.Index(p.email, "@")
+	if idx > 0 {
+		searchTags = append(searchTags, strings.ToLower(p.email[idx+1:]))
+	}
+
+	fn := strings.ToLower(p.firstName)
+	for _, r := range strings.Fields(fn) {
+		searchTags = append(searchTags, r)
+		for _, line := range FuzzyNameMatch {
+			lineMatch := false
+			for _, item := range line {
+				if item == r {
+					lineMatch = true
+					break
+				}
+			}
+			if lineMatch {
+				for _, item := range line {
+					if item != fn {
+						searchTags = append(searchTags, item)
+					}
+				}
+			}
+		}
+	}
+
+	for _, r := range strings.Fields(strings.ToLower(p.lastName)) {
+		searchTags = append(searchTags, r)
+	}
+	props = append(props, datastore.Property{Name: "SearchTags", Value: searchTags})
+
 	return props, nil
 }
 
@@ -240,66 +274,160 @@ func (p *GaePerson) HasRole(uid string) bool {
 }
 
 type GaeSession struct {
-	Site          string `datastore:"-"`
-	PersonUUID    string
-	FirstName     string
-	LastName      string
-	Email         string
-	Created       int64
-	Expiry        int64
-	Authenticated bool
-	Token         string `datastore:"-"`
-	CSRF          string
-	Roles         string
-	RoleMap       map[string]bool `datastore:"-"`
+	personUUID    string
+	firstName     string
+	lastName      string
+	email         string
+	created       *time.Time
+	expiry        *time.Time
+	authenticated bool
+	csrf          string
+	roles         string
+
+	site    string          `datastore:"-"`
+	token   string          `datastore:"-"`
+	roleMap map[string]bool `datastore:"-"`
 }
 
-func (s *GaeSession) GetPersonUuid() string {
-	return s.PersonUUID
+func (s *GaeSession) PersonUuid() string {
+	return s.personUUID
 }
 
-func (s *GaeSession) GetToken() string {
-	return s.Token
+func (s *GaeSession) Token() string {
+	return s.token
 }
 
-func (s *GaeSession) GetCSRF() string {
-	return s.CSRF
+func (s *GaeSession) Created() *time.Time {
+	return s.created
 }
 
-func (s *GaeSession) GetSite() string {
-	return s.Site
+func (s *GaeSession) Expiry() *time.Time {
+	return s.expiry
 }
 
-func (s *GaeSession) GetFirstName() string {
-	return s.FirstName
+func (s *GaeSession) CSRF() string {
+	return s.csrf
 }
 
-func (s *GaeSession) GetLastName() string {
-	return s.LastName
+func (s *GaeSession) Site() string {
+	return s.site
 }
 
-func (s *GaeSession) GetDisplayName() string {
-	return s.FirstName + " " + s.LastName
+func (s *GaeSession) FirstName() string {
+	return s.firstName
 }
 
-func (s *GaeSession) GetEmail() string {
-	return s.Email
+func (s *GaeSession) LastName() string {
+	return s.lastName
+}
+
+func (s *GaeSession) DisplayName() string {
+	return s.firstName + " " + s.lastName
+}
+
+func (s *GaeSession) Email() string {
+	return s.email
 }
 
 func (s *GaeSession) IsAuthenticated() bool {
-	return s.Authenticated
+	return s.authenticated
 }
 
 func (s *GaeSession) HasRole(uid string) bool {
-	if s.RoleMap == nil {
-		s.RoleMap = make(map[string]bool)
-		for _, v := range strings.FieldsFunc(s.Roles, func(c rune) bool { return c == ':' }) {
-			s.RoleMap[v] = true
+	if s.roleMap == nil {
+		s.roleMap = make(map[string]bool)
+		for _, v := range strings.FieldsFunc(s.roles, func(c rune) bool { return c == ':' }) {
+			s.roleMap[v] = true
 		}
 	}
 
-	_, found := s.RoleMap[uid]
+	_, found := s.roleMap[uid]
 	return found
+}
+
+func (p *GaeSession) Load(ps []datastore.Property) error {
+	for _, i := range ps {
+		switch i.Name {
+		case "PersonUuid":
+			p.personUUID = i.Value.(string)
+			break
+		case "FirstName":
+			p.firstName = i.Value.(string)
+			break
+		case "LastName":
+			p.lastName = i.Value.(string)
+			break
+		case "Email":
+			p.email = i.Value.(string)
+			break
+		case "Authenticated":
+			p.authenticated = i.Value.(bool)
+			break
+		case "CSRF":
+			p.csrf = i.Value.(string)
+			break
+		case "Roles":
+			p.roles = i.Value.(string)
+			break
+		case "Site":
+			p.site = i.Value.(string)
+			break
+		case "Created":
+			if i.Value != nil {
+				t := i.Value.(time.Time)
+				p.created = &t
+			}
+			break
+		case "Expiry":
+			if i.Value != nil {
+				t := i.Value.(time.Time)
+				p.expiry = &t
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func (p *GaeSession) Save() ([]datastore.Property, error) {
+	props := []datastore.Property{
+		{
+			Name:  "PersonUUID",
+			Value: p.personUUID,
+		},
+		{
+			Name:  "FirstName",
+			Value: p.firstName,
+		},
+		{
+			Name:  "LastName",
+			Value: p.lastName,
+		},
+		{
+			Name:  "Email",
+			Value: p.email,
+		},
+		{
+			Name:  "Authenticated",
+			Value: p.authenticated,
+		},
+		{
+			Name:  "CSRF",
+			Value: p.csrf,
+		},
+	}
+
+	if p.roles != "" {
+		props = append(props, datastore.Property{Name: "Roles", Value: p.roles})
+	}
+	if p.created != nil {
+		props = append(props, datastore.Property{Name: "Created", Value: p.created})
+	}
+	if p.expiry != nil {
+		props = append(props, datastore.Property{Name: "Expiry", Value: p.expiry})
+	}
+
+	return props, nil
 }
 
 type GaeRoleType struct {
@@ -648,16 +776,16 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
 		session := &GaeSession{
-			Site:          site,
-			PersonUUID:    items[0].Uuid(),
-			Token:         token,
-			FirstName:     items[0].FirstName(),
-			LastName:      items[0].LastName(),
-			Email:         items[0].Email(),
-			Roles:         items[0].roles,
-			CSRF:          RandomString(8),
-			Authenticated: true,
-			RoleMap:       nil,
+			site:          site,
+			personUUID:    items[0].Uuid(),
+			token:         token,
+			firstName:     items[0].FirstName(),
+			lastName:      items[0].LastName(),
+			email:         items[0].Email(),
+			roles:         items[0].roles,
+			csrf:          RandomString(8),
+			authenticated: true,
+			roleMap:       nil,
 		}
 
 		return session, "", nil
@@ -683,7 +811,7 @@ func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, e
 		return items, errors.New("Permission denied.")
 	}
 
-	q := datastore.NewQuery("SystemLog").Namespace(requestor.GetSite()).Order("-Recorded").Limit(200)
+	q := datastore.NewQuery("SystemLog").Namespace(requestor.Site()).Order("-Recorded").Limit(200)
 	it := a.client.Run(a.ctx, q)
 	for {
 		e := new(GaeSystemLog)
@@ -705,7 +833,7 @@ func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCol
 		return items, errors.New("Permission denied.")
 	}
 
-	q := datastore.NewQuery("LogCollection").Namespace(requestor.GetSite()).Order("-Began").Limit(200)
+	q := datastore.NewQuery("LogCollection").Namespace(requestor.Site()).Order("-Began").Limit(200)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaeLogCollection)
@@ -726,9 +854,9 @@ func (am *GaeAccessManager) GetEntityChangeLog(uuid string, requestor Session) (
 	var items []EntityAuditLogCollection
 
 	pkey := datastore.NameKey("EntityChange", uuid, nil)
-	pkey.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
 
-	q := datastore.NewQuery("EntityChange").Namespace(requestor.GetSite()).Ancestor(pkey).Limit(500)
+	q := datastore.NewQuery("EntityChange").Namespace(requestor.Site()).Ancestor(pkey).Limit(500)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaeEntityAuditLogCollection)
@@ -761,9 +889,9 @@ func (am *GaeAccessManager) AddEntityChangeLog(ec EntityAuditLogCollection, requ
 	e.Uuid = uuid.String()
 
 	pkey := datastore.NameKey("EntityChange", e.EntityUuid, nil)
-	pkey.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
 	key := datastore.NameKey("EntityChange", e.Uuid, pkey)
-	key.Namespace = requestor.GetSite()
+	key.Namespace = requestor.Site()
 
 	if _, err := am.client.Put(am.ctx, key, e); err != nil {
 		return err
@@ -779,7 +907,7 @@ func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]
 		return items, errors.New("Permission denied.")
 	}
 
-	q := datastore.NewQuery("LogEntry").Namespace(requestor.GetSite()).Filter("LogUuid =", uuid).Order("Recorded").Limit(10000)
+	q := datastore.NewQuery("LogEntry").Namespace(requestor.Site()).Filter("LogUuid =", uuid).Order("Recorded").Limit(10000)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaeLogEntry)
@@ -828,13 +956,13 @@ func (am *GaeAccessManager) StartWatching(objectUuid, objectName, objectType str
 	}
 
 	pkey := datastore.NameKey(objectType, objectUuid, nil)
-	pkey.Namespace = requestor.GetSite()
-	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.GetPersonUuid(), pkey)
-	key.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
+	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.PersonUuid(), pkey)
+	key.Namespace = requestor.Site()
 
 	w := GaeWatch{
-		PersonName: requestor.GetDisplayName(),
-		PersonUuid: requestor.GetPersonUuid(),
+		PersonName: requestor.DisplayName(),
+		PersonUuid: requestor.PersonUuid(),
 		ObjectUuid: objectUuid,
 		ObjectType: objectType,
 		ObjectName: objectName,
@@ -852,9 +980,9 @@ func (am *GaeAccessManager) StopWatching(objectUuid, objectType string, requesto
 	}
 
 	pkey := datastore.NameKey(objectType, objectUuid, nil)
-	pkey.Namespace = requestor.GetSite()
-	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.GetPersonUuid(), pkey)
-	key.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
+	key := datastore.NameKey("Watch", objectUuid+"|"+requestor.PersonUuid(), pkey)
+	key.Namespace = requestor.Site()
 	if err := am.client.Delete(am.ctx, key); err != nil {
 		return err
 	}
@@ -924,7 +1052,7 @@ func (am *GaeAccessManager) TriggerNotificationEvent(objectUuid string, session 
 func (am *GaeAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 	var items []Watch
 
-	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Filter("PersonUuid =", requestor.GetPersonUuid()).Limit(200)
+	q := datastore.NewQuery("Watch").Namespace(requestor.Site()).Filter("PersonUuid =", requestor.PersonUuid()).Limit(200)
 	it := am.client.Run(am.ctx, q)
 	for {
 		w := new(GaeWatch)
@@ -942,7 +1070,7 @@ func (am *GaeAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 func (am *GaeAccessManager) GetWatchers(objectUuid string, requestor Session) ([]Watch, error) {
 	var items []Watch
 
-	q := datastore.NewQuery("Watch").Namespace(requestor.GetSite()).Filter("ObjectUuid =", objectUuid).Limit(200)
+	q := datastore.NewQuery("Watch").Namespace(requestor.Site()).Filter("ObjectUuid =", objectUuid).Limit(200)
 	it := am.client.Run(am.ctx, q)
 	for {
 		w := new(GaeWatch)
@@ -958,12 +1086,12 @@ func (am *GaeAccessManager) GetWatchers(objectUuid string, requestor Session) ([
 }
 
 func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
-	if !requestor.HasRole("s1") && requestor.GetPersonUuid() != uuid {
+	if !requestor.HasRole("s1") && requestor.PersonUuid() != uuid {
 		return nil, errors.New("Permission denied.")
 	}
 
 	k := datastore.NameKey("Person", uuid, nil)
-	k.Namespace = requestor.GetSite()
+	k.Namespace = requestor.Site()
 	i := new(GaePerson)
 	err := am.client.Get(am.ctx, k, i)
 	if err == datastore.ErrNoSuchEntity {
@@ -981,7 +1109,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 		return items, errors.New("Permission denied.")
 	}
 
-	q := datastore.NewQuery("Person").Namespace(requestor.GetSite()).Limit(2000)
+	q := datastore.NewQuery("Person").Namespace(requestor.Site()).Limit(2000)
 	it := am.client.Run(am.ctx, q)
 	for {
 		e := new(GaePerson)
@@ -990,7 +1118,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		e.site = requestor.GetSite()
+		e.site = requestor.Site()
 		items = append(items, e)
 	}
 
@@ -998,7 +1126,7 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 }
 
 func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
-	if !updator.HasRole("s3") && updator.GetPersonUuid() != uuid {
+	if !updator.HasRole("s3") && updator.PersonUuid() != uuid {
 		return errors.New("Permission denied.")
 	}
 
@@ -1009,7 +1137,7 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 		}
 	}
 
-	check, err := am.GetPersonByEmail(updator.GetSite(), email, updator)
+	check, err := am.GetPersonByEmail(updator.Site(), email, updator)
 	if err != nil {
 		return err
 	}
@@ -1018,7 +1146,7 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 	}
 
 	k := datastore.NameKey("Person", uuid, nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 	i := new(GaePerson)
 	err = am.client.Get(am.ctx, k, i)
 	if err == datastore.ErrNoSuchEntity {
@@ -1028,14 +1156,14 @@ func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles
 	}
 
 	// Normal users may not update their own system roles
-	if !updator.HasRole("s3") && updator.GetPersonUuid() == uuid {
+	if !updator.HasRole("s3") && updator.PersonUuid() == uuid {
 		if roles != i.roles {
 			return errors.New("Permission denied.")
 		}
 	}
 
 	bulk := &GaeEntityAuditLogCollection{}
-	bulk.SetEntityUuidPersonUuid(uuid, updator.GetPersonUuid(), updator.GetDisplayName())
+	bulk.SetEntityUuidPersonUuid(uuid, updator.PersonUuid(), updator.DisplayName())
 	if firstName != i.FirstName() {
 		bulk.AddItem("FirstName", i.firstName, firstName)
 		i.firstName = firstName
@@ -1075,7 +1203,7 @@ func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {
 	}
 
 	k := datastore.NameKey("Person", uuid, nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	if err := am.client.Delete(am.ctx, k); err != nil {
 		return err
@@ -1083,12 +1211,48 @@ func (am *GaeAccessManager) DeletePerson(uuid string, updator Session) error {
 	return nil
 }
 
-func (am *GaeAccessManager) SearchPeople(keyword string, requestor Session) ([]Person, error) {
+func (am *GaeAccessManager) SearchPeople(query string, requestor Session) ([]Person, error) {
 	if !requestor.HasRole("s1") {
 		return []Person{}, errors.New("Permission denied.")
 	}
 
-	return am.GetPeople(requestor)
+	results := make([]Person, 0)
+
+	fields := strings.Fields(strings.ToLower(query))
+	sort.Slice(fields, func(i, j int) bool {
+		return len(fields[j]) < len(fields[i])
+	})
+
+	if len(fields) == 0 {
+		return results, nil
+	} else if len(fields) == 1 {
+		q := datastore.NewQuery("Person").Namespace(requestor.Site()).Filter("SearchTags =", fields[0]).Limit(50)
+		it := am.client.Run(am.ctx, q)
+		for {
+			e := new(GaePerson)
+			if _, err := it.Next(e); err == iterator.Done {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			results = append(results, e)
+		}
+	} else if len(fields) > 1 {
+		q := datastore.NewQuery("Student").Namespace(requestor.Site()).Filter("SearchTags =", fields[0]).Filter("SearchTags =", fields[1]).Limit(50)
+		it := am.client.Run(am.ctx, q)
+		for {
+			e := new(GaePerson)
+			if _, err := it.Next(e); err == iterator.Done {
+				break
+			} else if err != nil {
+				return nil, err
+			}
+			results = append(results, e)
+		}
+	}
+
+	return results, nil
+
 }
 
 func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error) {
@@ -1211,15 +1375,15 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 
 	token := RandomString(32)
 	session := &GaeSession{
-		Site:          site,
-		PersonUUID:    puuid,
-		Token:         token,
-		FirstName:     firstname,
-		LastName:      lastname,
-		Authenticated: true,
-		CSRF:          RandomString(8),
-		Roles:         roles,
-		RoleMap:       nil, // built on demand
+		site:          site,
+		personUUID:    puuid,
+		token:         token,
+		firstName:     firstname,
+		lastName:      lastname,
+		authenticated: true,
+		csrf:          RandomString(8),
+		roles:         roles,
+		roleMap:       nil, // built on demand
 	}
 
 	g.systemSessions[site+"|"+firstname+"|"+lastname] = session
@@ -1241,16 +1405,16 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
-			if err == datastore.ErrNoSuchEntity || session.Expiry < time.Now().Unix() {
+			if err == datastore.ErrNoSuchEntity || session.expiry.Before(time.Now()) {
 				return g.GuestSession(site), nil
 			} else if err != nil {
 				return g.GuestSession(site), err
 			}
 
 			// Fill the transient/non-persisted fields
-			session.Token = cookie
-			session.Site = site
-			session.RoleMap = nil
+			session.token = cookie
+			session.site = site
+			session.roleMap = nil
 			g.sessionCache.Set(cookie, session)
 		}
 
@@ -1268,18 +1432,18 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 
 		// Check this user session hasn't hit its maximum hard limit
 		maxAge := g.setting.GetInt(site, "session.max_age", 2592000)
-		newExpiry := time.Now().Add(time.Second * time.Duration(e)).Unix()
-		if session.Created+int64(maxAge) < newExpiry {
+		newExpiry := time.Now().Add(time.Second * time.Duration(e))
+		if session.Created().Add(time.Duration(maxAge) * time.Second).Before(newExpiry) {
 			g.log.Warning("User session hit \"session.max_age\".")
 			g.sessionCache.Remove(cookie)
 			return g.GuestSession(site), nil
 		}
 
 		// So "expires" is still in the future... Update the session expiry in the database
-		if newExpiry-session.Expiry > 30 {
+		if newExpiry.Unix()-session.Expiry().Unix() > 30 {
 			//g.Log().Debug("updating expiry new:  %d old: %d", newExpiry, i.Expiry)
 
-			session.Expiry = newExpiry
+			session.expiry = &newExpiry
 			if _, err := g.client.Put(g.ctx, k, session); err != nil {
 				g.Log().Error("Session() Session expiry update failed: %v", err)
 				return session, nil
@@ -1299,14 +1463,14 @@ func (g *GaeAccessManager) Session(site, cookie string) (Session, error) {
 
 func (g *GaeAccessManager) GuestSession(site string) Session {
 	return &GaeSession{
-		Site:          site,
-		Token:         "",
-		FirstName:     "",
-		LastName:      "",
-		Authenticated: false,
-		Roles:         "",
-		CSRF:          "",
-		RoleMap:       make(map[string]bool),
+		site:          site,
+		token:         "",
+		firstName:     "",
+		lastName:      "",
+		authenticated: false,
+		roles:         "",
+		csrf:          "",
+		roleMap:       make(map[string]bool),
 	}
 }
 
@@ -1369,17 +1533,17 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 
 	if requestor == nil {
 		requestor = &GaeSession{
-			Site:       site,
-			PersonUUID: si.uuid,
-			FirstName:  firstName,
-			LastName:   lastName,
-			Email:      email,
-			Roles:      roles,
+			site:       site,
+			personUUID: si.uuid,
+			firstName:  firstName,
+			lastName:   lastName,
+			email:      email,
+			roles:      roles,
 		}
 	}
 
 	bulk := &GaeEntityAuditLogCollection{}
-	bulk.SetEntityUuidPersonUuid(uuid.String(), requestor.GetPersonUuid(), requestor.GetDisplayName())
+	bulk.SetEntityUuidPersonUuid(uuid.String(), requestor.PersonUuid(), requestor.DisplayName())
 
 	if firstName != "" {
 		bulk.AddItem("FirstName", "", firstName)
@@ -1525,33 +1689,33 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 		g.setting.Put(site, `session.expiry`, `3600`)
 		g.Log().Warning("System setting \"session.expiry\" not set, defaulting to 1 hour.")
 	}
-	e, err := strconv.ParseInt(expiry, 10, 64)
+	e, err := strconv.Atoi(expiry)
 	if err != nil {
 		e = 3600
 		g.Log().Warning("System setting \"session.expiry\" is not a valid number, defaulting to 1 hour.")
 	}
 
 	token := RandomString(32)
-	now := time.Now().Unix()
-	expires := e + now
+	now := time.Now()
+	expires := now.Add(time.Duration(e) * time.Second)
 
 	if err != nil {
 		return "", err
 	}
 
 	session := &GaeSession{
-		Site:          site,
-		PersonUUID:    personUuid.String(),
-		Token:         token,
-		FirstName:     firstName,
-		LastName:      lastName,
-		Email:         email,
-		Created:       now,
-		Expiry:        expires,
-		Roles:         roles,
-		Authenticated: true,
-		RoleMap:       nil,
-		CSRF:          RandomString(8),
+		site:          site,
+		personUUID:    personUuid.String(),
+		token:         token,
+		firstName:     firstName,
+		lastName:      lastName,
+		email:         email,
+		created:       &now,
+		expiry:        &expires,
+		roles:         roles,
+		authenticated: true,
+		roleMap:       nil,
+		csrf:          RandomString(8),
 	}
 
 	k := datastore.NameKey("Session", token, nil)
@@ -1608,7 +1772,7 @@ func (s *GaeScheduledConnector) ToScheduledConnector() *ScheduledConnector {
 func (am *GaeAccessManager) GetScheduledConnectors(requestor Session) ([]*ScheduledConnector, error) {
 	var items []*GaeScheduledConnector
 
-	q := datastore.NewQuery("ScheduledConnector").Namespace(requestor.GetSite()).Limit(500)
+	q := datastore.NewQuery("ScheduledConnector").Namespace(requestor.Site()).Limit(500)
 	_, err := am.client.GetAll(am.ctx, q, &items)
 	if err != nil {
 		return nil, err
@@ -1632,7 +1796,7 @@ func (am *GaeAccessManager) GetScheduledConnector(uuid string, requestor Session
 	}
 
 	k := datastore.NameKey("ScheduledConnector", uuid, nil)
-	k.Namespace = requestor.GetSite()
+	k.Namespace = requestor.Site()
 
 	var i GaeScheduledConnector
 	if err := am.client.Get(am.ctx, k, &i); err != nil {
@@ -1666,7 +1830,7 @@ func (am *GaeAccessManager) AddScheduledConnector(connector *ScheduledConnector,
 	connector.SetConfig("google.location", "")
 
 	k := datastore.NameKey("ScheduledConnector", uuid.String(), nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	i := &GaeScheduledConnector{
 		Uuid:               connector.Uuid,
@@ -1693,7 +1857,7 @@ func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 		return errors.New("Invalid value for `uuid` parameter: " + connector.Uuid)
 	}
 	k := datastore.NameKey("ScheduledConnector", connector.Uuid, nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	// Ensure transient data is not persisted
 	connector.SetConfig("google.project", "")
@@ -1708,7 +1872,7 @@ func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 	}
 
 	bulk := &GaeEntityAuditLogCollection{}
-	bulk.SetEntityUuidPersonUuid(connector.Uuid, updator.GetPersonUuid(), updator.GetDisplayName())
+	bulk.SetEntityUuidPersonUuid(connector.Uuid, updator.PersonUuid(), updator.DisplayName())
 
 	if connector.Day != current.Day {
 		bulk.AddIntItem("Day", int64(current.Day), int64(connector.Day))
@@ -1762,7 +1926,7 @@ func (am *GaeAccessManager) UpdateScheduledConnector(connector *ScheduledConnect
 
 func (am *GaeAccessManager) DeleteScheduledConnector(uuid string, updator Session) error {
 	k := datastore.NameKey("ScheduledConnector", uuid, nil)
-	k.Namespace = updator.GetSite()
+	k.Namespace = updator.Site()
 
 	if err := am.client.Delete(am.ctx, k); err != nil {
 		return err

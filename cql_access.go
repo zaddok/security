@@ -326,17 +326,17 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		i.Close()
 
 		session := &CqlSession{
-			Token:         token,
-			Site:          site,
-			FirstName:     firstName,
-			LastName:      lastName,
-			Email:         email,
-			Roles:         roles,
-			CSRF:          RandomString(8),
-			Authenticated: true,
+			token:         token,
+			site:          site,
+			firstName:     firstName,
+			lastName:      lastName,
+			email:         email,
+			roles:         roles,
+			csrf:          RandomString(8),
+			authenticated: true,
 		}
-		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-			session.RoleMap[v] = true
+		for _, v := range strings.FieldsFunc(session.roles, func(c rune) bool { return c == ':' }) {
+			session.roleMap[v] = true
 		}
 		return session, "", nil
 	}
@@ -507,18 +507,18 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 		}
 		//user.Id = &uuid
 		session := &CqlSession{
-			Token:         cookie,
-			Site:          site,
-			FirstName:     firstName,
-			LastName:      lastName,
-			Email:         email,
-			Roles:         roles,
-			CSRF:          csrf,
-			Authenticated: true,
-			RoleMap:       make(map[string]bool),
+			token:         cookie,
+			site:          site,
+			firstName:     firstName,
+			lastName:      lastName,
+			email:         email,
+			roles:         roles,
+			csrf:          csrf,
+			authenticated: true,
+			roleMap:       make(map[string]bool),
 		}
-		for _, v := range strings.FieldsFunc(session.Roles, func(c rune) bool { return c == ':' }) {
-			session.RoleMap[v] = true
+		for _, v := range strings.FieldsFunc(session.roles, func(c rune) bool { return c == ':' }) {
+			session.roleMap[v] = true
 		}
 
 		expiry := g.setting.GetWithDefault(site, "session.expiry", "")
@@ -558,15 +558,15 @@ func (g *CqlAccessManager) Session(site, cookie string) (Session, error) {
 
 func (g *CqlAccessManager) GuestSession(site string) Session {
 	return &CqlSession{
-		Token:         "",
-		Site:          site,
-		FirstName:     "",
-		LastName:      "",
-		Email:         "",
-		Authenticated: false,
-		Roles:         "",
-		CSRF:          "",
-		RoleMap:       make(map[string]bool),
+		token:         "",
+		site:          site,
+		firstName:     "",
+		lastName:      "",
+		email:         "",
+		authenticated: false,
+		roles:         "",
+		csrf:          "",
+		roleMap:       make(map[string]bool),
 	}
 }
 
@@ -692,58 +692,58 @@ func (am *CqlAccessManager) GetSyslogBundle(site string) SyslogBundle {
 }
 
 type CqlSession struct {
-	PersonUUID    string
-	FirstName     string
-	LastName      string
-	Email         string
-	Created       int64
-	Expiry        int64
-	Roles         string
-	Authenticated bool
-	Token         string
-	Site          string
-	CSRF          string
-	RoleMap       map[string]bool `datastore:"-"`
+	personUUID    string
+	firstName     string
+	lastName      string
+	email         string
+	created       int64
+	expiry        int64
+	roles         string
+	authenticated bool
+	token         string
+	site          string
+	csrf          string
+	roleMap       map[string]bool `datastore:"-"`
 }
 
-func (s *CqlSession) GetPersonUuid() string {
-	return s.PersonUUID
+func (s *CqlSession) PersonUuid() string {
+	return s.personUUID
 }
 
-func (s *CqlSession) GetToken() string {
-	return s.Token
+func (s *CqlSession) Token() string {
+	return s.token
 }
 
-func (s *CqlSession) GetCSRF() string {
-	return s.Token
+func (s *CqlSession) CSRF() string {
+	return s.token
 }
 
-func (s *CqlSession) GetSite() string {
-	return s.Site
+func (s *CqlSession) Site() string {
+	return s.site
 }
 
-func (s *CqlSession) GetFirstName() string {
-	return s.FirstName
+func (s *CqlSession) FirstName() string {
+	return s.firstName
 }
 
-func (s *CqlSession) GetLastName() string {
-	return s.LastName
+func (s *CqlSession) LastName() string {
+	return s.lastName
 }
 
-func (s *CqlSession) GetDisplayName() string {
-	return s.FirstName + " " + s.LastName
+func (s *CqlSession) DisplayName() string {
+	return s.firstName + " " + s.lastName
 }
 
-func (s *CqlSession) GetEmail() string {
-	return s.Email
+func (s *CqlSession) Email() string {
+	return s.email
 }
 
 func (s *CqlSession) IsAuthenticated() bool {
-	return s.Authenticated
+	return s.authenticated
 }
 
 func (s *CqlSession) HasRole(uid string) bool {
-	_, found := s.RoleMap[uid]
+	_, found := s.roleMap[uid]
 	return found
 }
 

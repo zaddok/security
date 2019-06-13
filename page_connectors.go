@@ -107,7 +107,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			}
 
 			// Task queue is only available on appengine. Handle tasks differently on localhost
-			if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+			if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 				// When on DEV
 				am.Log().Notice("Cannot run connectors in development environment.")
 				found := am.GetConnectorInfoByLabel(s.Label)

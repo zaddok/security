@@ -46,7 +46,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 				if s.LastRun == nil || s.LastRun.In(defaultTimezone).Hour() != now.Hour() {
 					// Connector has never run, or was run in a different hour of the day
 					w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
-					if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+					if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 						am.Log().Notice("Cannot run connectors in development environment as a task.")
 						found := am.GetConnectorInfoByLabel(s.Label)
 						err := found.Run(am, s, session)
@@ -76,7 +76,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 						// Connector has never run, we are on the correct hour of the day, and it
 						// has not yet run today.
 						w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
-						if session.GetSite() == "localhost" || strings.HasPrefix(session.GetSite(), "dev") {
+						if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 							am.Log().Notice("Cannot run connectors in development environment.")
 						} else {
 							_, err := am.CreateTask("connector", s.Uuid)

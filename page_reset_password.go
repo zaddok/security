@@ -69,7 +69,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			}
 
 			if !failed {
-				success, message, err := am.ResetPassword(session.GetSite(), token, r.FormValue("new_password1"), IpFromRequest(r))
+				success, message, err := am.ResetPassword(session.Site(), token, r.FormValue("new_password1"), IpFromRequest(r))
 				if success {
 					p.Successes = append(p.Successes, "Your password has been reset.")
 

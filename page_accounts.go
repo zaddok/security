@@ -60,7 +60,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 			if r.Method == "POST" {
 				csrf := r.FormValue("csrf")
-				if csrf != session.GetCSRF() {
+				if csrf != session.CSRF() {
 					am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
 					ShowErrorForbidden(w, r, t, siteName)
 					return
@@ -97,7 +97,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		var feedback []string
 
 		if r.FormValue("delete") != "" {
-			if !session.HasRole("s3") || r.FormValue("csrf") != session.GetCSRF() {
+			if !session.HasRole("s3") || r.FormValue("csrf") != session.CSRF() {
 				ShowErrorForbidden(w, r, t, siteName)
 				return
 			}
@@ -211,7 +211,7 @@ func createAccountWithFormValues(am AccessManager, session Session, r *http.Requ
 		if password != "" {
 			pw = &password
 		}
-		_, err := am.AddPerson(session.GetSite(), firstName, lastName, email, roles, pw, IpFromRequest(r), session)
+		_, err := am.AddPerson(session.Site(), firstName, lastName, email, roles, pw, IpFromRequest(r), session)
 		return warnings, err
 	} else {
 		return warnings, nil

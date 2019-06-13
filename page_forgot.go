@@ -45,7 +45,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			return
 		}
 
-		token, err := am.ForgotPasswordRequest(session.GetSite(), r.FormValue("signin_email"), IpFromRequest(r))
+		token, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("signin_email"), IpFromRequest(r))
 		if err != nil {
 			fmt.Println("Forgot password request failed:", err)
 		} else {

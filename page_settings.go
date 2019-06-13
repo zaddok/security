@@ -35,7 +35,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				ShowErrorForbidden(w, r, t, siteName)
 				return
 			}
-			err := am.Setting().Put(session.GetSite(), key, value)
+			err := am.Setting().Put(session.Site(), key, value)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -48,7 +48,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				ShowErrorForbidden(w, r, t, siteName)
 				return
 			}
-			err := am.Setting().Put(session.GetSite(), delete, "")
+			err := am.Setting().Put(session.Site(), delete, "")
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -67,7 +67,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				Key             string
 				Value           string
 			}
-			value := am.Setting().GetWithDefault(session.GetSite(), edit, "")
+			value := am.Setting().GetWithDefault(session.Site(), edit, "")
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -94,7 +94,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		var values [][]string
 
-		items := am.Setting().List(session.GetSite())
+		items := am.Setting().List(session.Site())
 		for k, v := range items {
 			values = append(values, []string{k, v})
 		}

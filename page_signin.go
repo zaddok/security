@@ -82,7 +82,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		cookie := &http.Cookie{
 			Name:     "z",
-			Value:    session.GetToken(),
+			Value:    session.Token(),
 			Path:     "/",
 			Secure:   false,
 			HttpOnly: true,

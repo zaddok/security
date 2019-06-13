@@ -115,14 +115,14 @@ type Verification interface {
 
 // Contains information about a currently authenticated user session
 type Session interface {
-	GetPersonUuid() string
-	GetToken() string
-	GetCSRF() string
-	GetSite() string
-	GetFirstName() string
-	GetLastName() string
-	GetDisplayName() string
-	GetEmail() string
+	PersonUuid() string
+	Token() string
+	CSRF() string
+	Site() string
+	FirstName() string
+	LastName() string
+	DisplayName() string
+	Email() string
 	IsAuthenticated() bool
 	HasRole(uid string) bool
 }

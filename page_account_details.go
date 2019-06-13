@@ -103,7 +103,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 				return
 			}
 			csrf := r.FormValue("csrf")
-			if csrf != session.GetCSRF() {
+			if csrf != session.CSRF() {
 				am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
 				ShowErrorForbidden(w, r, t, siteName)
 				return
@@ -187,7 +187,7 @@ var accountDetailsTemplate = `
 <div id="actions">
 <a href="/z/account.details/{{.Person.Uuid}}?q={{.Query}}&audit=history" class="history">History</a>
 {{if not .Person.LastSignin}}
-<a href="/z/accounts?q={{.Query}}&delete={{.Person.Uuid}}&csrf={{.Session.GetCSRF}}" class="delete">Delete</a>
+<a href="/z/accounts?q={{.Query}}&delete={{.Person.Uuid}}&csrf={{.Session.CSRF}}" class="delete">Delete</a>
 {{end}}
 </div>
 
@@ -216,7 +216,7 @@ var accountDetailsTemplate = `
 
 <form method="post">
 <input type="hidden" name="q" value="{{.Query}}"/>
-<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>

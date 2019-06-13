@@ -29,7 +29,7 @@ type GaeTicketManager struct {
 // GetTicket looks up a parentless ticket by ticked uuid
 func (t *GaeTicketManager) GetTicket(uuid string, requestor Session) (Ticket, error) {
 	k := datastore.NameKey("Ticket", uuid, nil)
-	k.Namespace = requestor.GetSite()
+	k.Namespace = requestor.Site()
 
 	var ticket GaeTicket
 	err := t.client.Get(t.ctx, k, &ticket)
@@ -45,10 +45,10 @@ func (t *GaeTicketManager) GetTicket(uuid string, requestor Session) (Ticket, er
 // GetTicketWithParent looks up a ticket by uuid with a specfic parent object
 func (t *GaeTicketManager) GetTicketWithParent(parentType, parentUuid, uuid string, requestor Session) (Ticket, error) {
 	pk := datastore.NameKey(parentType, parentUuid, nil)
-	pk.Namespace = requestor.GetSite()
+	pk.Namespace = requestor.Site()
 
 	k := datastore.NameKey("Ticket", uuid, pk)
-	k.Namespace = requestor.GetSite()
+	k.Namespace = requestor.Site()
 
 	var ticket GaeTicket
 	err := t.client.Get(t.ctx, k, &ticket)
@@ -65,7 +65,7 @@ func (t *GaeTicketManager) GetTicketWithParent(parentType, parentUuid, uuid stri
 func (t *GaeTicketManager) GetTicketsByStatus(status string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Filter("Status =", status).Order("-Created").Limit(200)
+	q := datastore.NewQuery("Ticket").Namespace(requestor.Site()).Filter("Status =", status).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -84,7 +84,7 @@ func (t *GaeTicketManager) GetTicketsByStatus(status string, requestor Session) 
 func (t *GaeTicketManager) GetTicketsByEmail(email string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Filter("Email =", email).Order("-Created").Limit(200)
+	q := datastore.NewQuery("Ticket").Namespace(requestor.Site()).Filter("Email =", email).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -103,7 +103,7 @@ func (t *GaeTicketManager) GetTicketsByEmail(email string, requestor Session) ([
 func (t *GaeTicketManager) GetTicketsByPersonUuid(personUuid string, requestor Session) ([]Ticket, error) {
 	var tickets []Ticket
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Filter("PersonUuid =", personUuid).Order("-Created").Limit(200)
+	q := datastore.NewQuery("Ticket").Namespace(requestor.Site()).Filter("PersonUuid =", personUuid).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -123,9 +123,9 @@ func (t *GaeTicketManager) GetTicketsByParentUuid(parentType, parentUuid string,
 	var tickets []Ticket
 
 	pkey := datastore.NameKey(parentType, parentUuid, nil)
-	pkey.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Ancestor(pkey).Order("-Created").Limit(200)
+	q := datastore.NewQuery("Ticket").Namespace(requestor.Site()).Ancestor(pkey).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -143,9 +143,9 @@ func (t *GaeTicketManager) GetTicketsByStatusParentUuid(status, parentType, pare
 	var tickets []Ticket
 
 	pkey := datastore.NameKey(parentType, parentUuid, nil)
-	pkey.Namespace = requestor.GetSite()
+	pkey.Namespace = requestor.Site()
 
-	q := datastore.NewQuery("Ticket").Namespace(requestor.GetSite()).Ancestor(pkey).Filter("Status =", status).Order("-Created").Limit(200)
+	q := datastore.NewQuery("Ticket").Namespace(requestor.Site()).Ancestor(pkey).Filter("Status =", status).Order("-Created").Limit(200)
 	it := t.client.Run(t.ctx, q)
 	for {
 		e := new(GaeTicket)
@@ -203,11 +203,11 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid, status, p
 	var pk *datastore.Key = nil
 	if parentType != "" && parentUuid != "" {
 		pk = datastore.NameKey(parentType, parentUuid, nil)
-		pk.Namespace = requestor.GetSite()
+		pk.Namespace = requestor.Site()
 	}
 
 	k := datastore.NameKey("Ticket", ticket.Uuid, pk)
-	k.Namespace = requestor.GetSite()
+	k.Namespace = requestor.Site()
 	if _, err := t.client.Put(t.ctx, k, &ticket); err != nil {
 		t.Log().Error("AddTicket() failed. Error: %v", err)
 		return nil, err

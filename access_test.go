@@ -31,7 +31,7 @@ func TestWatch(t *testing.T) {
 		t.Fatalf("am.StartWatching() failed: %v", err)
 	}
 
-	err = am.StartWatching(user.GetPersonUuid(), "Person", "Person", user)
+	err = am.StartWatching(user.PersonUuid(), "Person", "Person", user)
 	if err != nil {
 		t.Fatalf("am.StartWatching() failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestWatch(t *testing.T) {
 	}
 
 	// Stop watching an item, to check the watch list goes down to 1
-	err = am.StopWatching(user.GetPersonUuid(), "Person", user)
+	err = am.StopWatching(user.PersonUuid(), "Person", user)
 	if err != nil {
 		t.Fatalf("am.StopWatching() failed: %v", err)
 	}
@@ -143,7 +143,7 @@ func TestPersonManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Authenticate() failed: %v", err)
 		}
-		person, err := am.GetPerson(user.GetPersonUuid(), session)
+		person, err := am.GetPerson(user.PersonUuid(), session)
 		if err != nil {
 			t.Fatalf("am.GetPerson() failed: %v", err)
 		}
@@ -183,10 +183,10 @@ func TestSystemSessionManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("am.GetSystemSession() failed: %v", err)
 	}
-	if s1.GetFirstName() != "Google Sample" {
+	if s1.FirstName() != "Google Sample" {
 		t.Fatalf("am.GetSystemSession() has incorrect first name storage")
 	}
-	if s1.GetLastName() != "Connector" {
+	if s1.LastName() != "Connector" {
 		t.Fatalf("am.GetSystemSession() has incorrect first name storage")
 	}
 
@@ -194,7 +194,7 @@ func TestSystemSessionManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("am.GetSystemSession() failed: %v", err)
 	}
-	if s1.GetPersonUuid() != s2.GetPersonUuid() {
+	if s1.PersonUuid() != s2.PersonUuid() {
 		t.Fatalf("am.GetSystemSession() did not remember uuid of person. Namespace: " + TestSite)
 	}
 }
@@ -332,7 +332,7 @@ func TestScheduledConnectors(t *testing.T) {
 	}
 
 	search.SetData("d", "20")
-	sys, err := am.GetSystemSession(user.GetSite(), "Test System Session", "Account")
+	sys, err := am.GetSystemSession(user.Site(), "Test System Session", "Account")
 	err = am.UpdateScheduledConnector(search, sys)
 	if err != nil {
 		t.Fatalf("UpdateScheduledConnector() with system session failed unexpectedly: %v", err)

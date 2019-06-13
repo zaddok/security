@@ -352,7 +352,7 @@ type ErrUnauthenticated struct {
 }
 
 func (e *ErrUnauthenticated) Error() string {
-	return fmt.Sprintf("Permission Denied. Unauthenticated request from %s", e.Requestor.GetDisplayName())
+	return fmt.Sprintf("Permission Denied. Unauthenticated request from %s", e.Requestor.DisplayName())
 }
 
 type ErrUnauthorised struct {
@@ -361,7 +361,7 @@ type ErrUnauthorised struct {
 }
 
 func (e *ErrUnauthorised) Error() string {
-	return fmt.Sprintf("Permission Denied. Unauthorised request from %s", e.Requestor.GetDisplayName())
+	return fmt.Sprintf("Permission Denied. Unauthorised request from %s", e.Requestor.DisplayName())
 }
 
 func DecodeOrPanic(data string) []byte {

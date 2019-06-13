@@ -72,7 +72,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 
 		if r.Method == "POST" {
 			csrf := r.FormValue("csrf")
-			if csrf != session.GetCSRF() {
+			if csrf != session.CSRF() {
 				am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
 				ShowErrorForbidden(w, r, t, siteName)
 				return
@@ -80,10 +80,10 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 
 			_, err = tm.AddTicket(
 				"open",
-				session.GetPersonUuid(),
-				session.GetFirstName(),
-				session.GetLastName(),
-				session.GetEmail(),
+				session.PersonUuid(),
+				session.FirstName(),
+				session.LastName(),
+				session.Email(),
 				"f",
 				p.MessageSubject+"\nURL: "+p.CurrentUrl,
 				p.MessageText,

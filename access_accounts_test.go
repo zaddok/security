@@ -54,7 +54,7 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Refetch the session object (it would have been cached)
-		user2, err := am.Session(TestSite, user.GetToken())
+		user2, err := am.Session(TestSite, user.Token())
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -62,7 +62,7 @@ func TestAccountManagement(t *testing.T) {
 			t.Fatalf("am.Session() failed to return cached sesion object")
 		}
 		if !user2.IsAuthenticated() {
-			t.Fatalf("am.Authenticate() user session should have been considered authenticated: " + user.GetToken())
+			t.Fatalf("am.Authenticate() user session should have been considered authenticated: " + user.Token())
 		}
 		if !user2.HasRole("s1") {
 			t.Fatalf("am.Authenticate() user role 's1' missing")

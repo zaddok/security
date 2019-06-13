@@ -32,10 +32,10 @@ func TestTicketManager(t *testing.T) {
 	{
 		ticket, err := tm.AddTicket(
 			"open",
-			user.GetPersonUuid(),
-			user.GetFirstName(),
-			user.GetLastName(),
-			user.GetEmail(),
+			user.PersonUuid(),
+			user.FirstName(),
+			user.LastName(),
+			user.Email(),
 			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
@@ -59,8 +59,8 @@ func TestTicketManager(t *testing.T) {
 		if r == nil {
 			t.Fatalf("tm.GetTicket() returned no response")
 		}
-		if r.GetFirstName() != user.GetFirstName() {
-			t.Fatalf("tm.GetTicket() did not return firstname %s. It returned %s", user.GetFirstName(), r.GetFirstName())
+		if r.GetFirstName() != user.FirstName() {
+			t.Fatalf("tm.GetTicket() did not return firstname %s. It returned %s", user.FirstName(), r.GetFirstName())
 		}
 		if r.GetType() != "f" {
 			t.Fatalf("tm.GetTicket() did not return type \"f\". It returned %s", r.GetType())
@@ -76,10 +76,10 @@ func TestTicketManager(t *testing.T) {
 			"Student",
 			"uuid1",
 			"open",
-			user.GetPersonUuid(),
-			user.GetFirstName(),
-			user.GetLastName(),
-			user.GetEmail(),
+			user.PersonUuid(),
+			user.FirstName(),
+			user.LastName(),
+			user.Email(),
 			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
@@ -96,10 +96,10 @@ func TestTicketManager(t *testing.T) {
 			"Student",
 			"uuid1",
 			"open",
-			user.GetPersonUuid(),
-			user.GetFirstName(),
-			user.GetLastName(),
-			user.GetEmail(),
+			user.PersonUuid(),
+			user.FirstName(),
+			user.LastName(),
+			user.Email(),
 			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
@@ -116,10 +116,10 @@ func TestTicketManager(t *testing.T) {
 			"Student",
 			"uuid2",
 			"open",
-			user.GetPersonUuid(),
-			user.GetFirstName(),
-			user.GetLastName(),
-			user.GetEmail(),
+			user.PersonUuid(),
+			user.FirstName(),
+			user.LastName(),
+			user.Email(),
 			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",

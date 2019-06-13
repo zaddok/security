@@ -207,10 +207,10 @@ func NewDatastoreLog(component string, user Session, client *datastore.Client, c
 	}
 
 	now := time.Now()
-	entry := &GaeLogCollection{cuuid.String(), component, &now, nil, user.GetPersonUuid()}
+	entry := &GaeLogCollection{cuuid.String(), component, &now, nil, user.PersonUuid()}
 
 	k := datastore.NameKey("LogCollection", cuuid.String(), nil)
-	k.Namespace = user.GetSite()
+	k.Namespace = user.Site()
 	if _, err := client.Put(ctx, k, entry); err != nil {
 		return nil, "", err
 	}
@@ -223,7 +223,7 @@ func NewDatastoreLog(component string, user Session, client *datastore.Client, c
 func (l *DatastoreLog) Close() {
 
 	k := datastore.NameKey("LogCollection", l.uuid, nil)
-	k.Namespace = l.user.GetSite()
+	k.Namespace = l.user.Site()
 
 	now := time.Now()
 	l.entry.Completed = &now
@@ -255,7 +255,7 @@ func (l *DatastoreLog) doLog(level string, message string) error {
 	entry.Message = message
 
 	k := datastore.NameKey("LogEntry", uuid.String(), nil)
-	k.Namespace = l.user.GetSite()
+	k.Namespace = l.user.Site()
 	if _, err := l.client.Put(l.ctx, k, &entry); err != nil {
 		return err
 	}

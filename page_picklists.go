@@ -37,7 +37,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 				ShowErrorForbidden(w, r, t, siteName)
 				return
 			}
-			err := am.PicklistStore().AddPicklistItem(session.GetSite(), picklistName, key, value, description, index)
+			err := am.PicklistStore().AddPicklistItem(session.Site(), picklistName, key, value, description, index)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -50,7 +50,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 				ShowErrorForbidden(w, r, t, siteName)
 				return
 			}
-			err := am.PicklistStore().TogglePicklistItem(session.GetSite(), picklistName, toggle)
+			err := am.PicklistStore().TogglePicklistItem(session.Site(), picklistName, toggle)
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -69,7 +69,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 				Key             string
 				Value           string
 			}
-			value := am.Setting().GetWithDefault(session.GetSite(), edit, "")
+			value := am.Setting().GetWithDefault(session.Site(), edit, "")
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -102,7 +102,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return
 		}
 
-		all, err := am.PicklistStore().GetPicklists(session.GetSite())
+		all, err := am.PicklistStore().GetPicklists(session.Site())
 		if err != nil {
 			ShowError(w, r, t, err, siteName)
 			return
@@ -121,7 +121,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		p.Picklist = picklistName
 		p.Title = []string{"Picklists", picklistName}
 
-		p.PicklistItems, err = am.PicklistStore().GetPicklistOrdered(session.GetSite(), picklistName)
+		p.PicklistItems, err = am.PicklistStore().GetPicklistOrdered(session.Site(), picklistName)
 		if err != nil {
 			ShowError(w, r, t, err, siteName)
 			return
