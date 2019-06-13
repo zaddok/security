@@ -148,7 +148,7 @@ var externalSystemCreateTemplate = `
 <form method="post">
 <input type="hidden" name="type" value="{{.SystemType}}"/>
 <input type="hidden" name="connector" value="{{.ConnectorLabel}}"/>
-<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 <table id="course_edit" class="form">
 	<tr>
 		<th>System Type</th>

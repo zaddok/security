@@ -162,7 +162,7 @@ var feedbackTemplate = `
 <p>Please take a moment to submit your feedback, comments, or suggestions.</p>
 
 <form method="post" action="/z/feedback">
-<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 <input type="hidden" name="current_url" value="{{.CurrentUrl}}"/>
 
 <b>Subject</b>

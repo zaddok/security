@@ -434,7 +434,7 @@ td a.add::before {
 
 <form method="post">
 <input type="hidden" name="add" value="{{.Connector.Label}}" />
-<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 <table id="connector_add" class="form">
 {{if .Connector.ExternalSystemPicker}}
 	<tr><td colspan="2"><h3 class="external">External System</h3></td></tr>
@@ -560,7 +560,7 @@ h3.config::before {
 
 <form method="post">
 <input type="hidden" name="edit" value="{{.ScheduledConnector.Uuid}}" />
-<input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 
 <table id="connector_edit" class="form">
 {{if .ConnectorType.ExternalSystemPicker}}

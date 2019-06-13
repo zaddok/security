@@ -296,7 +296,7 @@ var accountCreateTemplate = `
 <div id="editform">
 <h1>New Account</h1>
 
-<form method="post"><input type="hidden" name="q" value="{{.Query}}"/><input type="hidden" name="csrf" value="{{.Session.GetCSRF}}"/>
+<form method="post"><input type="hidden" name="q" value="{{.Query}}"/><input type="hidden" name="csrf" value="{{.Session.CSRF}}"/>
 <table id="account_view" class="form">
 	<tr>
 		<th>First Name</th>
