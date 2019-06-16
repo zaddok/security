@@ -805,7 +805,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	}
 
 	g.throttle.Increment(ip)
-	syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication for '%s' failed. Email address not registered on this site.", email))
+	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed: Unknown email address.", email))
 	return g.GuestSession(site, ip), "Invalid email address or password.", nil
 }
 func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
