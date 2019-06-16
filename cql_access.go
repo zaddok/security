@@ -261,9 +261,9 @@ func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, 
 }
 
 func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
-
+	session := a.GuestSession(site, ip)
 	for _, preauth := range a.preAuthenticationHandlers {
-		preauth(a, site, email)
+		preauth(a, session, email)
 	}
 
 	var actualPassword string
@@ -286,11 +286,13 @@ func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 }
 
 func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
+	session := g.GuestSession(site, ip)
+
 	if email == "" {
 		return g.GuestSession(site, ip), "Invalid email address or password.", nil
 	}
 	for _, preauth := range g.preAuthenticationHandlers {
-		preauth(g, site, email)
+		preauth(g, session, email)
 	}
 
 	var actualPassword string
@@ -336,7 +338,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			csrf:          RandomString(8),
 			authenticated: true,
 		}
-		for _, v := range strings.FieldsFunc(session.roles, func(c rune) bool { return c == ':' }) {
+		for _, v := range strings.FieldsFunc(roles, func(c rune) bool { return c == ':' }) {
 			session.roleMap[v] = true
 		}
 		return session, "", nil

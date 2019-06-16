@@ -219,13 +219,13 @@ type ExternalSystemId interface {
 	Value() string
 }
 
-// Check an email (username)  and password against an external authentication source
-type AuthenticationHandler func(AccessManager, string, string) (bool, error)
+// Check an email (username) and password against an external authentication source
+type AuthenticationHandler func(AccessManager, Session, string, string) (bool, error)
 
 // Signal that an email address is about to be sent to the Authentication method for a particular site.
 // Can be used to trigger 'just in time' account creation. Error will block signin,
 // avoid returning an error unless it should genuinely block authentication.
-type PreAuthenticationHandler func(AccessManager, string, string) error
+type PreAuthenticationHandler func(AccessManager, Session, string) error
 
 // Register a callback handler when a an event occurs on a particular atched item
 type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)

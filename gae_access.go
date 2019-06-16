@@ -615,7 +615,7 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	defer syslog.Put()
 
 	for _, preauth := range a.preAuthenticationHandlers {
-		preauth(a, site, email)
+		preauth(a, session, email)
 	}
 
 	syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest '%s'", email))
@@ -708,8 +708,9 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	if email == "" {
 		return g.GuestSession(site, ip), "Invalid email address or password.", nil
 	}
+	session := g.GuestSession(site, ip)
 	for _, preauth := range g.preAuthenticationHandlers {
-		preauth(g, site, email)
+		preauth(g, session, email)
 	}
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
@@ -742,7 +743,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 			externallyAuthenticated := false
 			for _, auth := range g.authenticationHandlers {
-				ok, err := auth(g, email, password)
+				ok, err := auth(g, session, email, password)
 				if ok {
 					syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("External Authentication for '%s' succeeded.", email))
 					externallyAuthenticated = true
@@ -778,7 +779,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		}
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
-		session := &GaeSession{
+		session = &GaeSession{
 			site:          site,
 			personUUID:    items[0].Uuid(),
 			token:         token,
