@@ -14,7 +14,7 @@ type MoodleAuthenticationHandler struct {
 }
 
 // CheckMoodlePassword completes the moodle signin form and checks the response from moodle for indicators of signin success or failure.
-func (m *MoodleAuthenticationHandler) Authenticate(am AccessManager, username, password string) (bool, error) {
+func (m *MoodleAuthenticationHandler) Authenticate(am AccessManager, session Session, username, password string) (bool, error) {
 
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
