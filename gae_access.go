@@ -1419,6 +1419,10 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 		v, _ := g.sessionCache.Get(cookie)
 		if v != nil {
 			session = v.(*GaeSession)
+			if session.ip != ip {
+				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
+				session.ip = ip
+			}
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
@@ -1428,10 +1432,16 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 				return g.GuestSession(site, ip), err
 			}
 
+			if session.ip != ip {
+				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
+				session.ip = ip
+			}
+
 			// Fill the transient/non-persisted fields
 			session.token = cookie
 			session.site = site
 			session.roleMap = nil
+			session.ip = ip
 			g.sessionCache.Set(cookie, session)
 		}
 
@@ -1513,7 +1523,7 @@ func (g *GaeAccessManager) Invalidate(site, ip, cookie string) (Session, error) 
 		g.Error(session, `auth`, "Signout for %s failed. %v", session.DisplayName(), err)
 		return session, err
 	}
-	g.Info(session, `auth`, "Signout by %v", session.DisplayName())
+	g.Info(session, `auth`, "Signout by %v (%s)", session.DisplayName(), session.Email())
 
 	return session, err
 }
