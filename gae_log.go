@@ -177,7 +177,7 @@ func (am *GaeAccessManager) Debug(session Session, component, message string, ar
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		fmt.Println(err)
-		fmt.Println(component, session.IP(), level, message)
+		fmt.Println(component, session.IP(), i.Level, message)
 	}
 }
 
@@ -192,7 +192,7 @@ func (am *GaeAccessManager) Info(session Session, component, message string, arg
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		fmt.Println(err)
-		fmt.Println(component, session.IP(), level, message)
+		fmt.Println(component, session.IP(), i.Level, message)
 	}
 }
 
@@ -207,7 +207,7 @@ func (am *GaeAccessManager) Notice(session Session, component, message string, a
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		fmt.Println(err)
-		fmt.Println(component, session.IP(), level, message)
+		fmt.Println(component, session.IP(), i.Level, message)
 	}
 }
 
@@ -222,7 +222,7 @@ func (am *GaeAccessManager) Warning(session Session, component, message string, 
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		fmt.Println(err)
-		fmt.Println(component, session.IP(), level, message)
+		fmt.Println(component, session.IP(), i.Level, message)
 	}
 }
 
@@ -237,7 +237,7 @@ func (am *GaeAccessManager) Error(session Session, component, message string, ar
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, i); err != nil {
 		fmt.Println(err)
-		fmt.Println(component, session.IP(), level, message)
+		fmt.Println(component, session.IP(), i.Level, message)
 	}
 }
 
