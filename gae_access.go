@@ -611,6 +611,12 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	session := a.GuestSession(site, ip)
 	email = strings.ToLower(strings.TrimSpace(email))
 
+	if email == "" {
+		return "", nil
+	}
+
+	syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("ForgotPasswordRequest received for: %s", email))
+
 	syslog := NewGaeSyslogBundle(site, a.client, a.ctx)
 	defer syslog.Put()
 
@@ -618,21 +624,19 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		preauth(a, session, email)
 	}
 
-	syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest '%s'", email))
-
 	var items []GaePerson
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ForgotPasswordRequest() Person lookup Error: %v", err))
+		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ForgotPasswordRequest Person lookup Error: %v", err))
 		return "", err
 	}
 	if len(items) == 0 {
-		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with unknown email address: %s", email))
+		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest called with unknown email address: %s", email))
 		return "", nil
 	}
 	if items[0].password == nil || *items[0].password == "" {
-		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPassword with an empty password.  Email address: %s", email))
+		syslog.Add(`security`, ip, `warning`, fmt.Sprintf("ForgotPassword calld on account with an empty password: %s", email))
 		return "", nil
 	}
 
@@ -665,7 +669,7 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	t.Token = token.String()
 	t.FirstName = items[0].FirstName()
 	t.LastName = items[0].LastName()
-	t.Subject = "Lost password retrieval"
+	t.Subject = "Lost password request"
 	t.FromEmail = supportEmail
 	t.FromName = supportName
 	if baseUrl == "" {

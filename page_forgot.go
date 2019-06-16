@@ -35,7 +35,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		if r.Method == "POST" && r.FormValue("forgot") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
 
-			token, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r))
+			_, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r))
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return
@@ -44,7 +44,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		err = t.ExecuteTemplate(w, "forgot_password_page", p)
 		if err != nil {
-			am.Notice(session, `html`, "Error displaying 'forgot' page: %v", err)
+			am.Notice(session, `html`, "Error displaying 'forgot_password_page': %v", err)
 			w.Write([]byte("Error displaying 'forgot' page"))
 			return
 		}
