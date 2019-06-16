@@ -615,7 +615,7 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 		return "", nil
 	}
 
-	syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("ForgotPasswordRequest received for: %s", email))
+	a.Debug(session, `auth`, "ForgotPasswordRequest received for: %s", email)
 
 	syslog := NewGaeSyslogBundle(site, a.client, a.ctx)
 	defer syslog.Put()
@@ -628,15 +628,15 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := a.client.GetAll(a.ctx, q, &items)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ForgotPasswordRequest Person lookup Error: %v", err))
+		a.Error(session, `auth`, "ForgotPasswordRequest Person lookup Error: %v", err)
 		return "", err
 	}
 	if len(items) == 0 {
-		syslog.Add(`auth`, ip, `fine`, fmt.Sprintf("ForgotPasswordRequest called with unknown email address: %s", email))
+		a.Info(session, `auth`, "ForgotPasswordRequest called with unknown email address: %s", email)
 		return "", nil
 	}
 	if items[0].password == nil || *items[0].password == "" {
-		syslog.Add(`security`, ip, `warning`, fmt.Sprintf("ForgotPassword calld on account with an empty password: %s", email))
+		a.Warning(session, `security`, "ForgotPassword calld on account with an empty password: %s", email)
 		return "", nil
 	}
 
