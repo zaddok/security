@@ -27,11 +27,6 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			return
 		}
 		if failure != "" || session == nil {
-			if err != nil {
-				am.Error(session, `auth`, "Error during authentication: %s %v", failure, err)
-			} else {
-				am.Error(session, `auth`, "Error during authentication: %s", failure)
-			}
 			session, err := LookupSession(r, am)
 
 			p := &SignupPageData{}
@@ -57,8 +52,8 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 			err = t.ExecuteTemplate(w, "signin_page", p)
 			if err != nil {
-				am.Notice(session, `html`, "Error displaying 'signup' page: %v", err)
-				w.Write([]byte("Error displaying 'signup' page"))
+				am.Notice(session, `html`, "Error displaying 'signin_page': %v", err)
+				w.Write([]byte("Error displaying 'signin_page' page"))
 				return
 			}
 			return
