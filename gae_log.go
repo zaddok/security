@@ -172,7 +172,8 @@ func (am *GaeAccessManager) Debug(session Session, component, message string, ar
 		Component: component,
 		IP:        session.IP(),
 		Level:     "debug",
-		Message:   message}
+		Message:   fmt.Sprintf(message, args...),
+	}
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
@@ -187,7 +188,8 @@ func (am *GaeAccessManager) Info(session Session, component, message string, arg
 		Component: component,
 		IP:        session.IP(),
 		Level:     "info",
-		Message:   message}
+		Message:   fmt.Sprintf(message, args...),
+	}
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
@@ -202,7 +204,8 @@ func (am *GaeAccessManager) Notice(session Session, component, message string, a
 		Component: component,
 		IP:        session.IP(),
 		Level:     "notice",
-		Message:   message}
+		Message:   fmt.Sprintf(message, args...),
+	}
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
@@ -217,7 +220,8 @@ func (am *GaeAccessManager) Warning(session Session, component, message string, 
 		Component: component,
 		IP:        session.IP(),
 		Level:     "warning",
-		Message:   message}
+		Message:   fmt.Sprintf(message, args...),
+	}
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
@@ -232,7 +236,8 @@ func (am *GaeAccessManager) Error(session Session, component, message string, ar
 		Component: component,
 		IP:        session.IP(),
 		Level:     "error",
-		Message:   message}
+		Message:   fmt.Sprintf(message, args...),
+	}
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = session.Site()
 	if _, err := am.client.Put(am.ctx, k, &i); err != nil {
