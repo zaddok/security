@@ -22,15 +22,15 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		ip := IpFromRequest(r)
 		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip)
 		if err != nil {
-			am.Log().Error("Error during authentication: %v", err)
+			am.Error(session, `auth`, "Error during authentication: %v", err)
 			ShowError(w, r, t, errors.New("An error occurred, please try again shortly."), siteName)
 			return
 		}
 		if failure != "" || session == nil {
 			if err != nil {
-				am.Log().Error("Error during authentication: %s %v", failure, err)
+				am.Error(session, `auth`, "Error during authentication: %s %v", failure, err)
 			} else {
-				am.Log().Error("Error during authentication: %s", failure)
+				am.Error(session, `auth`, "Error during authentication: %s", failure)
 			}
 			session, err := LookupSession(r, am)
 
@@ -57,7 +57,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 			err = t.ExecuteTemplate(w, "signin_page", p)
 			if err != nil {
-				am.Log().Notice("Error displaying 'signup' page: %v", err)
+				am.Notice(session, `html`, "Error displaying 'signup' page: %v", err)
 				w.Write([]byte("Error displaying 'signup' page"))
 				return
 			}
@@ -67,13 +67,13 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		// Signin successful
 		refer := r.FormValue("r")
 		if strings.Index(refer, "://") >= 0 {
-			am.Log().Notice("Signin with invalid referrer URL: %v", refer)
+			am.Notice(session, `auth`, "Signin with invalid referrer URL: %v", refer)
 			refer = ""
 		}
 		if strings.Index(refer, "?") >= 0 {
-			am.Log().Notice("Signin with invalid referrer URL: %v", refer)
+			am.Notice(session, `auth`, "Signin with invalid referrer URL: %v", refer)
 			refer = refer[0:strings.Index(refer, "?")]
-			am.Log().Notice("Invalid referrer URL trimmed to: %v", refer)
+			am.Notice(session, `auth`, "Invalid referrer URL trimmed to: %v", refer)
 		}
 
 		if refer != "" && refer[0] != '/' {

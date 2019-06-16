@@ -11,8 +11,8 @@ func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescript
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			am.Log().Notice("Error fetching session data %s", err)
-			w.Write([]byte("Error fetching session data"))
+			am.Notice(session, `datastore`, "Error fetching session data. "+err.Error())
+			w.Write([]byte("Error fetching session data."))
 			return
 		}
 
@@ -61,8 +61,8 @@ func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
-			am.Log().Notice("Error displaying 'signup' page: %v", err)
-			w.Write([]byte("Error displaying 'signup' page"))
+			am.Notice(session, `html`, "Error displaying 'signup' page: "+err.Error())
+			w.Write([]byte("Error displaying 'signup' page."))
 			return
 		}
 	}

@@ -128,6 +128,9 @@ func FirstRequestOnSite(site string, am AccessManager) {
 	FirstRequestOnSiteWait(site, am, false)
 }
 func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
+	syslog := am.GetSyslogBundle(site)
+	defer syslog.Put()
+
 	if firsts == nil {
 		firsts = make(map[string]bool)
 	}
@@ -135,16 +138,14 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 		return
 	}
 	firsts[site] = true
-	am.Log().Debug("First access to site %s since appserver start", site)
+	syslog.Add(`startup`, ``, `debug`, "First access to site "+site+" since appserver start")
 
 	val := am.Setting().Get(site, "self.signup")
 	if val == nil || *val == "" {
-		am.Log().Debug("Adding default setting value for: self.signup")
 		am.Setting().Put(site, "self.signup", "no")
 	}
 	val = am.Setting().Get(site, "session.expiry")
 	if val == nil {
-		am.Log().Debug("Adding default setting value for: session.expiry")
 		am.Setting().Put(site, "session.expiry", "900")
 	}
 	val = am.Setting().Get(site, "smtp.hostname")
@@ -154,6 +155,14 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 	val = am.Setting().Get(site, "smtp.port")
 	if val == nil {
 		am.Setting().Put(site, "smtp.port", "587")
+	}
+	val = am.Setting().Get(site, "smtp.user")
+	if val == nil {
+		am.Setting().Put(site, "smtp.user", "support@example.com")
+	}
+	val = am.Setting().Get(site, "smtp.password")
+	if val == nil {
+		am.Setting().Put(site, "smtp.password", "password")
 	}
 	val = am.Setting().Get(site, "support_team.name")
 	if val == nil {
@@ -167,6 +176,7 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 	if wait {
 		prefilPicklists(site, am)
 		am.RunVirtualHostSetupHandler(site)
+		syslog.Add(`startup`, ``, `debug`, "Virtualhost setup for "+site+" completed")
 	} else {
 		go func() {
 			prefilPicklists(site, am)
@@ -185,7 +195,6 @@ func prefilPicklists(site string, am AccessManager) {
 		return
 	}
 	if list == nil || len(list) == 0 {
-		am.Log().Debug("Prefill picklist: title")
 		ps.AddPicklistItem(site, "title", "u", "", "", 0)
 		ps.AddPicklistItem(site, "title", "mr", "Mr", "", 0)
 		ps.AddPicklistItem(site, "title", "ms", "Ms", "", 0)
@@ -221,7 +230,6 @@ func prefilPicklists(site string, am AccessManager) {
 		return
 	}
 	if list == nil || len(IsoCountryList) == 0 {
-		am.Log().Debug("Prefill picklist: country")
 		var c int64 = 10
 		for _, r := range IsoCountryList {
 			//fmt.Println("add", r[1])
@@ -455,13 +463,13 @@ func LookupSession(r *http.Request, am AccessManager) (Session, error) {
 		if err == http.ErrNoCookie {
 			err = nil
 		}
-		return am.GuestSession(HostFromRequest(r)), err
+		return am.GuestSession(HostFromRequest(r), IpFromRequest(r)), err
 	}
 	token := ""
 	if cookie != nil && cookie.Value != "" {
 		token = cookie.Value
 	}
-	return am.Session(HostFromRequest(r), token)
+	return am.Session(HostFromRequest(r), IpFromRequest(r), token)
 }
 
 // Rudimentary checks on email address

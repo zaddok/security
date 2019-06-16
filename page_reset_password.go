@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strings"
@@ -20,7 +19,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		}
 		session, err := LookupSession(r, am)
 		if err != nil {
-			am.Log().Notice("Error fetching session data %s", err)
+			am.Notice(session, `http`, "Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
 			return
 		}
@@ -75,7 +74,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 
 					err = t.ExecuteTemplate(w, "signin_page", p)
 					if err != nil {
-						am.Log().Notice("Error displaying 'signup' page: %v", err)
+						am.Notice(session, `http`, "Error displaying 'signup' page: %v", err)
 						w.Write([]byte("Error displaying 'signup' page"))
 						return
 					}
@@ -83,15 +82,14 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 				} else if message != "" {
 					p.Errors = append(p.Errors, message)
 				} else if err != nil {
-					am.Log().Warning("System error while resetting password: %v", err)
-					fmt.Println("Password reset failure", err)
+					am.Warning(session, `http`, "System error while resetting password: %v", err)
 				}
 			}
 		}
 
 		err = t.ExecuteTemplate(w, "reset_password_page", p)
 		if err != nil {
-			am.Log().Notice("Error displaying 'reset_password' page: %v", err)
+			am.Notice(session, `http`, "Error displaying 'reset_password' page: %v", err)
 			w.Write([]byte("Error displaying 'reset_password' page"))
 			return
 		}

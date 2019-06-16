@@ -32,8 +32,6 @@ func (a *GaeAccessManager) CreateTask(queueID, message string) (string, error) {
 	// Build the Task queue path.
 	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", a.projectId, a.locationId, queueID)
 
-	a.Log().Debug("About to submit task to: %s", queuePath)
-
 	// Build the Task payload.
 	// https://godoc.org/google.golang.org/genproto/googleapis/cloud/tasks/v2beta3#CreateTaskRequest
 	req := &taskspb.CreateTaskRequest{

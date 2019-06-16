@@ -13,11 +13,11 @@ func TestAccountManagement(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), log)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
-	var user Session = am.GuestSession(TestSite)
+	var user Session = am.GuestSession(TestSite, "127.0.0.1")
 
 	// Test Create account
 	{
@@ -54,7 +54,7 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Refetch the session object (it would have been cached)
-		user2, err := am.Session(TestSite, user.Token())
+		user2, err := am.Session(TestSite, user.IP(), user.Token())
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -169,7 +169,7 @@ func TestAccountCheckEmail(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), log)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

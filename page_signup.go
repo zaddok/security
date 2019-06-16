@@ -31,7 +31,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		session, err := LookupSession(r, am)
 		if err != nil {
-			am.Log().Notice("Error fetching session data %s", err)
+			am.Notice(session, `http`, "Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
 			return
 		}
@@ -62,7 +62,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		if selfSignup != "yes" && selfSignup != "no" {
 			selfSignup = "no"
 			am.Setting().Put(HostFromRequest(r), "self.signup", selfSignup)
-			am.Log().Warning("Setting default self.signup setting to no on host %s", HostFromRequest(r))
+			am.Warning(session, `security`, "Setting default self.signup setting to no on host %s", HostFromRequest(r))
 		}
 		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
 
@@ -129,7 +129,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
-			am.Log().Notice("Error displaying 'signup' page: %v", err)
+			am.Notice(session, `html`, "Error displaying 'signup' page: %v", err)
 			w.Write([]byte("Error displaying 'signup' page"))
 			return
 		}

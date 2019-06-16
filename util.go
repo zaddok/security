@@ -277,22 +277,22 @@ func MatchingDate(a, b *time.Time) bool {
 // SendEmail delivers an email message over smtp to the intended target using the preconfigured
 // smtp settings. Returns with a list of strings to present to the user if sending fails, or an
 // error object if a system error has occured.
-func SendEmail(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte) (*[]string, error) {
-	return SendEmailWithAttachment(am, site, subject, toEmail, toName, textContent, htmlContent, "", "", nil)
+func SendEmail(am AccessManager, session Session, subject, toEmail, toName string, textContent, htmlContent []byte) (*[]string, error) {
+	return SendEmailWithAttachment(am, session, subject, toEmail, toName, textContent, htmlContent, "", "", nil)
 }
 
 // SendEmail delivers an email message over smtp to the intended target using the preconfigured
 // smtp settings. Returns with a list of strings to present to the user if sending fails, or an
 // error object if a system error has occured.
-func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName string, textContent, htmlContent []byte, attachmentName, attachmentType string, attachment []byte) (*[]string, error) {
+func SendEmailWithAttachment(am AccessManager, session Session, subject, toEmail, toName string, textContent, htmlContent []byte, attachmentName, attachmentType string, attachment []byte) (*[]string, error) {
 	var results []string
 
-	smtpHostname := am.Setting().GetWithDefault(site, "smtp.hostname", "")
-	smtpPassword := am.Setting().GetWithDefault(site, "smtp.password", "")
-	smtpPort := am.Setting().GetWithDefault(site, "smtp.port", "")
-	smtpUser := am.Setting().GetWithDefault(site, "smtp.user", "")
-	supportName := am.Setting().GetWithDefault(site, "support_team.name", "")
-	supportEmail := am.Setting().GetWithDefault(site, "support_team.email", "")
+	smtpHostname := am.Setting().GetWithDefault(session.Site(), "smtp.hostname", "")
+	smtpPassword := am.Setting().GetWithDefault(session.Site(), "smtp.password", "")
+	smtpPort := am.Setting().GetWithDefault(session.Site(), "smtp.port", "")
+	smtpUser := am.Setting().GetWithDefault(session.Site(), "smtp.user", "")
+	supportName := am.Setting().GetWithDefault(session.Site(), "support_team.name", "")
+	supportEmail := am.Setting().GetWithDefault(session.Site(), "support_team.email", "")
 
 	if smtpHostname == "" {
 		results = append(results, "Missing \"smtp.hostname\" host, setting, cant send message notification")
@@ -308,8 +308,8 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 	}
 
 	if len(results) > 0 {
-		am.Log().Error("Email configuration issue. Not sending email to: %s Subject: %s ", toEmail, subject)
-		am.Log().Warning("Check configuration: %s", results[0])
+		am.Error(session, `email`, "Email configuration issue. Not sending email to: %s Subject: %s ", toEmail, subject)
+		am.Warning(session, `email`, "Check configuration: %s", results[0])
 		return &results, errors.New(results[0])
 	}
 
@@ -355,11 +355,11 @@ func SendEmailWithAttachment(am AccessManager, site, subject, toEmail, toName st
 	}
 	err := smtp.SendMail(fmt.Sprintf("%s:%s", smtpHostname, smtpPort), auth, supportEmail, []string{toEmail}, w.Bytes())
 	if err != nil {
-		am.Log().Error("Email delivery failed. To: %s Subject: %s Error: %v", toName, subject, err)
+		am.Error(session, `email`, "Email delivery failed. To: %s Subject: %s Error: %v", toName, subject, err)
 		results = append(results, "Email delivery failed. Please retry shortly.")
 		return &results, errors.New(results[0])
 	} else {
-		am.Log().Info("Email delivered. To: %s Subject: %s ", toEmail, subject)
+		am.Info(session, `email`, "Email delivered. To: %s Subject: %s ", toEmail, subject)
 	}
 
 	return &results, nil

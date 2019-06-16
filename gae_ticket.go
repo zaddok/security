@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/zaddok/log"
-
 	"cloud.google.com/go/datastore"
 	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
@@ -209,7 +207,7 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid, status, p
 	k := datastore.NameKey("Ticket", ticket.Uuid, pk)
 	k.Namespace = requestor.Site()
 	if _, err := t.client.Put(t.ctx, k, &ticket); err != nil {
-		t.Log().Error("AddTicket() failed. Error: %v", err)
+		t.am.Error(requestor, `ticket`, "AddTicket() failed. Error: %v", err)
 		return nil, err
 	}
 
@@ -218,10 +216,6 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid, status, p
 
 func (t *GaeTicketManager) AddTicketResponse(response TicketResponse, requestor Session) error {
 	return nil
-}
-
-func (t *GaeTicketManager) Log() log.Log {
-	return t.am.Log()
 }
 
 func (t *GaeTicketManager) Setting() Setting {

@@ -109,16 +109,16 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			// Task queue is only available on appengine. Handle tasks differently on localhost
 			if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 				// When on DEV
-				am.Log().Notice("Cannot run connectors in development environment.")
+				am.Notice(session, `connector`, "Cannot run connectors in development environment.")
 				found := am.GetConnectorInfoByLabel(s.Label)
 				if found != nil {
 
 					if found.Run != nil {
 						err := found.Run(am, s, session)
 						if err != nil {
-							am.Log().Error("Failed executing connector %s %v", s.Label, err)
+							am.Error(session, `connector`, "Failed executing connector %s %v", s.Label, err)
 						} else {
-							am.Log().Debug("Executed connector %s successfully", s.Label)
+							am.Debug(session, `connector`, "Executed connector %s successfully", s.Label)
 						}
 					}
 				}
@@ -184,7 +184,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			if cType.ExternalSystemPicker == true {
 				p.ExternalSystem, err = am.GetExternalSystem(p.ScheduledConnector.ExternalSystemUuid, session)
 				if err != nil {
-					am.Log().Error("Scheduled Connector '%s' references unknown ExternalSystemUuid '%s'", p.ScheduledConnector.Uuid, p.ScheduledConnector.ExternalSystemUuid)
+					am.Error(session, `connector`, "Scheduled Connector '%s' references unknown ExternalSystemUuid '%s'", p.ScheduledConnector.Uuid, p.ScheduledConnector.ExternalSystemUuid)
 					ShowErrorNotFound(w, r, t, siteName)
 					return
 				}

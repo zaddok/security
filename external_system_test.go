@@ -3,15 +3,11 @@ package security
 import (
 	"fmt"
 	"testing"
-
-	"github.com/zaddok/log"
 )
 
 func TestExternalSystem(t *testing.T) {
 
-	l := log.NewStdoutLog()
-
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), l)
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

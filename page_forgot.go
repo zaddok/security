@@ -9,11 +9,10 @@ import (
 func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
-		am.Log().Debug("Forgot password page")
 
 		session, err := LookupSession(r, am)
 		if err != nil {
-			am.Log().Notice("Error fetching session data %s", err)
+			am.Notice(session, `http`, "Error fetching session data %s", err)
 			w.Write([]byte("Error fetching session data"))
 			return
 		}
@@ -40,7 +39,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 		err = t.ExecuteTemplate(w, "forgot_password_page", p)
 		if err != nil {
-			am.Log().Notice("Error displaying 'forgot' page: %v", err)
+			am.Notice(session, `html`, "Error displaying 'forgot' page: %v", err)
 			w.Write([]byte("Error displaying 'forgot' page"))
 			return
 		}

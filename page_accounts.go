@@ -61,7 +61,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			if r.Method == "POST" {
 				csrf := r.FormValue("csrf")
 				if csrf != session.CSRF() {
-					am.Log().Warning("Potential CSRF attack detected. '" + IpFromRequest(r) + "', '" + r.URL.String() + "'")
+					am.Warning(session, `security`, "Potential CSRF attack detected. "+r.URL.String())
 					ShowErrorForbidden(w, r, t, siteName)
 					return
 				}

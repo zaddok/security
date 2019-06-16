@@ -2,8 +2,6 @@ package security
 
 import (
 	"time"
-
-	"github.com/zaddok/log"
 )
 
 type TicketManager interface {
@@ -27,7 +25,6 @@ type TicketManager interface {
 	AddTicket(status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
 	AddTicketResponse(response TicketResponse, requestor Session) error
 
-	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
 }

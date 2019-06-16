@@ -2,8 +2,6 @@ package security
 
 import (
 	"time"
-
-	"github.com/zaddok/log"
 )
 
 type VirtualHostSetup func(site string, am AccessManager)
@@ -27,13 +25,12 @@ type AccessManager interface {
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
 	CheckEmailExists(site, email string) (bool, error)
 
-	Session(host, cookie string) (Session, error)
-	GuestSession(site string) Session
-	Invalidate(host, cookie string) (Session, error)
+	Session(host, ip, cookie string) (Session, error)
+	GuestSession(site, ip string) Session
+	Invalidate(host, ip, cookie string) (Session, error)
 	GetSystemSession(host, firstname, lastname string) (Session, error)
 	GetSystemSessionWithRoles(host, firstname, lastname, roles string) (Session, error)
 
-	Log() log.Log
 	Setting() Setting
 	PicklistStore() PicklistStore
 	SetVirtualHostSetupHandler(fn VirtualHostSetup)
@@ -90,6 +87,16 @@ type AccessManager interface {
 	DeleteScheduledConnector(uuid string, updator Session) error
 
 	WipeDatastore(namespace string) error
+
+	Syslogger
+}
+
+type Syslogger interface {
+	Debug(session Session, component, message string, args ...interface{})
+	Info(session Session, component, message string, args ...interface{})
+	Notice(session Session, component, message string, args ...interface{})
+	Warning(session Session, component, message string, args ...interface{})
+	Error(session Session, component, message string, args ...interface{})
 }
 
 // Information about a verified user
@@ -115,10 +122,11 @@ type Verification interface {
 
 // Contains information about a currently authenticated user session
 type Session interface {
-	PersonUuid() string
-	Token() string
-	CSRF() string
 	Site() string
+	IP() string
+	Token() string
+	PersonUuid() string
+	CSRF() string
 	FirstName() string
 	LastName() string
 	DisplayName() string

@@ -9,9 +9,9 @@ import (
 func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
-		session, err := am.Invalidate("cookie", HostFromRequest(r))
+		session, err := am.Invalidate("cookie", IpFromRequest(r), HostFromRequest(r))
 		if err != nil {
-			am.Log().Notice("Error displaying 'signout' page: %v", err)
+			am.Notice(session, `auth`, "Error invalidating session on 'signout' page: %v", err)
 			w.Write([]byte("Error displaying 'signout' page"))
 			return
 		}
@@ -28,7 +28,7 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 		}
 		http.SetCookie(w, cookie)
 		if err != nil && session != nil && session.IsAuthenticated() {
-			am.Log().Info("Signout from %s %s", session.FirstName(), session.LastName())
+			am.Notice(session, `auth`, "Signout from %s %s", session.FirstName(), session.LastName())
 		}
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}

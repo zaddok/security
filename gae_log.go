@@ -166,6 +166,76 @@ func (am *GaeAccessManager) GetSyslogBundle(site string) SyslogBundle {
 	return &GaeSyslogBundle{site: site, client: am.client, ctx: am.ctx}
 }
 
+func (am *GaeAccessManager) Debug(session Session, component, message string, args ...interface{}) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        session.IP(),
+		Level:     "debug",
+		Message:   message}
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = session.Site()
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		fmt.Println(message)
+	}
+}
+
+func (am *GaeAccessManager) Info(session Session, component, message string, args ...interface{}) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        session.IP(),
+		Level:     "info",
+		Message:   message}
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = session.Site()
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		fmt.Println(message)
+	}
+}
+
+func (am *GaeAccessManager) Notice(session Session, component, message string, args ...interface{}) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        session.IP(),
+		Level:     "notice",
+		Message:   message}
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = session.Site()
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		fmt.Println(message)
+	}
+}
+
+func (am *GaeAccessManager) Warning(session Session, component, message string, args ...interface{}) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        session.IP(),
+		Level:     "warning",
+		Message:   message}
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = session.Site()
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		fmt.Println(message)
+	}
+}
+
+func (am *GaeAccessManager) Error(session Session, component, message string, args ...interface{}) {
+	i := GaeSystemLog{
+		Recorded:  time.Now(),
+		Component: component,
+		IP:        session.IP(),
+		Level:     "error",
+		Message:   message}
+	k := datastore.IncompleteKey("SystemLog", nil)
+	k.Namespace = session.Site()
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		fmt.Println(message)
+	}
+}
+
 type SyslogBundle interface {
 	Put()
 	Add(component, ip, level, message string)
