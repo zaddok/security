@@ -1508,7 +1508,11 @@ func (g *GaeAccessManager) Invalidate(site, ip, cookie string) (Session, error) 
 
 	k := datastore.NameKey("Session", cookie, nil)
 	k.Namespace = site
-	err := am.client.Delete(am.ctx, k)
+	err = g.client.Delete(g.ctx, k)
+	if err != nil {
+		return session, err
+	}
+	g.Info(session, `auth`, "Signout by %v", session.DisplayName())
 
 	return session, err
 }
