@@ -785,6 +785,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 		session = &GaeSession{
 			site:          site,
+			ip:            ip,
 			personUUID:    items[0].Uuid(),
 			token:         token,
 			firstName:     items[0].FirstName(),
