@@ -72,7 +72,7 @@ var ForgotTemplate = `
 <form method="post" action="/forgot/" id="forgot">
 <h3>Request Password Reset Email</h3>
 
-<label for="signin_username">
+<label for="forgot_email">
 <input type="email" name="forgot" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
