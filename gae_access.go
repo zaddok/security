@@ -732,13 +732,13 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
 		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Person lookup Error: %v", err))
-		return g.GuestSession(site, ip), "", err
+		return session, "", err
 	}
 	if len(items) > 0 {
 		if items[0].password == nil || *items[0].password == "" {
 			g.throttle.Increment(email)
 			syslog.Add(`auth`, ip, `warn`, fmt.Sprintf("Authentication for '%s' blocked. Account has no password.", email))
-			return g.GuestSession(site, ip), "Invalid email address or password.", nil
+			return session, "Invalid email address or password.", nil
 		}
 
 		// Check internal password
@@ -773,7 +773,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, &items[0]); err != nil {
 			syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Person update Error: %v", err))
-			return g.GuestSession(site, ip), "", err
+			return session, "", err
 		}
 
 		token, err2 := g.createSession(site, items[0].Uuid(), items[0].FirstName(), items[0].LastName(), items[0].Email(), items[0].roles, ip)
@@ -1761,6 +1761,7 @@ func (g *GaeAccessManager) createSession(site, person, firstName, lastName, emai
 
 	session := &GaeSession{
 		site:          site,
+		ip:            ip,
 		personUUID:    personUuid.String(),
 		token:         token,
 		firstName:     firstName,
