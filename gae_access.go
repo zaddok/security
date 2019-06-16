@@ -1260,6 +1260,10 @@ func (am *GaeAccessManager) SearchPeople(query string, requestor Session) ([]Per
 }
 
 func (g *GaeAccessManager) GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error) {
+	if firstname == "" && lastname == "" {
+		return nil, nil
+	}
+
 	if requestor != nil && !requestor.HasRole("s1") {
 		return nil, errors.New("Permission denied.")
 	}
@@ -1301,6 +1305,10 @@ func (g *GaeAccessManager) CheckEmailExists(site, email string) (bool, error) {
 }
 
 func (g *GaeAccessManager) GetPersonByEmail(site, email string, requestor Session) (Person, error) {
+	if email == "" {
+		return nil, nil
+	}
+
 	if requestor != nil && !requestor.HasRole("s1") {
 		return nil, errors.New("Permission denied.")
 	}
