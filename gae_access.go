@@ -1318,7 +1318,7 @@ func (g *GaeAccessManager) GetPersonByEmail(site, email string, requestor Sessio
 		return nil, nil
 	}
 	if len(items) > 1 {
-		return nil, errors.New("Multiple accounts have this first and last name")
+		return nil, errors.New("Multiple accounts have this email address")
 	}
 
 	items[0].site = site
