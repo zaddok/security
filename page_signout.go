@@ -29,8 +29,8 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 			MaxAge:   0,
 		}
 		http.SetCookie(w, cookie)
-		if err != nil && session != nil && session.IsAuthenticated() {
-			am.Notice(session, `auth`, "Signout from %s %s", session.FirstName(), session.LastName())
+		if err != nil && session != nil {
+			am.Notice(session, `auth`, "Signout from %s (%s)", session.DisplayName(), session.Email())
 		}
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
