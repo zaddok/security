@@ -1510,6 +1510,7 @@ func (g *GaeAccessManager) Invalidate(site, ip, cookie string) (Session, error) 
 	k.Namespace = site
 	err = g.client.Delete(g.ctx, k)
 	if err != nil {
+		g.Error(session, `auth`, "Signout for %s failed. %v", session.DisplayName(), err)
 		return session, err
 	}
 	g.Info(session, `auth`, "Signout by %v", session.DisplayName())
