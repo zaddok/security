@@ -33,7 +33,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p.SupplimentalCss = supplimentalCss
 		p.Session = session
 
-		if r.FormValue("signin_email") != "" {
+		if r.Method == "POST" && r.FormValue("forgot") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
 		}
 
@@ -44,11 +44,13 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			return
 		}
 
-		token, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("signin_email"), IpFromRequest(r))
-		if err != nil {
-			fmt.Println("Forgot password request failed:", err)
-		} else {
-			fmt.Println("Forgot password request successs:", token, r.FormValue("signin_email"))
+		if r.Method == "POST" && r.FormValue("forgot") != "" {
+			token, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r))
+			if err != nil {
+				fmt.Println("Forgot password request failed:", err)
+			} else {
+				fmt.Println("Forgot password request successs:", token, r.FormValue("signin_email"))
+			}
 		}
 	}
 }
@@ -71,7 +73,7 @@ var ForgotTemplate = `
 <h3>Request Password Reset Email</h3>
 
 <label for="signin_username">
-<input type="email" name="signin_email" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
+<input type="email" name="forgot" id="forgot_email" value='{{.SigninEmail}}' placeholder="Email address"/>
 </label>
 
 <p>Enter your email address so that we can send you an email containing a password reset link.</p>
