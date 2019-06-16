@@ -1498,11 +1498,17 @@ func (g *GaeAccessManager) GuestSession(site, ip string) Session {
 	}
 }
 
+// Invalidate removes session information from the datastore. Alternate behaviour
+// might be to simply flag session as unauthenticated.
 func (g *GaeAccessManager) Invalidate(site, ip, cookie string) (Session, error) {
 	session, err := g.Session(site, ip, cookie)
 
 	// Delete session information
 	g.sessionCache.Remove(cookie)
+
+	k := datastore.NameKey("Session", cookie, nil)
+	k.Namespace = site
+	err := am.client.Delete(am.ctx, k)
 
 	return session, err
 }
