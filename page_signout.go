@@ -9,7 +9,7 @@ import (
 func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
-		session, err := security.LookupSession(r, am)
+		session, err := LookupSession(r, am)
 
 		_, err = am.Invalidate(session.Site(), session.IP(), session.Token())
 		if err != nil {
