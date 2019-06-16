@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 )
@@ -38,7 +37,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 			token, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r))
 			if err != nil {
-				security.ShowError(w, r, t, err, SITE)
+				ShowError(w, r, t, err, siteName)
 				return
 			}
 		}
