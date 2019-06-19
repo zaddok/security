@@ -649,15 +649,19 @@ var SecurityHeader = `
 
 		div.info { color: #024; }
 		div.info::before { color: #68c; content: '\f05a' }
+		div.info p a, div.info p > a { color: #048 !important; font-size: 1rem;}
 
 		div.warning, div.warning::before { color: #420; background: #ffdeb9; border-color: #efcea9; }
 		div.warning::before { content: '\f071'; color: #a86; }
+		div.warning p a, div.warning p > a { color: #840 !important; font-size: 1rem;}
 
 		div.error, div.error::before { color: #400; background: #ffb9b9; border-color: #efa9a9; }
 		div.error::before { color: #844; opacity: 0.7;}
+		div.error p a, div.error p > a { color: #844 !important; font-size: 1rem;}
 
 		div.success, div.success::before { color: #041; background: #b9ffde; border-color: #aec; }
 		div.success::before { content: '\f058'; color: #7b6; opacity: 0.7; }
+		div.success p a, div.success p > a { color: #482 !important; font-size: 1rem;}
 
 
 {{.SupplimentalCss | safe}}
