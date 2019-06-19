@@ -15,6 +15,7 @@ type SignupPageData struct {
 	FirstName       string
 	LastName        string
 	Email           string
+	BaseUrl         string
 	Password        string
 	Password2       string
 	Referer         string
@@ -65,6 +66,11 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			am.Warning(session, `security`, "Setting default self.signup setting to no on host %s", HostFromRequest(r))
 		}
 		p.AllowSignup = !(strings.ToLower(am.Setting().GetWithDefault(HostFromRequest(r), "self.signup", "no")) == "no")
+
+		baseUrl := am.Setting().GetWithDefault(session.Site(), "base.url", "")
+		if baseUrl != "" {
+			p.BaseUrl = baseUrl
+		}
 
 		signupRequested := len(r.FormValue("signup")) > 0 || len(r.FormValue("register_firstname")) > 0
 		var signupMessage []string
@@ -150,7 +156,7 @@ var SignupTemplate = `
 	<h2>{{.SiteName}}</h2>
 </div>
 
-<form method="post" action="/signin" id="signin">
+<form method="post" action="{{.BaseUrl}}/signin" id="signin">
 <input type="hidden" name="r" value="{{.Referer}}">
 <h3>Sign in</h3>
 
@@ -160,7 +166,7 @@ var SignupTemplate = `
 
 <label for="signin_password">
 <input type="password" name="signin_password" id="signin_password" value="{{.Password}}" placeholder="Password"/></span>
-<p class="forgot"><a href="/forgot/">Forgot your password?</a></p>
+<p class="forgot"><a href="{{.BaseUrl}}/forgot/">Forgot your password?</a></p>
 
 	<input type="submit" name="signin" value="Sign in"/>
 </label>
@@ -175,7 +181,7 @@ var SignupTemplate = `
 {{if .AllowSignup}}
 <div id="signup_box">
 
-<form method="post" action="/signup" id="signup">
+<form method="post" action="{{.BaseUrl}}/signup" id="signup">
 <h3>Sign up</h3>
 
 <label for="firstname">
@@ -198,7 +204,7 @@ var SignupTemplate = `
 <input type="password" placeholder="Re-type password" name="password2" id="password2" value="{{.Password2}}"/>
 </label>
 
-<p>By signing up, you agree that you have read and accepted our <a href="/user.agreement">User Agreement</a>, you consent to our <a href="/privacy">Privacy Notice</a> and receiving email that may contain marketing communications from us.</p>
+<p>By signing up, you agree that you have read and accepted our <a href="{{.BaseUrl}}/user.agreement">User Agreement</a>, you consent to our <a href="{{.BaseUrl}}/privacy">Privacy Notice</a> and receiving email that may contain marketing communications from us.</p>
 
 <div class="submit">
 <input type="submit" name="signup" value="Sign up"/>
