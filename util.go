@@ -319,7 +319,11 @@ func SendEmailWithAttachment(am AccessManager, session Session, subject, toEmail
 	w.Write([]byte(subject))
 	w.Write([]byte("\r\n"))
 	w.Write([]byte(fmt.Sprintf("From: %s <%s>\r\n", supportName, supportEmail)))
-	w.Write([]byte(fmt.Sprintf("To: %s <%s>\r\n", toName, toEmail)))
+	if toName != "" {
+		w.Write([]byte(fmt.Sprintf("To: %s <%s>\r\n", toName, toEmail)))
+	} else {
+		w.Write([]byte(fmt.Sprintf("To: %s\r\n", toEmail)))
+	}
 	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
 	w.Write([]byte("MIME-version: 1.0\r\n"))
 	w.Write([]byte("Content-type: multipart/alternative; charset=\"UTF-8\"; boundary="))
