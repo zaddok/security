@@ -102,7 +102,6 @@ func (s *GaeSetting) GetInt(site, name string, defaultValue int) int {
 
 // Store a configuration setting. Stores in cache, and flushes through to database.
 func (s *GaeSetting) Put(site, name, value string) error {
-	//TODO: Delete settings where value == ""
 	name = strings.ToLower(name)
 
 	oldValue := s.Get(site, name)
