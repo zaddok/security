@@ -519,6 +519,16 @@ var SecurityHeader = `
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+{{if .Session.IsIOS}}<script type="text/javascript">
+var ieh = function (event) {
+    if (('standalone' in window.navigator) && window.navigator.standalone) {
+        if ( event.target.tagName.toLowerCase() !== 'a' || event.target.hostname !== window.location.hostname ) return;
+        event.preventDefault();
+        window.location = event.target.href;
+    }
+}
+window.addEventListener('click', ieh, true);
+</script>{{end}}
 		<title>{{range .Title}}{{.}} &mdash; {{end}} {{.SiteName}}</title>
 		<style type="text/css">
 			@font-face {
