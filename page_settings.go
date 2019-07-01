@@ -166,14 +166,14 @@ a.delete::before {
 		<th>Name</th>
 		<th>Value</th>
 	</tr>
-	{{range .Settings}}{{$k := index . 0}}{{$v := index . 1}}{{if ne $k "smtp.password"}}{{if ne $v ""}}
+	{{range .Settings}}{{$k := index . 0}}{{$v := index . 1}}{{if ne $k "smtp.password"}}
 	<tr>
 		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}">{{$k}}</a>{{else}}{{$k}}{{end}}</td>
 		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}">{{$v}}{{else}}{{$v}}{{end}}</a></td>
 		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?delete={{$k}}" class="delete"></a>{{end}}</td>
 		<td>{{if $.Session.HasRole "s2"}}<a href="/z/settings?edit={{$k}}" class="edit"></a>{{end}}</td>
 	</tr>
-{{end}}{{end}}{{end}}
+{{end}}{{end}}
 </table>
 {{else}}
 <p style="text-align:center; color: #a55;">No settings found.</p>
