@@ -500,7 +500,9 @@ var SecurityHeader = `
 		<meta property="og:site_name" content="{{.SiteName}}"/>
 		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
 		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+		<link rel="apple-touch-icon" href="/favicon.ico" />
 		<title>Signin &mdash; {{.SiteName}}</title>
 		<style type="text/css">
 			@font-face {
