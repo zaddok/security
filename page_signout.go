@@ -11,27 +11,32 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 		AddSafeHeaders(w)
 		session, err := LookupSession(r, am)
 
-		_, err = am.Invalidate(session.Site(), session.IP(), session.Token(), session.UserAgent(), session.Lang())
-		if err != nil {
-			am.Notice(session, `auth`, "Error invalidating session on 'signout' page: %v", err)
-			w.Write([]byte("Error displaying 'signout' page"))
-			return
+		if session.IsAuthenticated() {
+			_, err = am.Invalidate(session.Site(), session.IP(), session.Token(), session.UserAgent(), session.Lang())
+			if err != nil {
+				am.Notice(session, `auth`, "Error invalidating session on 'signout' page. Token=%s: %v", session.Token, err)
+				w.Write([]byte("Error processing signout request"))
+				return
+			}
+			if session != nil {
+				am.Notice(session, `auth`, "Signout from %s (%s)", session.DisplayName(), session.Email())
+			}
+		}
+		if session.Token() != "" {
+			am.Debug(session, `auth`, "Signout called without cookie set")
+			// wipe cookie
+			cookie := &http.Cookie{
+				Name:     "z",
+				Value:    session.Token(),
+				Path:     "/",
+				Expires:  time.Now().Add(time.Minute * 60 * 24 * -356),
+				Secure:   false,
+				HttpOnly: true,
+				MaxAge:   0,
+			}
+			http.SetCookie(w, cookie)
 		}
 
-		// wipe cookie
-		cookie := &http.Cookie{
-			Name:     "z",
-			Value:    session.Token(),
-			Path:     "/",
-			Expires:  time.Now().Add(time.Minute * 60 * 24 * -356),
-			Secure:   false,
-			HttpOnly: true,
-			MaxAge:   0,
-		}
-		http.SetCookie(w, cookie)
-		if err != nil && session != nil {
-			am.Notice(session, `auth`, "Signout from %s (%s)", session.DisplayName(), session.Email())
-		}
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	}
 }

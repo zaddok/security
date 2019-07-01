@@ -1539,6 +1539,12 @@ func (g *GaeAccessManager) GuestSession(site, ip, userAgent, lang string) Sessio
 // Invalidate removes session information from the datastore. Alternate behaviour
 // might be to simply flag session as unauthenticated.
 func (g *GaeAccessManager) Invalidate(site, ip, cookie, userAgent, lang string) (Session, error) {
+	if cookie == "" {
+		session := g.GuestSession(site, ip, userAgent, lang)
+		g.Debug(session, `datastore`, "Invalidate called with empty cookie")
+		return session, nil
+	}
+
 	session, err := g.Session(site, ip, cookie, userAgent, lang)
 
 	// Delete session information
