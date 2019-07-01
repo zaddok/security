@@ -21,6 +21,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			SiteDescription string
 			SigninEmail     string
 			SupplimentalCss string
+			Title           []string
 			Session         Session
 			Errors          []string
 			Infos           []string
@@ -30,6 +31,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
+		p.Title = []string{"Lost Password"}
 		p.Session = session
 
 		if r.Method == "POST" && r.FormValue("forgot") != "" {

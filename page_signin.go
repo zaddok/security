@@ -33,6 +33,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 			p.SiteName = siteName
 			p.SiteDescription = siteDescription
 			p.SupplimentalCss = supplimentalCss
+			p.Title = []string{"Signin"}
 			p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 			p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 			p.Email = strings.TrimSpace(r.FormValue("email"))

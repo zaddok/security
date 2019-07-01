@@ -29,6 +29,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			SiteDescription string
 			SigninEmail     string
 			SupplimentalCss string
+			Title           []string
 			FirstName       string
 			LastName        string
 			Email           string
@@ -47,6 +48,7 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
+		p.Title = []string{"Reset Password"}
 		p.Token = token
 		p.Session = session
 

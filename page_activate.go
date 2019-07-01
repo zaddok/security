@@ -20,6 +20,7 @@ func ActivatePage(t *template.Template, am AccessManager, siteName, siteDescript
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
+		p.Title = []string{"Activate Account"}
 		p.Session = session
 
 		token := r.URL.Path

@@ -12,6 +12,7 @@ type SignupPageData struct {
 	SiteDescription string
 	SigninEmail     string
 	SupplimentalCss string
+	Title           []string
 	FirstName       string
 	LastName        string
 	Email           string
@@ -48,6 +49,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
+		p.Title = []string{"Signup"}
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 		p.Email = strings.TrimSpace(r.FormValue("email"))
