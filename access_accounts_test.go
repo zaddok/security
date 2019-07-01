@@ -17,7 +17,7 @@ func TestAccountManagement(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
-	var user Session = am.GuestSession(TestSite, "127.0.0.1")
+	var user Session = am.GuestSession(TestSite, "127.0.0.1", "", "en-AU")
 
 	// Test Create account
 	{
@@ -36,7 +36,7 @@ func TestAccountManagement(t *testing.T) {
 
 		// Authenticate to get a session object
 		msg := ""
-		user, msg, err = am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1")
+		user, msg, err = am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.Authenticate() failed: %v", err)
 		}
@@ -54,7 +54,7 @@ func TestAccountManagement(t *testing.T) {
 		}
 
 		// Refetch the session object (it would have been cached)
-		user2, err := am.Session(TestSite, user.IP(), user.Token())
+		user2, err := am.Session(TestSite, user.IP(), user.Token(), "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}
@@ -115,7 +115,7 @@ func TestAccountManagement(t *testing.T) {
 
 	// Test updating an account
 	{
-		session, _, err := am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1")
+		session, _, err := am.Authenticate(TestSite, "tacm.stacy@test.com", "fIr10g-!", "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.Session() failed: %v", err)
 		}

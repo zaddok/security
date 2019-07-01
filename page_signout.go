@@ -11,7 +11,7 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 		AddSafeHeaders(w)
 		session, err := LookupSession(r, am)
 
-		_, err = am.Invalidate(session.Site(), session.IP(), session.Token())
+		_, err = am.Invalidate(session.Site(), session.IP(), session.Token(), session.UserAgent(), session.Lang())
 		if err != nil {
 			am.Notice(session, `auth`, "Error invalidating session on 'signout' page: %v", err)
 			w.Write([]byte("Error displaying 'signout' page"))

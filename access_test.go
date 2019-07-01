@@ -139,7 +139,7 @@ func TestPersonManagement(t *testing.T) {
 	}
 
 	{
-		user, _, err := am.Authenticate(TestSite, "john.smythe@example.com", "fish cat 190!", "127.0.0.10")
+		user, _, err := am.Authenticate(TestSite, "john.smythe@example.com", "fish cat 190!", "127.0.0.10", "", "en-AU")
 		if err != nil {
 			t.Fatalf("Authenticate() failed: %v", err)
 		}
@@ -228,7 +228,7 @@ func TestScheduledConnectors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddPerson() failed: %v", err)
 	}
-	user, _, err := am.Authenticate(TestSite, "sct_tmp@example.com", "fish cat water dog 190!", "127.0.0.1")
+	user, _, err := am.Authenticate(TestSite, "sct_tmp@example.com", "fish cat water dog 190!", "127.0.0.1", "", "en-AU")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestAccessManager(t *testing.T) {
 
 	// Test Signup fail
 	{
-		_, _, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1")
+		_, _, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1", "", "en-AU")
 		if err == nil {
 			t.Fatalf("am.Signup() should have failed when self.signup=no")
 		}
@@ -463,7 +463,7 @@ func TestAccessManager(t *testing.T) {
 	// Test Signup success
 	{
 		//Signup(host, email, password, first_name, last_name, ip string) (*[]string, error)
-		_, token, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1")
+		_, token, err := am.Signup(host, first, last, email, "mypassword12!", "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.Signup() failed: %v", err)
 		}
@@ -484,7 +484,7 @@ func TestAccessManager(t *testing.T) {
 
 	// Test Forgot Password email request
 	{
-		token, err := am.ForgotPasswordRequest(host, email, "127.0.0.1")
+		token, err := am.ForgotPasswordRequest(host, email, "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.ForgotPasswordRequest() failed, when it should have succeded: %v", err)
 		}
@@ -493,7 +493,7 @@ func TestAccessManager(t *testing.T) {
 			t.Fatalf("am.ForgotPasswordRequest() should have returned a token")
 		}
 
-		token, err = am.ForgotPasswordRequest(host, "fake.email@example.com", "127.0.0.1")
+		token, err = am.ForgotPasswordRequest(host, "fake.email@example.com", "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.ForgotPasswordRequest() failed, when it should have succeded: %v", err)
 		}

@@ -10,6 +10,11 @@ import (
 
 func SigninPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		session, err := LookupSession(r, am)
+		if err != nil {
+			ShowError(w, r, t, err, siteName)
+			return
+		}
 
 		// HTTP GET to the signin page should return the full signin/signup page
 		if r.Method != "POST" {
@@ -20,7 +25,7 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		AddSafeHeaders(w)
 
 		ip := IpFromRequest(r)
-		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip)
+		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip, session.UserAgent(), session.Lang())
 		if err != nil {
 			am.Error(session, `auth`, "Error during authentication: %v", err)
 			ShowError(w, r, t, errors.New("An error occurred, please try again shortly."), siteName)

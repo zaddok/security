@@ -37,7 +37,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		if r.Method == "POST" && r.FormValue("forgot") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")
 
-			_, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r))
+			_, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r), session.UserAgent(), session.Lang())
 			if err != nil {
 				ShowError(w, r, t, err, siteName)
 				return

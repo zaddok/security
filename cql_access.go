@@ -124,7 +124,7 @@ func (c *CqlAccessManager) Log() log.Log {
 	return c.log
 }
 
-func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, string, error) {
+func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, ip, userAgent, lang string) (*[]string, string, error) {
 	var results []string
 
 	// Check email does not already exist
@@ -260,8 +260,8 @@ func (a *CqlAccessManager) Signup(site, first_name, last_name, email, password, 
 
 }
 
-func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
-	session := a.GuestSession(site, ip)
+func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip, userAgent, lang string) (string, error) {
+	session := a.GuestSession(site, ip, userAgent, lang)
 	for _, preauth := range a.preAuthenticationHandlers {
 		preauth(a, session, email)
 	}
@@ -285,11 +285,11 @@ func (a *CqlAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	return "", nil
 }
 
-func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
-	session := g.GuestSession(site, ip)
+func (g *CqlAccessManager) Authenticate(site, email, password, ip, userAgent, lang string) (Session, string, error) {
+	session := g.GuestSession(site, ip, userAgent, lang)
 
 	if email == "" {
-		return g.GuestSession(site, ip), "Invalid email address or password.", nil
+		return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 	}
 	for _, preauth := range g.preAuthenticationHandlers {
 		preauth(g, session, email)
@@ -305,24 +305,24 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 
 		if actualPassword == "" {
 			g.Log().Info("Signin failed. This user account has an empty password field. Email: " + email)
-			return g.GuestSession(site, ip), "Invalid email address or password.", nil
+			return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 		}
 
 		if !VerifyPassword(actualPassword, password) {
 			g.Log().Info("Authenticate() Signin failed. User provided password failes to match stored password.")
-			return g.GuestSession(site, ip), "Invalid email address or password.", nil
+			return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 		}
 
 		uerr := g.cql.Query("update person set last_auth=?,last_auth_ip=? where site=? and uuid=?", time.Now().Unix(), ip, site, uuid).Exec()
 		if uerr != nil {
 			g.Log().Error("Authenticate() Person update Error: %v", uerr)
-			return g.GuestSession(site, ip), "", uerr
+			return g.GuestSession(site, ip, userAgent, lang), "", uerr
 		}
 
 		token, err2 := g.createSession(site, uuid.String(), firstName, lastName, email, roles, ip)
 		if err2 != nil {
 			g.Log().Error("Authenticate() Session creation error: %v", err2)
-			return g.GuestSession(site, ip), "", err2
+			return g.GuestSession(site, ip, userAgent, lang), "", err2
 		}
 
 		i.Close()
@@ -337,6 +337,8 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 			roles:         roles,
 			csrf:          RandomString(8),
 			authenticated: true,
+			userAgent:     userAgent,
+			lang:          lang,
 		}
 		for _, v := range strings.FieldsFunc(roles, func(c rune) bool { return c == ':' }) {
 			session.roleMap[v] = true
@@ -347,12 +349,12 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	err := i.Close()
 	if err != nil {
 		g.Log().Error("Authenticate() Person lookup Error: %v", err)
-		return g.GuestSession(site, ip), "", err
+		return g.GuestSession(site, ip, userAgent, lang), "", err
 	}
 
 	// User lookup failed
 	g.Log().Info("Signin failed. Email address %s not signed up on site %s.", email, site)
-	return g.GuestSession(site, ip), "Invalid email address or password.", nil
+	return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 }
 
 func (am *CqlAccessManager) GetConnectorInfo() []*ConnectorInfo {
@@ -491,7 +493,7 @@ func (am *CqlAccessManager) GetSystemSessionWithRoles(site, firstname, lastname,
 	return nil, errors.New("unimplemented")
 }
 
-func (g *CqlAccessManager) Session(site, ip, cookie string) (Session, error) {
+func (g *CqlAccessManager) Session(site, ip, cookie, userAgent, lang string) (Session, error) {
 	if len(cookie) > 0 {
 		rows := g.cql.Query("select first_name, last_name, person_uuid, created, expiry, roles, email, csrf from session_token where site=? and uid=?", site, cookie).Iter()
 
@@ -502,11 +504,11 @@ func (g *CqlAccessManager) Session(site, ip, cookie string) (Session, error) {
 		match := rows.Scan(&firstName, &lastName, &uuid, &created, &expires, &roles, &email, &csrf)
 		err := rows.Close()
 		if err != nil {
-			return g.GuestSession(site, ip), err
+			return g.GuestSession(site, ip, userAgent, lang), err
 		}
 
 		if !match || expires < time.Now().Unix() {
-			return g.GuestSession(site, ip), nil
+			return g.GuestSession(site, ip, userAgent, lang), nil
 		}
 		//user.Id = &uuid
 		session := &CqlSession{
@@ -520,6 +522,8 @@ func (g *CqlAccessManager) Session(site, ip, cookie string) (Session, error) {
 			csrf:          csrf,
 			authenticated: true,
 			roleMap:       make(map[string]bool),
+			userAgent:     userAgent,
+			lang:          lang,
 		}
 		for _, v := range strings.FieldsFunc(session.roles, func(c rune) bool { return c == ':' }) {
 			session.roleMap[v] = true
@@ -541,7 +545,7 @@ func (g *CqlAccessManager) Session(site, ip, cookie string) (Session, error) {
 		newExpiry := time.Now().Add(time.Second * time.Duration(e)).Unix()
 		if created+int64(maxAge) < newExpiry {
 			g.log.Warning("User session hit \"session.max_age\".\n")
-			return g.GuestSession(site, ip), nil
+			return g.GuestSession(site, ip, userAgent, lang), nil
 		}
 
 		// So "expires" is still in the future... Update the session expiry in the database
@@ -557,10 +561,10 @@ func (g *CqlAccessManager) Session(site, ip, cookie string) (Session, error) {
 
 	g.log.Debug("Session() no valid cookie")
 
-	return g.GuestSession(site, ip), nil
+	return g.GuestSession(site, ip, userAgent, lang), nil
 }
 
-func (g *CqlAccessManager) GuestSession(site, ip string) Session {
+func (g *CqlAccessManager) GuestSession(site, ip, userAgent, lang string) Session {
 	return &CqlSession{
 		ip:            ip,
 		token:         "",
@@ -572,11 +576,13 @@ func (g *CqlAccessManager) GuestSession(site, ip string) Session {
 		roles:         "",
 		csrf:          "",
 		roleMap:       make(map[string]bool),
+		userAgent:     userAgent,
+		lang:          lang,
 	}
 }
 
-func (g *CqlAccessManager) Invalidate(site, ip, cookie string) (Session, error) {
-	session, err := g.Session(site, ip, cookie)
+func (g *CqlAccessManager) Invalidate(site, ip, cookie, userAgent, lang string) (Session, error) {
+	session, err := g.Session(site, ip, cookie, userAgent, lang)
 
 	// Delete session information
 
@@ -725,6 +731,8 @@ type CqlSession struct {
 	site          string
 	csrf          string
 	roleMap       map[string]bool `datastore:"-"`
+	userAgent     string
+	lang          string
 }
 
 func (s *CqlSession) PersonUuid() string {
@@ -761,6 +769,24 @@ func (s *CqlSession) DisplayName() string {
 
 func (s *CqlSession) Email() string {
 	return s.email
+}
+
+func (s *CqlSession) UserAgent() string {
+	return s.userAgent
+}
+
+func (s *CqlSession) Lang() string {
+	return s.lang
+}
+
+func (s *CqlSession) IsIOS() bool {
+	if strings.Index(s.userAgent, "iPhone") > 0 {
+		return true
+	}
+	if strings.Index(s.userAgent, "iPad") > 0 {
+		return true
+	}
+	return false
 }
 
 func (s *CqlSession) IsAuthenticated() bool {

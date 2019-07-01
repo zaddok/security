@@ -119,7 +119,7 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 				p.Errors = signupMessage
 			} else {
 				ip := IpFromRequest(r)
-				errors, _, err := am.Signup(HostFromRequest(r), p.FirstName, p.LastName, p.Email, p.Password, ip)
+				errors, _, err := am.Signup(HostFromRequest(r), p.FirstName, p.LastName, p.Email, p.Password, ip, session.UserAgent(), session.Lang())
 				if errors != nil {
 					p.Errors = *errors
 				} else if err != nil {

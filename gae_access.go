@@ -281,6 +281,8 @@ type GaeSession struct {
 	authenticated bool
 	csrf          string
 	roles         string
+	userAgent     string
+	lang          string
 
 	site    string          `datastore:"-"`
 	token   string          `datastore:"-"`
@@ -329,6 +331,24 @@ func (s *GaeSession) DisplayName() string {
 
 func (s *GaeSession) Email() string {
 	return s.email
+}
+
+func (s *GaeSession) UserAgent() string {
+	return s.userAgent
+}
+
+func (s *GaeSession) Lang() string {
+	return s.lang
+}
+
+func (s *GaeSession) IsIOS() bool {
+	if strings.Index(s.userAgent, "iPhone") > 0 {
+		return true
+	}
+	if strings.Index(s.userAgent, "iPad") > 0 {
+		return true
+	}
+	return false
 }
 
 func (s *GaeSession) IsAuthenticated() bool {
@@ -493,10 +513,10 @@ func (c *GaeAccessManager) PicklistStore() PicklistStore {
 	return c.picklistStore
 }
 
-func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip string) (*[]string, string, error) {
+func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, ip, userAgent, lang string) (*[]string, string, error) {
 	var results []string
 
-	session := a.GuestSession(site, ip)
+	session := a.GuestSession(site, ip, userAgent, lang)
 	email = strings.ToLower(strings.TrimSpace(email))
 
 	// Check email does not already exist
@@ -607,8 +627,8 @@ func (a *GaeAccessManager) Signup(site, first_name, last_name, email, password, 
 	return nil, token.String(), nil
 }
 
-func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string, error) {
-	session := a.GuestSession(site, ip)
+func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip, userAgent, lang string) (string, error) {
+	session := a.GuestSession(site, ip, "", "")
 	email = strings.ToLower(strings.TrimSpace(email))
 
 	if email == "" {
@@ -708,11 +728,11 @@ func (a *GaeAccessManager) ForgotPasswordRequest(site, email, ip string) (string
 	return token.String(), nil
 }
 
-func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Session, string, error) {
+func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, lang string) (Session, string, error) {
 	if email == "" {
-		return g.GuestSession(site, ip), "Invalid email address or password.", nil
+		return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 	}
-	session := g.GuestSession(site, ip)
+	session := g.GuestSession(site, ip, userAgent, lang)
 	for _, preauth := range g.preAuthenticationHandlers {
 		preauth(g, session, email)
 	}
@@ -724,7 +744,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 	email = strings.ToLower(strings.TrimSpace(email))
 	if throttled, _ := g.throttle.IsThrottled(email); throttled {
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
-		return g.GuestSession(site, ip), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
+		return g.GuestSession(site, ip, userAgent, lang), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
 	}
 
 	var items []GaePerson
@@ -755,14 +775,14 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 				}
 				if err != nil {
 					syslog.Add(`auth`, ip, `warning`, fmt.Sprintf("External Authentication for '%s' failed. Error: %v", email, err))
-					return g.GuestSession(site, ip), "Communication with authentication service failed. Please try again.", nil
+					return g.GuestSession(site, ip, userAgent, lang), "Communication with authentication service failed. Please try again.", nil
 				}
 			}
 
 			if !externallyAuthenticated {
 				g.throttle.Increment(email)
 				syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
-				return g.GuestSession(site, ip), "Invalid email address or password.", nil
+				return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 			}
 		}
 
@@ -779,7 +799,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		token, err2 := g.createSession(site, items[0].Uuid(), items[0].FirstName(), items[0].LastName(), items[0].Email(), items[0].roles, ip)
 		if err2 != nil {
 			syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Session creation error: %v", err2))
-			return g.GuestSession(site, ip), "", err2
+			return g.GuestSession(site, ip, userAgent, lang), "", err2
 		}
 		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
 
@@ -806,12 +826,12 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip string) (Sessi
 		// back the normal "Invalid email address or password" message prevent the signin form
 		// revealing to a bot that this email address/password combination is invalid.
 		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
-		return g.GuestSession(site, ip), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
+		return g.GuestSession(site, ip, userAgent, lang), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
 	}
 
 	g.throttle.Increment(ip)
 	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed: Unknown email address.", email))
-	return g.GuestSession(site, ip), "Invalid email address or password.", nil
+	return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 }
 func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
 	var items []SystemLog
@@ -1384,7 +1404,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 		k := datastore.NameKey("Person", person.Uuid(), nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, person); err != nil {
-			g.Error(g.GuestSession(site, ""), `datastore`, "GetSystemSession() Person creation failed. Error: %v", err)
+			g.Error(g.GuestSession(site, "", "", ""), `datastore`, "GetSystemSession() Person creation failed. Error: %v", err)
 			return nil, err
 		}
 		puuid = person.Uuid()
@@ -1410,7 +1430,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 }
 
 // Request the session information associated the site hostname and cookie in the web request
-func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
+func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Session, error) {
 	if len(cookie) > 0 {
 		k := datastore.NameKey("Session", cookie, nil)
 		k.Namespace = site
@@ -1424,13 +1444,16 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
 				session.ip = ip
 			}
+			// Fill the transient/non-persisted fields
+			session.userAgent = userAgent
+			session.lang = lang
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
 			if err == datastore.ErrNoSuchEntity {
-				return g.GuestSession(site, ip), nil
+				return g.GuestSession(site, ip, userAgent, lang), nil
 			} else if err != nil {
-				return g.GuestSession(site, ip), err
+				return g.GuestSession(site, ip, userAgent, lang), err
 			}
 
 			if session.ip != ip {
@@ -1443,6 +1466,8 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 			session.site = site
 			session.roleMap = nil
 			session.ip = ip
+			session.userAgent = userAgent
+			session.lang = lang
 			g.sessionCache.Set(cookie, session)
 		}
 
@@ -1450,7 +1475,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 			g.Debug(session, `auth`, "Session expired for %s: %v", session.DisplayName(), session.expiry)
 			g.client.Delete(g.ctx, k)
 			g.sessionCache.Remove(cookie)
-			return g.GuestSession(site, ip), nil
+			return g.GuestSession(site, ip, userAgent, lang), nil
 		}
 
 		expiry := g.setting.GetInt(site, `session.expiry`, 0)
@@ -1470,7 +1495,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 			g.Warning(session, `auth`, "Session for %s hit \"session.max_age\". Session created: %v Max Age: %v", session.DisplayName(), session.Created(), session.Created().Add(time.Duration(maxAge)*time.Second))
 			g.client.Delete(g.ctx, k)
 			g.sessionCache.Remove(cookie)
-			return g.GuestSession(site, ip), nil
+			return g.GuestSession(site, ip, userAgent, lang), nil
 		}
 
 		// So "expires" is still in the future... Update the session expiry in the database
@@ -1492,10 +1517,10 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 
 	//g.Debug("Session() no valid cookie")
 
-	return g.GuestSession(site, ip), nil
+	return g.GuestSession(site, ip, userAgent, lang), nil
 }
 
-func (g *GaeAccessManager) GuestSession(site, ip string) Session {
+func (g *GaeAccessManager) GuestSession(site, ip, userAgent, lang string) Session {
 	return &GaeSession{
 		site:          site,
 		ip:            ip,
@@ -1506,13 +1531,15 @@ func (g *GaeAccessManager) GuestSession(site, ip string) Session {
 		roles:         "",
 		csrf:          "",
 		roleMap:       make(map[string]bool),
+		userAgent:     userAgent,
+		lang:          lang,
 	}
 }
 
 // Invalidate removes session information from the datastore. Alternate behaviour
 // might be to simply flag session as unauthenticated.
-func (g *GaeAccessManager) Invalidate(site, ip, cookie string) (Session, error) {
-	session, err := g.Session(site, ip, cookie)
+func (g *GaeAccessManager) Invalidate(site, ip, cookie, userAgent, lang string) (Session, error) {
+	session, err := g.Session(site, ip, cookie, userAgent, lang)
 
 	// Delete session information
 	g.sessionCache.Remove(cookie)

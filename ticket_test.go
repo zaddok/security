@@ -23,7 +23,7 @@ func TestTicketManager(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddPerson() failed: %v", err)
 	}
-	user, _, err := am.Authenticate(TestSite, "ticketmanager.tmp1@example.com", "tmpA@9040hi", "127.0.0.1")
+	user, _, err := am.Authenticate(TestSite, "ticketmanager.tmp1@example.com", "tmpA@9040hi", "127.0.0.1", "", "en-AU")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}

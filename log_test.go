@@ -67,7 +67,7 @@ func TestEntityAudit(t *testing.T) {
 		if err != nil {
 			t.Fatalf("am.AddPerson() failed: %v", err)
 		}
-		session, _, err = am.Authenticate(TestSite, "stacy.jones@test.com", "abc123--", "127.0.0.1")
+		session, _, err = am.Authenticate(TestSite, "stacy.jones@test.com", "abc123--", "127.0.0.1", "", "en-AU")
 		if err != nil {
 			t.Fatalf("am.Authenticate() failed: %v", err)
 		}

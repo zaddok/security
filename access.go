@@ -7,11 +7,11 @@ import (
 type VirtualHostSetup func(site string, am AccessManager)
 
 type AccessManager interface {
-	Signup(host, first_name, last_name, email, password, ip string) (*[]string, string, error)
+	Signup(host, first_name, last_name, email, password, ip, userAgent, lang string) (*[]string, string, error)
 	ActivateSignup(host, token, ip string) (string, string, error)
-	ForgotPasswordRequest(host, email, ip string) (string, error)
+	ForgotPasswordRequest(host, email, ip, userAgent, lang string) (string, error)
 	ResetPassword(host, token, password, ip string) (bool, string, error)
-	Authenticate(host, email, password, ip string) (Session, string, error)
+	Authenticate(host, email, password, ip, userAgent, lang string) (Session, string, error)
 
 	GetPerson(uuid string, requestor Session) (Person, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error)
@@ -25,9 +25,9 @@ type AccessManager interface {
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
 	CheckEmailExists(site, email string) (bool, error)
 
-	Session(host, ip, cookie string) (Session, error)
-	GuestSession(site, ip string) Session
-	Invalidate(host, ip, cookie string) (Session, error)
+	Session(host, ip, cookie, userAgent, lang string) (Session, error)
+	GuestSession(site, ip, userAgent, lang string) Session
+	Invalidate(host, ip, cookie, userAgent, lang string) (Session, error)
 	GetSystemSession(host, firstname, lastname string) (Session, error)
 	GetSystemSessionWithRoles(host, firstname, lastname, roles string) (Session, error)
 
@@ -133,6 +133,9 @@ type Session interface {
 	Email() string
 	IsAuthenticated() bool
 	HasRole(uid string) bool
+	UserAgent() string
+	Lang() string
+	IsIOS() bool
 }
 
 type RoleType interface {

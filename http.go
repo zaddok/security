@@ -458,18 +458,34 @@ func IpFromRequest(r *http.Request) string {
 
 // Inspect the cookie and IP address of a request and return associated session information
 func LookupSession(r *http.Request, am AccessManager) (Session, error) {
+	ua := r.Header.Get("User-Agent")
+	lang := r.Header.Get("Accept-Language")
+	l := strings.Index(lang, ",")
+	if l > 0 {
+		lang = lang[0:l]
+	}
+	if len(lang) > 256 {
+		lang = ""
+	}
+	if len(ua) > 256 {
+		ua = ""
+	}
+
 	cookie, err := r.Cookie("z")
 	if err != nil {
 		if err == http.ErrNoCookie {
 			err = nil
 		}
-		return am.GuestSession(HostFromRequest(r), IpFromRequest(r)), err
+		return am.GuestSession(HostFromRequest(r), IpFromRequest(r), ua, lang), err
 	}
 	token := ""
 	if cookie != nil && cookie.Value != "" {
 		token = cookie.Value
 	}
-	return am.Session(HostFromRequest(r), IpFromRequest(r), token)
+	if len(token) > 256 {
+		token = ""
+	}
+	return am.Session(HostFromRequest(r), IpFromRequest(r), ua, lang, token)
 }
 
 // Rudimentary checks on email address

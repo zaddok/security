@@ -16,7 +16,7 @@ func TestExternalSystem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AddPerson() failed: %v", err)
 	}
-	user, _, err := am.Authenticate(TestSite, "testexternalsystem@example.com", "tmp", "127.0.0.1")
+	user, _, err := am.Authenticate(TestSite, "testexternalsystem@example.com", "tmp", "127.0.0.1", "", "en-AU")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
