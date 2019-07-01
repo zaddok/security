@@ -1447,7 +1447,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie string) (Session, error) {
 		}
 
 		if session.expiry.Before(time.Now()) {
-			g.Debug(session, `datastore`, "Session expired for %s: %v", session.DisplayName(), session.expiry)
+			g.Debug(session, `auth`, "Session expired for %s: %v", session.DisplayName(), session.expiry)
 			g.client.Delete(g.ctx, k)
 			g.sessionCache.Remove(cookie)
 			return g.GuestSession(site, ip), nil
