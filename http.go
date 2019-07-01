@@ -485,7 +485,7 @@ func LookupSession(r *http.Request, am AccessManager) (Session, error) {
 	if len(token) > 256 {
 		token = ""
 	}
-	return am.Session(HostFromRequest(r), IpFromRequest(r), ua, lang, token)
+	return am.Session(HostFromRequest(r), IpFromRequest(r), token, ua, lang)
 }
 
 // Rudimentary checks on email address
