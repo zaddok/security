@@ -22,9 +22,10 @@ func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescripti
 				am.Notice(session, `auth`, "Signout from %s (%s)", session.DisplayName(), session.Email())
 			}
 		}
-		if session.Token() != "" {
+		if session.Token() == "" {
 			am.Debug(session, `auth`, "Signout called without cookie set")
-			// wipe cookie
+		} else {
+			// Remove cookie
 			cookie := &http.Cookie{
 				Name:     "z",
 				Value:    session.Token(),

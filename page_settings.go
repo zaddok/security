@@ -214,7 +214,7 @@ window.onclick = function(event) { if (event.target == modal) { modal.style.disp
 var settingEditTemplate = `
 {{define "setting_edit"}}
 {{template "admin_header" .}}
-<div style="margin-top: -0.8rem"><a class="back" href="/z/settings">Back</a></div>
+<div style="margin-top: -0.8rem"><a class="back" href="/z/settings">Settings</a></div>
 
 <style type="text/css">
 #editform table {
