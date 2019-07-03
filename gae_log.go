@@ -260,16 +260,16 @@ type GaeSyslogBundle struct {
 }
 
 func (sb *GaeSyslogBundle) Put() {
-	if len(sb.Items) > 499 {
+	if len(sb.Item) > 499 {
 		fmt.Println("Syslog bundle greater than 500 entries.")
-		sb.Items = sb.Items[0:498]
+		sb.Items = sb.Item[0:498]
 		sb.Add("datastore", "", "error", "Syslog bundle greater than 500 entries.")
 	}
 	go func() {
 		if _, err := sb.client.PutMulti(sb.ctx, sb.Key, sb.Item); err != nil {
 			fmt.Printf("Unable to store system log entries: %v", err)
 		}
-		fmt.Println("Syslog bundle persisted.", len(sb.Items))
+		fmt.Println("Syslog bundle persisted.", len(sb.Item))
 	}()
 }
 
