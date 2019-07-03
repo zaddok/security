@@ -262,7 +262,7 @@ type GaeSyslogBundle struct {
 func (sb *GaeSyslogBundle) Put() {
 	if len(sb.Item) > 499 {
 		fmt.Println("Syslog bundle greater than 500 entries.")
-		sb.Items = sb.Item[0:498]
+		sb.Item = sb.Item[0:498]
 		sb.Add("datastore", "", "error", "Syslog bundle greater than 500 entries.")
 	}
 	go func() {
