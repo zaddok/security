@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -106,7 +107,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				return
 			}
 			if s == nil {
-				fmt.Printf("Scheduled connector not found. Site: %s UUID: %s\n", session.GetSite(), r.FormValue("run"))
+				fmt.Printf("Scheduled connector not found. Site: %s UUID: %s\n", session.Site(), r.FormValue("run"))
 				ShowErrorNotFound(w, r, t, siteName)
 				return
 			}
