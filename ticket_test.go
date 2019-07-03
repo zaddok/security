@@ -2,6 +2,7 @@ package security
 
 import (
 	"testing"
+	"time"
 
 	"github.com/zaddok/log"
 )
@@ -12,7 +13,7 @@ func TestTicketManager(t *testing.T) {
 	defer l.Close()
 
 	// Initialize helper API objects
-	am, err, client, context := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
+	am, err, client, context := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

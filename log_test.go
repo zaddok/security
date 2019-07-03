@@ -2,6 +2,7 @@ package security
 
 import (
 	"testing"
+	"time"
 
 	"github.com/zaddok/log"
 )
@@ -55,7 +56,7 @@ func TestEntityAudit(t *testing.T) {
 	l := log.NewStdoutLogDebug()
 	defer l.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

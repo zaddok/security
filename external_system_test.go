@@ -3,11 +3,12 @@ package security
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestExternalSystem(t *testing.T) {
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

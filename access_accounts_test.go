@@ -3,6 +3,7 @@ package security
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/zaddok/log"
 )
@@ -13,7 +14,7 @@ func TestAccountManagement(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -169,7 +170,7 @@ func TestAccountCheckEmail(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t))
+	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}

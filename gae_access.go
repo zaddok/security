@@ -35,6 +35,7 @@ type GaeAccessManager struct {
 	sessionCache              gcache.Cache
 	projectId                 string
 	locationId                string
+	defaultLocale             *time.Location
 }
 
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
@@ -283,6 +284,7 @@ type GaeSession struct {
 	roles         string
 	userAgent     string
 	lang          string
+	locale        *time.Location
 
 	site    string          `datastore:"-"`
 	token   string          `datastore:"-"`
@@ -335,6 +337,10 @@ func (s *GaeSession) Email() string {
 
 func (s *GaeSession) UserAgent() string {
 	return s.userAgent
+}
+
+func (s *GaeSession) Locale() *time.Location {
+	return s.locale
 }
 
 func (s *GaeSession) Lang() string {
@@ -477,7 +483,7 @@ func (r *GaeRoleType) GetDescription() string {
 	return r.Description
 }
 
-func NewGaeAccessManager(projectId, locationId string) (AccessManager, error, *datastore.Client, context.Context) {
+func NewGaeAccessManager(projectId, locationId string, locale *time.Location) (AccessManager, error, *datastore.Client, context.Context) {
 
 	settings, client, ctx := NewGaeSetting(projectId)
 	throttle := NewGaeThrottle(settings, client, ctx)
@@ -502,6 +508,7 @@ func NewGaeAccessManager(projectId, locationId string) (AccessManager, error, *d
 		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
 		projectId:      projectId,
 		locationId:     locationId,
+		defaultLocale:  locale,
 	}, nil, client, ctx
 }
 
@@ -815,6 +822,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 			csrf:          RandomString(8),
 			authenticated: true,
 			roleMap:       nil,
+			locale:        g.defaultLocale,
 		}
 
 		return session, "", nil
@@ -1422,6 +1430,7 @@ func (g *GaeAccessManager) GetSystemSessionWithRoles(site, firstname, lastname, 
 		csrf:          RandomString(8),
 		roles:         roles,
 		roleMap:       nil, // built on demand
+		locale:        g.defaultLocale,
 	}
 
 	g.systemSessions[site+"|"+firstname+"|"+lastname] = session
@@ -1447,6 +1456,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 			// Fill the transient/non-persisted fields
 			session.userAgent = userAgent
 			session.lang = lang
+			session.locale = g.defaultLocale
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
@@ -1468,6 +1478,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 			session.ip = ip
 			session.userAgent = userAgent
 			session.lang = lang
+			session.locale = g.defaultLocale
 			g.sessionCache.Set(cookie, session)
 		}
 
@@ -1533,6 +1544,7 @@ func (g *GaeAccessManager) GuestSession(site, ip, userAgent, lang string) Sessio
 		roleMap:       make(map[string]bool),
 		userAgent:     userAgent,
 		lang:          lang,
+		locale:        g.defaultLocale,
 	}
 }
 

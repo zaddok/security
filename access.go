@@ -135,6 +135,7 @@ type Session interface {
 	HasRole(uid string) bool
 	UserAgent() string
 	Lang() string
+	Locale() *time.Location
 	IsIOS() bool
 }
 

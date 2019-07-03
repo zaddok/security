@@ -29,6 +29,7 @@ type CqlAccessManager struct {
 	authenticationHandlers    []AuthenticationHandler
 	preAuthenticationHandlers []PreAuthenticationHandler
 	connectorInfo             []*ConnectorInfo
+	defaultLocale             *time.Location
 }
 
 func (am *CqlAccessManager) GetCustomRoleTypes() []RoleType {
@@ -339,6 +340,7 @@ func (g *CqlAccessManager) Authenticate(site, email, password, ip, userAgent, la
 			authenticated: true,
 			userAgent:     userAgent,
 			lang:          lang,
+			locale:        g.defaultLocale,
 		}
 		for _, v := range strings.FieldsFunc(roles, func(c rune) bool { return c == ':' }) {
 			session.roleMap[v] = true
@@ -524,6 +526,7 @@ func (g *CqlAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 			roleMap:       make(map[string]bool),
 			userAgent:     userAgent,
 			lang:          lang,
+			locale:        g.defaultLocale,
 		}
 		for _, v := range strings.FieldsFunc(session.roles, func(c rune) bool { return c == ':' }) {
 			session.roleMap[v] = true
@@ -578,6 +581,7 @@ func (g *CqlAccessManager) GuestSession(site, ip, userAgent, lang string) Sessio
 		roleMap:       make(map[string]bool),
 		userAgent:     userAgent,
 		lang:          lang,
+		locale:        g.defaultLocale,
 	}
 }
 
@@ -733,6 +737,7 @@ type CqlSession struct {
 	roleMap       map[string]bool `datastore:"-"`
 	userAgent     string
 	lang          string
+	locale        *time.Location
 }
 
 func (s *CqlSession) PersonUuid() string {
@@ -773,6 +778,10 @@ func (s *CqlSession) Email() string {
 
 func (s *CqlSession) UserAgent() string {
 	return s.userAgent
+}
+
+func (s *CqlSession) Locale() *time.Location {
+	return s.locale
 }
 
 func (s *CqlSession) Lang() string {
