@@ -24,33 +24,23 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			return
 		}
 
-		type SignupPageData struct {
-			SiteName        string
-			SiteDescription string
-			SigninEmail     string
-			SupplimentalCss string
-			Title           []string
-			FirstName       string
-			LastName        string
-			Email           string
-			Password        string
-			Password2       string
-			Referer         string
-			Token           string
-			AllowSignup     bool
-			Session         Session
-			Errors          []string
-			Infos           []string
-			Successes       []string
-		}
+		type ResetPageData struct {
+			SignupPageData
 
-		p := &SignupPageData{}
+			Token string
+		}
+		p := &ResetPageData{}
 		p.SiteName = siteName
 		p.SiteDescription = siteDescription
 		p.SupplimentalCss = supplimentalCss
 		p.Title = []string{"Reset Password"}
 		p.Token = token
 		p.Session = session
+
+		baseUrl := am.Setting().GetWithDefault(session.Site(), "base.url", "")
+		if baseUrl != "" {
+			p.BaseUrl = baseUrl
+		}
 
 		// Form has been submitted with new password
 		if r.FormValue("new_password1") != "" || r.FormValue("new_password2") != "" {
