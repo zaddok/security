@@ -269,7 +269,6 @@ func (sb *GaeSyslogBundle) Put() {
 		if _, err := sb.client.PutMulti(sb.ctx, sb.Key, sb.Item); err != nil {
 			fmt.Printf("Unable to store system log entries: %v", err)
 		}
-		fmt.Println("Syslog bundle persisted.", len(sb.Item))
 	}()
 }
 
