@@ -105,6 +105,11 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				ShowError(w, r, t, err, siteName)
 				return
 			}
+			if s == nil {
+				fmt.Printf("Scheduled connector not found. Site: %s UUID: %s\n", session.GetSite(), r.FormValue("run"))
+				ShowErrorNotFound(w, r, t, siteName)
+				return
+			}
 
 			// Task queue is only available on appengine. Handle tasks differently on localhost
 			if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
