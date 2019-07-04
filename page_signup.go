@@ -1,6 +1,7 @@
 package security
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/mail"
@@ -132,7 +133,7 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
 			am.Notice(session, `html`, "Error displaying 'signin_page' page: %v", err)
-			w.Write([]byte("Error displaying 'signin_page' page: %v", err))
+			w.Write([]byte(fmt.Sprintf("Error displaying 'signin_page' page: %v", err)))
 			return
 		}
 	}
