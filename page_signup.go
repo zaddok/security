@@ -43,13 +43,13 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 		}
 
 		p := &SignupPageData{}
+		p.Session = session
 		p.Title = []string{"Signup"}
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 		p.Email = strings.TrimSpace(r.FormValue("email"))
 		p.Password = strings.TrimSpace(r.FormValue("password"))
 		p.Password2 = strings.TrimSpace(r.FormValue("password2"))
-		p.Session = session
 		if r.FormValue("r") != "" {
 			p.Referer = r.FormValue("r")
 		}
@@ -131,8 +131,8 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 
 		err = t.ExecuteTemplate(w, "signin_page", p)
 		if err != nil {
-			am.Notice(session, `html`, "Error displaying 'signup' page: %v", err)
-			w.Write([]byte("Error displaying 'signup' page"))
+			am.Notice(session, `html`, "Error displaying 'signin_page' page: %v", err)
+			w.Write([]byte("Error displaying 'signin_page' page"))
 			return
 		}
 	}
