@@ -8,7 +8,7 @@ import (
 )
 
 // Serve a generic html page that does not need any variables inserted into it
-func GenericPage(t *template.Template, name string, title string, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func GenericPage(t *template.Template, name string, title string, session Session) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "max-age=6,s-maxage=6,no-transform,public")
 
@@ -32,8 +32,8 @@ func GenericPage(t *template.Template, name string, title string, siteName, site
 		}
 
 		Render(r, w, t, name, &Page{
-			siteName,
-			siteDescription,
+			session.Theme().Name(),
+			session.Theme().Description(),
 			headerTitle,
 			time.Now().Format("2006/01/02/"),
 			year})
