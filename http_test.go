@@ -18,7 +18,7 @@ func TestHtmlCompiles(t *testing.T) {
 	}
 	tm := NewGaeTicketManager(client, context, am)
 
-	_, err = RegisterHttpHandlers("name", "description", "body{}", am, tm, time.Now().Location(), l)
+	_, err = RegisterHttpHandlers(am, tm, time.Now().Location(), l)
 	if err != nil {
 		t.Fatalf("RegisterHttpHandlers() failed: %v", err)
 	}

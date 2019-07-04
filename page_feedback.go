@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -22,11 +22,8 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 		AddSafeHeaders(w)
 
 		type Page struct {
-			SiteName         string
-			SiteDescription  string
-			SupplimentalCss  string
-			Title            []string
 			Session          Session
+			Title            []string
 			MessageSubject   string
 			MessageText      string
 			CurrentUserAgent string
@@ -37,11 +34,8 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 		}
 
 		p := &Page{
-			SiteName:         siteName,
-			SiteDescription:  siteDescription,
-			SupplimentalCss:  supplimentalCss,
-			Title:            []string{"Send feedback", "Feedback"},
 			Session:          session,
+			Title:            []string{"Send feedback", "Feedback"},
 			CurrentUrl:       r.Referer(),
 			CurrentUserAgent: r.UserAgent(),
 			CurrentIP:        IpFromRequest(r),
@@ -74,7 +68,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 			csrf := r.FormValue("csrf")
 			if csrf != session.CSRF() {
 				am.Warning(session, `security`, "Potential CSRF attack detected: "+r.URL.String())
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 
@@ -101,7 +95,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager, site
 				}
 				return
 			} else {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 

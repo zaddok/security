@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func SignoutPage(t *template.Template, am AccessManager, siteName, siteDescription string) func(w http.ResponseWriter, r *http.Request) {
+func SignoutPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 		session, err := LookupSession(r, am)

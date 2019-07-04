@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func AccountDetailsPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -20,7 +20,7 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 			return
 		}
 		if !session.HasRole("s1") {
-			ShowErrorForbidden(w, r, t, siteName)
+			ShowErrorForbidden(w, r, t, session)
 			return
 		}
 
@@ -34,36 +34,32 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 
 		person, err = am.GetPerson(uuid, session)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if person == nil {
-			ShowErrorNotFound(w, r, t, siteName)
+			ShowErrorNotFound(w, r, t, session)
 			return
 		}
 
 		if r.FormValue("audit") == "history" {
 
 			type Page struct {
-				SiteName        string
-				SiteDescription string
-				Title           []string
-				Session         Session
-				Person          Person
-				Query           string
-				EntityAudit     []EntityAuditLogCollection
+				Session     Session
+				Title       []string
+				Person      Person
+				Query       string
+				EntityAudit []EntityAuditLogCollection
 			}
 			changeLog, err := am.GetEntityChangeLog(uuid, session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 
 			p := &Page{
-				siteName,
-				siteDescription,
-				[]string{"Account History", person.DisplayName(), "Accounts"},
 				session,
+				[]string{"Account History", person.DisplayName(), "Accounts"},
 				person,
 				r.FormValue("q"),
 				changeLog,
@@ -73,10 +69,8 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		}
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			Title           []string
 			Session         Session
+			Title           []string
 			Person          Person
 			FirstName       string
 			LastName        string
@@ -87,31 +81,29 @@ func AccountDetailsPage(t *template.Template, am AccessManager, siteName, siteDe
 		}
 
 		p := &Page{
-			SiteName:        siteName,
-			SiteDescription: siteDescription,
-			Title:           []string{person.DisplayName(), "Accounts"},
-			Session:         session,
-			Person:          person,
-			Query:           r.FormValue("q"),
+			Session: session,
+			Title:   []string{person.DisplayName(), "Accounts"},
+			Person:  person,
+			Query:   r.FormValue("q"),
 		}
 
 		p.CustomRoleTypes = am.GetCustomRoleTypes()
 
 		if r.Method == "POST" {
 			if !session.HasRole("s3") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			csrf := r.FormValue("csrf")
 			if csrf != session.CSRF() {
 
 				am.Warning(session, `security`, "Potential CSRF attack detected. "+r.URL.String())
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			feedback, err := updateAccountWithFormValues(am, person, session, r)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			if len(feedback) == 0 {

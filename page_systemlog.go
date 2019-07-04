@@ -5,11 +5,11 @@ import (
 	"net/http"
 )
 
-func SystemlogPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func SystemlogPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -19,21 +19,18 @@ func SystemlogPage(t *template.Template, am AccessManager, siteName, siteDescrip
 		AddSafeHeaders(w)
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			SupplimentalCss string
-			Title           []string
-			Session         Session
-			Entries         []SystemLog
+			Session Session
+			Title   []string
+			Entries []SystemLog
 		}
 
 		entries, err := am.GetRecentSystemLog(session)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 
-		p := &Page{siteName, siteDescription, supplimentalCss, []string{"System Log"}, session, entries}
+		p := &Page{session, []string{"System Log"}, entries}
 
 		Render(r, w, t, "system_log", p)
 	}

@@ -8,26 +8,23 @@ import (
 )
 
 type SignupPageData struct {
-	SiteName        string
-	SiteDescription string
-	SigninEmail     string
-	SupplimentalCss string
-	Title           []string
-	FirstName       string
-	LastName        string
-	Email           string
-	BaseUrl         string
-	Password        string
-	Password2       string
-	Referer         string
-	AllowSignup     bool
-	Session         Session
-	Errors          []string
-	Infos           []string
-	Successes       []string
+	Session     Session
+	Title       []string
+	SigninEmail string
+	FirstName   string
+	LastName    string
+	Email       string
+	BaseUrl     string
+	Password    string
+	Password2   string
+	Referer     string
+	AllowSignup bool
+	Errors      []string
+	Infos       []string
+	Successes   []string
 }
 
-func SignupPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -46,9 +43,6 @@ func SignupPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		}
 
 		p := &SignupPageData{}
-		p.SiteName = siteName
-		p.SiteDescription = siteDescription
-		p.SupplimentalCss = supplimentalCss
 		p.Title = []string{"Signup"}
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
@@ -155,7 +149,7 @@ var SignupTemplate = `
 <div id="signin_box">
 
 <div id="site_banner">
-	<h2>{{.SiteName}}</h2>
+	<h2>{{.Session.Theme.Name}}</h2>
 </div>
 
 <form method="post" action="{{.BaseUrl}}/signin" id="signin">

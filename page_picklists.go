@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func PicklistPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -34,12 +34,12 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		index, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("index")), 10, 64)
 		if r.Method == "POST" && key != "" && picklistName != "" {
 			if !session.HasRole("s4") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			err := am.PicklistStore().AddPicklistItem(session.Site(), picklistName, key, value, description, index)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -47,12 +47,12 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		toggle := strings.TrimSpace(r.FormValue("toggle"))
 		if toggle != "" && picklistName != "" {
 			if !session.HasRole("s4") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			err := am.PicklistStore().TogglePicklistItem(session.Site(), picklistName, toggle)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -61,50 +61,41 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 		if edit != "" {
 
 			type Page struct {
-				SiteName        string
-				SiteDescription string
-				SupplimentalCss string
-				Title           []string
-				Session         Session
-				Key             string
-				Value           string
+				Session Session
+				Title   []string
+				Key     string
+				Value   string
 			}
 			value := am.Setting().GetWithDefault(session.Site(), edit, "")
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
-			Render(r, w, t, "picklist_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit Picklist Item", "Picklists", "Administration"}, session, edit, value})
+			Render(r, w, t, "picklist_edit", &Page{session, []string{"Edit Picklist Item", "Picklists", "Administration"}, edit, value})
 
 			return
 		}
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			SupplimentalCss string
-			Title           []string
-			Session         Session
-			Picklists       []string
-			Picklist        string
-			PicklistItems   []PicklistItem
+			Session       Session
+			Title         []string
+			Picklists     []string
+			Picklist      string
+			PicklistItems []PicklistItem
 		}
 		p := &Page{
-			SiteName:        siteName,
-			SiteDescription: siteDescription,
-			SupplimentalCss: supplimentalCss,
-			Session:         session,
+			Session: session,
 		}
 
 		err = r.ParseForm()
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 
 		all, err := am.PicklistStore().GetPicklists(session.Site())
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		for k, _ := range all {
@@ -123,7 +114,7 @@ func PicklistPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		p.PicklistItems, err = am.PicklistStore().GetPicklistOrdered(session.Site(), picklistName)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 

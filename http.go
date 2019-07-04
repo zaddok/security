@@ -15,7 +15,7 @@ import (
 var COOKIE_DAYS = 365
 
 // Register pages specific to the security package
-func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessManager, tm TicketManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
+func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
 
 	st := template.New("page")
 	fm := template.FuncMap{
@@ -84,22 +84,22 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 		}
 	}
 
-	http.HandleFunc("/signin", SigninPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/signout", SignoutPage(st, am, siteName, siteDescription))
-	http.HandleFunc("/signup", SignupPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/forgot/", ForgotPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/activate/", ActivatePage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/reset.password/", ResetPasswordPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/accounts", AccountsPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/api/", ApiPage(st, am, siteName, siteDescription))
-	http.HandleFunc("/z/audit", SystemlogPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/connectors", ConnectorsPage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/external.system.create", ExternalSystemCreatePage(st, am, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/feedback", FeedbackPage(st, am, tm, siteName, siteDescription, siteCss))
-	http.HandleFunc("/z/picklist/", PicklistPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/signin", SigninPage(st, am))
+	http.HandleFunc("/signout", SignoutPage(st, am))
+	http.HandleFunc("/signup", SignupPage(st, am))
+	http.HandleFunc("/forgot/", ForgotPage(st, am))
+	http.HandleFunc("/activate/", ActivatePage(st, am))
+	http.HandleFunc("/reset.password/", ResetPasswordPage(st, am))
+	http.HandleFunc("/z/accounts", AccountsPage(st, am))
+	http.HandleFunc("/z/account.details/", AccountDetailsPage(st, am))
+	http.HandleFunc("/z/api/", ApiPage(st, am))
+	http.HandleFunc("/z/audit", SystemlogPage(st, am))
+	http.HandleFunc("/z/connectors", ConnectorsPage(st, am))
+	http.HandleFunc("/z/external.system.create", ExternalSystemCreatePage(st, am))
+	http.HandleFunc("/z/feedback", FeedbackPage(st, am, tm))
+	http.HandleFunc("/z/picklist/", PicklistPage(st, am))
 	http.HandleFunc("/z/run_connectors", RunConnectorsPage(st, am, defaultTimezone))
-	http.HandleFunc("/z/settings", SettingsPage(st, am, siteName, siteDescription, siteCss))
+	http.HandleFunc("/z/settings", SettingsPage(st, am))
 
 	http.HandleFunc("/i/loading.gif", BinaryFile(&loadingGif, 604800))
 
@@ -118,6 +118,11 @@ func RegisterHttpHandlers(siteName, siteDescription, siteCss string, am AccessMa
 	http.HandleFunc("/font/materialicons.eot", BinaryFile(&materialIconsEot, 604800))
 	http.HandleFunc("/font/materialicons.ttf", BinaryFile(&materialIconsTtf, 604800))
 	http.HandleFunc("/font/materialicons.woff", BinaryFile(&materialIconsWoff, 604800))
+
+	// Set a default theme in case the user of the framework doesnt set the default theme
+	if defaultTheme == nil {
+		RegisterDefaultTheme("Site Name", "Site Description", "")
+	}
 
 	return st, nil
 }
@@ -290,7 +295,7 @@ func RedirectHandler(target string) func(w http.ResponseWriter, r *http.Request)
 }
 
 // Display an error page. It is expected no content has yet been sent to the browser, and no content will be sent after
-func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err error, siteName string) {
+func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err error, session Session) {
 	w.WriteHeader(http.StatusInternalServerError)
 	type Page struct {
 		SiteName        string
@@ -301,8 +306,8 @@ func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err
 		Today           string
 	}
 	err = t.ExecuteTemplate(w, "error", &Page{
-		siteName,
-		"",
+		session.Theme().Name(),
+		session.Theme().Description(),
 		[]string{"System error"},
 		"",
 		err,
@@ -313,7 +318,7 @@ func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err
 	}
 }
 
-func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Template, siteName string) {
+func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Template, session Session) {
 	w.WriteHeader(http.StatusNotFound)
 	type Page struct {
 		SiteName        string
@@ -324,8 +329,8 @@ func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Templ
 		Today           string
 	}
 	err := t.ExecuteTemplate(w, "error_not_found", &Page{
-		siteName,
-		"",
+		session.Theme().Name(),
+		session.Theme().Description(),
 		[]string{"Not found"},
 		"",
 		"Sorry, We could not find what you are looking for",
@@ -335,7 +340,7 @@ func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Templ
 	}
 }
 
-func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Template, siteName string) {
+func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Template, session Session) {
 	w.WriteHeader(http.StatusForbidden)
 	type Page struct {
 		SiteName        string
@@ -345,8 +350,8 @@ func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Temp
 		Today           time.Time
 	}
 	err := t.ExecuteTemplate(w, "error_forbidden", &Page{
-		siteName,
-		"",
+		session.Theme().Name(),
+		session.Theme().Description(),
 		[]string{"Permission Denied"},
 		"",
 		time.Now()})
@@ -513,8 +518,8 @@ var SecurityHeader = `
 		<meta charset="utf-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="refresh" content="{{timeout .Session.Site}}">
-		<meta property="og:site_name" content="{{.SiteName}}"/>
-		<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+		<meta property="og:site_name" content="{{.Session.Theme.Name}}"/>
+		<meta name="apple-mobile-web-app-title" content="{{.Session.Theme.Name}}">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
@@ -529,7 +534,7 @@ var ieh = function (event) {
 }
 window.addEventListener('click', ieh, true);
 </script>{{end}}
-		<title>{{range .Title}}{{.}} &mdash; {{end}} {{.SiteName}}</title>
+		<title>{{range .Title}}{{.}} &mdash; {{end}} {{.Session.Theme.Name}}</title>
 		<style type="text/css">
 			@font-face {
 				font-family: 'FontAwesomeSolid';
@@ -692,7 +697,7 @@ window.addEventListener('click', ieh, true);
 		div.success p a, div.success p > a { color: #482 !important; font-size: 1rem;}
 
 
-{{.SupplimentalCss | safe}}
+{{.Session.Theme.Css | safe}}
 	</style>
 </head>
 <body class="signin">
@@ -708,7 +713,7 @@ var ErrorTemplates = `
 {{define "error"}}
 <html>
 	<head>
-		<title>Sorry. a problem occurred</title>
+		<title>Sorry. a problem occurred &mdash; {{.Session.Theme.Name}}</title>
 		<style type="text/css">
 body, h1, h2, h3, div, p { font-family: Helvetica Neue, Helvetica, Arial, Sans-sersif }
 body { margin-left: auto; margin-right: auto; max-width: 40em; margin-top: 5%; }
@@ -778,7 +783,9 @@ A problem occured while attempting to display this page. Please try again shortl
 {{define "error_forbidden"}}
 <html>
 	<head>
-		<title>Permission denied</title>
+		<title>Permission denied &mdash; {{.Session.Theme.Name}}</title>
+		<meta property="og:site_name" content="{{.Session.Theme.Name}}"/>
+		<meta name="apple-mobile-web-app-title" content="{{.Session.Theme.Name}}">
 		<style type="text/css">
 body, h1, h2, h3, div, p { font-family: Helvetica Neue, Helvetica, Arial, Sans-sersif }
 body { margin-left: auto; margin-right: auto; max-width: 40em; margin-top: 5%; }
@@ -826,7 +833,7 @@ body { margin-left: auto; margin-right: auto; max-width: 40em; margin-top: 5%; }
 	</head>
 <body>
 
-<h1>Permission denied</h1>
+<h1>Permission denied &mdash; {{.Session.Theme.Name}}</h1>
 <p>
 Sorry, but you do not appear to have permission to access this page. Consider returing to the home page and/or signing in again into your account.
 </p>
@@ -843,8 +850,10 @@ Sorry, but you do not appear to have permission to access this page. Consider re
 
 {{define "error_not_found"}}
 <html>
-<head>
-<title>We can't find what you are looking for</title>
+	<head>
+		<title>We can't find what you are looking for &mdash; {{.Session.Theme.Name}}</title>
+		<meta property="og:site_name" content="{{.Session.Theme.Name}}"/>
+		<meta name="apple-mobile-web-app-title" content="{{.Session.Theme.Name}}">
 <style type="text/css">
 * { font-family: Helvetica Neue, Helvetica, Arial, Sans-sersif }
 body { margin-left: auto; margin-right: auto; max-width: 40em; margin-top: 5%; }
@@ -918,11 +927,11 @@ var AdminTemplate = `
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="refresh" content="{{timeout .Session.Site}}">
                 <meta charset="utf-8">
-                <title>{{range .Title}}{{.}} &mdash; {{end}} {{.SiteName}}</title>
+                <title>{{range .Title}}{{.}} &mdash; {{end}} {{.Session.Theme.Name}}</title>
                 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-				<meta name="description" content="{{.SiteDescription}}">
-				<meta name="apple-mobile-web-app-title" content="{{.SiteName}}">
+				<meta name="description" content="{{.Session.Theme.Description}}">
+				<meta name="apple-mobile-web-app-title" content="{{.Session.Theme.Name}}">
 				<meta name="apple-mobile-web-app-capable" content="yes">
 				<link rel="apple-touch-icon" href="/favicon.ico" />
 				<style type="text/css">

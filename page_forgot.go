@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func ForgotPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -17,20 +17,14 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		}
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			SigninEmail     string
-			SupplimentalCss string
-			Title           []string
-			Session         Session
-			Errors          []string
-			Infos           []string
-			Successes       []string
+			Session     Session
+			Title       []string
+			SigninEmail string
+			Errors      []string
+			Infos       []string
+			Successes   []string
 		}
 		p := &Page{}
-		p.SiteName = siteName
-		p.SiteDescription = siteDescription
-		p.SupplimentalCss = supplimentalCss
 		p.Title = []string{"Lost Password"}
 		p.Session = session
 
@@ -39,7 +33,7 @@ func ForgotPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 
 			_, err := am.ForgotPasswordRequest(session.Site(), r.FormValue("forgot"), IpFromRequest(r), session.UserAgent(), session.Lang())
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -65,7 +59,7 @@ var ForgotTemplate = `
 <div id="signin_box">
 
 <div id="site_banner">
-	<h2>{{.SiteName}}</h2>
+	<h2>{{.Session.Theme.Name}}</h2>
 </div>
 
 <form method="post" action="/forgot/" id="forgot">

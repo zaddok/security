@@ -8,11 +8,11 @@ import (
 	"sort"
 )
 
-func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func AccountsPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -20,7 +20,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return
 		}
 		if !session.HasRole("s1") {
-			ShowErrorForbidden(w, r, t, siteName)
+			ShowErrorForbidden(w, r, t, session)
 			return
 		}
 
@@ -28,15 +28,13 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		if r.FormValue("new") == "create" {
 			if !session.HasRole("s3") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 
 			type Page struct {
-				SiteName        string
-				SiteDescription string
-				Title           []string
 				Session         Session
+				Title           []string
 				Query           string
 				FirstName       string
 				LastName        string
@@ -46,10 +44,8 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			}
 
 			p := &Page{
-				SiteName:        siteName,
-				SiteDescription: siteDescription,
-				Title:           []string{"Create new account", "Accounts"},
 				Session:         session,
+				Title:           []string{"Create new account", "Accounts"},
 				Query:           r.FormValue("q"),
 				CustomRoleTypes: am.GetCustomRoleTypes(),
 			}
@@ -62,13 +58,13 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 				csrf := r.FormValue("csrf")
 				if csrf != session.CSRF() {
 					am.Warning(session, `security`, "Potential CSRF attack detected. "+r.URL.String())
-					ShowErrorForbidden(w, r, t, siteName)
+					ShowErrorForbidden(w, r, t, session)
 					return
 				}
 
 				feedback, err := createAccountWithFormValues(am, session, r)
 				if err != nil {
-					ShowError(w, r, t, err, siteName)
+					ShowError(w, r, t, err, session)
 					return
 				}
 				if len(feedback) == 0 {
@@ -84,11 +80,8 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		}
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			SupplimentalCss string
-			Title           []string
 			Session         Session
+			Title           []string
 			Query           string
 			Accounts        []Person
 			CustomRoleTypes []RoleType
@@ -98,13 +91,13 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		if r.FormValue("delete") != "" {
 			if !session.HasRole("s3") || r.FormValue("csrf") != session.CSRF() {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			uuid := r.FormValue("delete")
 			err := am.DeletePerson(uuid, session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			feedback = append(feedback, "User account has been deleted.")
@@ -112,7 +105,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 
 		err = r.ParseForm()
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		q := r.Form.Get("q")
@@ -121,7 +114,7 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		if q != "" {
 			accounts, err = am.SearchPeople(q, session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -144,11 +137,8 @@ func AccountsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return accounts[j].FirstName() > accounts[i].FirstName()
 		})
 		p := &Page{
-			siteName,
-			siteDescription,
-			supplimentalCss,
-			[]string{"Accounts"},
 			session,
+			[]string{"Accounts"},
 			q,
 			accounts,
 			am.GetCustomRoleTypes(),

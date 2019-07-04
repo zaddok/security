@@ -8,25 +8,23 @@ import (
 	"strings"
 )
 
-func ExternalSystemCreatePage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
+func ExternalSystemCreatePage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 
 	type Page struct {
-		SiteName        string
-		SiteDescription string
-		Title           []string
-		Session         Session
-		SystemType      string
-		Uuid            string
-		ExternalSystem  *ExternalSystem
-		Feedback        []string
-		Config          []*ConfSet
-		ConnectorLabel  string
+		Session        Session
+		Title          []string
+		SystemType     string
+		Uuid           string
+		ExternalSystem *ExternalSystem
+		Feedback       []string
+		Config         []*ConfSet
+		ConnectorLabel string
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -34,19 +32,17 @@ func ExternalSystemCreatePage(t *template.Template, am AccessManager, siteName, 
 			return
 		}
 		if !session.HasRole("c6") && !session.HasRole("s1") {
-			ShowErrorForbidden(w, r, t, siteName)
+			ShowErrorForbidden(w, r, t, session)
 			return
 		}
 		AddSafeHeaders(w)
 
 		p := &Page{
-			SiteName:        siteName,
-			SiteDescription: siteDescription,
-			Title:           []string{"Create new external system connection", "External Systems"},
-			Session:         session,
-			Uuid:            r.FormValue(`uuid`),
-			SystemType:      r.FormValue(`type`),
-			ConnectorLabel:  r.FormValue(`connector`),
+			Session:        session,
+			Title:          []string{"Create new external system connection", "External Systems"},
+			Uuid:           r.FormValue(`uuid`),
+			SystemType:     r.FormValue(`type`),
+			ConnectorLabel: r.FormValue(`connector`),
 		}
 		if p.SystemType == `Mailchimp` {
 			p.Config = append(p.Config, &ConfSet{"Mailchimp API Key", "mailchimp.key", "", "string"})
@@ -66,7 +62,7 @@ func ExternalSystemCreatePage(t *template.Template, am AccessManager, siteName, 
 		if r.Method == "POST" {
 			es, feedback, err := createExternalSystemWithFormValues(am, session, r, p.Config)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			if len(feedback) == 0 && es != nil {

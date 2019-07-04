@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func ResetPasswordPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -30,12 +30,9 @@ func ResetPasswordPage(t *template.Template, am AccessManager, siteName, siteDes
 			Token string
 		}
 		p := &ResetPageData{}
-		p.SiteName = siteName
-		p.SiteDescription = siteDescription
-		p.SupplimentalCss = supplimentalCss
+		p.Session = session
 		p.Title = []string{"Reset Password"}
 		p.Token = token
-		p.Session = session
 
 		baseUrl := am.Setting().GetWithDefault(session.Site(), "base.url", "")
 		if baseUrl != "" {
@@ -100,7 +97,7 @@ var ResetPasswordTemplate = `
 <div id="signin_box">
 
 <div id="site_banner">
-	<h2>{{.SiteName}}</h2>
+	<h2>{{.Session.Theme.Name}}</h2>
 </div>
 
 <form method="post" action="/reset.password/{{.Token}}" id="forgot">

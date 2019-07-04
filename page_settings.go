@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func SettingsPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -23,7 +23,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return
 		}
 		if !session.HasRole("s1") {
-			ShowErrorForbidden(w, r, t, siteName)
+			ShowErrorForbidden(w, r, t, session)
 			return
 		}
 		AddSafeHeaders(w)
@@ -32,12 +32,12 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		value := strings.TrimSpace(r.FormValue("value"))
 		if key != "" {
 			if !session.HasRole("s2") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			err := am.Setting().Put(session.Site(), key, value)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -45,12 +45,12 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		delete := strings.TrimSpace(r.FormValue("delete"))
 		if delete != "" {
 			if !session.HasRole("s2") {
-				ShowErrorForbidden(w, r, t, siteName)
+				ShowErrorForbidden(w, r, t, session)
 				return
 			}
 			err := am.Setting().Put(session.Site(), delete, "")
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -59,36 +59,30 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 		if edit != "" {
 
 			type Page struct {
-				SiteName        string
-				SiteDescription string
-				SupplimentalCss string
-				Title           []string
-				Session         Session
-				Key             string
-				Value           string
+				Session Session
+				Title   []string
+				Key     string
+				Value   string
 			}
 			value := am.Setting().GetWithDefault(session.Site(), edit, "")
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
-			Render(r, w, t, "setting_edit", &Page{siteName, siteDescription, supplimentalCss, []string{"Edit setting", "System Settings"}, session, edit, value})
+			Render(r, w, t, "setting_edit", &Page{session, []string{"Edit setting", "System Settings"}, edit, value})
 
 			return
 		}
 
 		type Page struct {
-			SiteName        string
-			SiteDescription string
-			SupplimentalCss string
-			Title           []string
-			Session         Session
-			Settings        [][]string
+			Session  Session
+			Title    []string
+			Settings [][]string
 		}
 
 		err = r.ParseForm()
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 
@@ -103,7 +97,7 @@ func SettingsPage(t *template.Template, am AccessManager, siteName, siteDescript
 			return values[j][0] > values[i][0]
 		})
 
-		Render(r, w, t, "settings", &Page{siteName, siteDescription, supplimentalCss, []string{"System Settings"}, session, values})
+		Render(r, w, t, "settings", &Page{session, []string{"System Settings"}, values})
 	}
 }
 

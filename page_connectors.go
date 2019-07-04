@@ -16,12 +16,12 @@ type ConfSet struct {
 	Type      string
 }
 
-func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescription, siteCss string) func(w http.ResponseWriter, r *http.Request) {
+func ConnectorsPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 		if !session.IsAuthenticated() {
@@ -29,7 +29,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			return
 		}
 		if !session.HasRole("c6") {
-			ShowErrorForbidden(w, r, t, siteName)
+			ShowErrorForbidden(w, r, t, session)
 			return
 		}
 		AddSafeHeaders(w)
@@ -37,25 +37,23 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		q := r.FormValue("log")
 		if q != "" {
 			type Page struct {
-				SiteName        string
-				SiteDescription string
-				Title           []string
-				Session         Session
-				LogEntry        []LogEntry
+				Session  Session
+				Title    []string
+				LogEntry []LogEntry
 			}
 
 			entries, err := am.GetLogCollection(q, session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
-			Render(r, w, t, "connector_log", &Page{siteName, siteDescription, []string{"Reports"}, session, entries})
+			Render(r, w, t, "connector_log", &Page{session, []string{"Reports"}, entries})
 			return
 		}
 
 		collections, cerr := am.GetRecentLogCollections(session)
 		if err != nil {
-			ShowError(w, r, t, cerr, siteName)
+			ShowError(w, r, t, cerr, session)
 			return
 		}
 
@@ -64,10 +62,8 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			ConnectorInfo      *ConnectorInfo
 		}
 		type Page struct {
-			SiteName               string
-			SiteDescription        string
-			Title                  []string
 			Session                Session
+			Title                  []string
 			Connectors             []*ConnectorInfo
 			ScheduledConnectors    []*ScheduledConnector
 			ScheduledConnectorInfo []*ConfInfo
@@ -77,7 +73,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		if r.FormValue("delete") != "" {
 			err := am.DeleteScheduledConnector(r.FormValue("delete"), session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -85,17 +81,17 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		if r.FormValue("pause") != "" {
 			s, err := am.GetScheduledConnector(r.FormValue("pause"), session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			if s == nil {
-				ShowErrorNotFound(w, r, t, siteName)
+				ShowErrorNotFound(w, r, t, session)
 				return
 			}
 			s.Disabled = !s.Disabled
 			err = am.UpdateScheduledConnector(s, session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 		}
@@ -103,12 +99,12 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		if r.FormValue("run") != "" {
 			s, err := am.GetScheduledConnector(r.FormValue("run"), session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			if s == nil {
 				fmt.Printf("Scheduled connector not found. Site: %s UUID: %s\n", session.Site(), r.FormValue("run"))
-				ShowErrorNotFound(w, r, t, siteName)
+				ShowErrorNotFound(w, r, t, session)
 				return
 			}
 
@@ -142,7 +138,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					http.Redirect(w, r, "/z/connectors", http.StatusSeeOther)
 					return
 				} else {
-					ShowError(w, r, t, err, siteName)
+					ShowError(w, r, t, err, session)
 					return
 				}
 			}
@@ -151,11 +147,11 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		if r.FormValue("edit") != "" {
 			connector, err := am.GetScheduledConnector(r.FormValue("edit"), session)
 			if err != nil {
-				ShowError(w, r, t, err, siteName)
+				ShowError(w, r, t, err, session)
 				return
 			}
 			if connector == nil {
-				ShowErrorNotFound(w, r, t, siteName)
+				ShowErrorNotFound(w, r, t, session)
 				return
 			}
 			var cType *ConnectorInfo = nil
@@ -167,10 +163,8 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			}
 
 			type Page struct {
-				SiteName           string
-				SiteDescription    string
-				Title              []string
 				Session            Session
+				Title              []string
 				ConnectorType      *ConnectorInfo
 				ScheduledConnector *ScheduledConnector
 				ExternalSystem     ExternalSystem
@@ -179,10 +173,8 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			}
 
 			p := &Page{
-				SiteName:           siteName,
-				SiteDescription:    siteDescription,
-				Title:              []string{"Connector"},
 				Session:            session,
+				Title:              []string{"Connector"},
 				ConnectorType:      cType,
 				ScheduledConnector: connector,
 			}
@@ -191,7 +183,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				p.ExternalSystem, err = am.GetExternalSystem(p.ScheduledConnector.ExternalSystemUuid, session)
 				if err != nil {
 					am.Error(session, `connector`, "Scheduled Connector '%s' references unknown ExternalSystemUuid '%s'", p.ScheduledConnector.Uuid, p.ScheduledConnector.ExternalSystemUuid)
-					ShowErrorNotFound(w, r, t, siteName)
+					ShowErrorNotFound(w, r, t, session)
 					return
 				}
 			}
@@ -226,7 +218,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				}
 				err := am.UpdateScheduledConnector(connector, session)
 				if err != nil {
-					ShowError(w, r, t, err, siteName)
+					ShowError(w, r, t, err, session)
 					return
 				}
 				http.Redirect(w, r, "/z/connectors", http.StatusSeeOther)
@@ -243,10 +235,8 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 			if cType != nil {
 				var feedback []string
 				type Page struct {
-					SiteName        string
-					SiteDescription string
-					Title           []string
 					Session         Session
+					Title           []string
 					Connector       *ConnectorInfo
 					ExternalSystems []ExternalSystem
 					Uuid            string
@@ -259,20 +249,18 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 				hour, _ := strconv.Atoi(r.FormValue(`hour`))
 				day, _ := strconv.Atoi(r.FormValue(`day`))
 				p := &Page{
-					SiteName:        siteName,
-					SiteDescription: siteDescription,
-					Title:           []string{"Connector"},
-					Session:         session,
-					Connector:       cType,
-					Uuid:            r.FormValue(`uuid`),
-					Hour:            hour,
-					Day:             day,
-					Feedback:        feedback,
+					Session:   session,
+					Title:     []string{"Connector"},
+					Connector: cType,
+					Uuid:      r.FormValue(`uuid`),
+					Hour:      hour,
+					Day:       day,
+					Feedback:  feedback,
 				}
 				if cType.ExternalSystemPicker == true {
 					current, err := am.GetExternalSystemsByType(cType.SystemType, session)
 					if err != nil {
-						ShowError(w, r, t, err, siteName)
+						ShowError(w, r, t, err, session)
 						return
 					}
 					p.ExternalSystems = current
@@ -311,7 +299,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 					}
 					err := am.AddScheduledConnector(scheduled, session)
 					if err != nil {
-						ShowError(w, r, t, err, siteName)
+						ShowError(w, r, t, err, session)
 						return
 					}
 					http.Redirect(w, r, "/z/connectors", http.StatusSeeOther)
@@ -324,7 +312,7 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 
 		scheduled, err := am.GetScheduledConnectors(session)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 
@@ -346,10 +334,8 @@ func ConnectorsPage(t *template.Template, am AccessManager, siteName, siteDescri
 		}
 
 		p := &Page{
-			siteName,
-			siteDescription,
-			[]string{"Connectors"},
 			session,
+			[]string{"Connectors"},
 			am.GetConnectorInfo(),
 			scheduled,
 			confinfo,

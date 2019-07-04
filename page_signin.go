@@ -8,17 +8,17 @@ import (
 	"time"
 )
 
-func SigninPage(t *template.Template, am AccessManager, siteName, siteDescription, supplimentalCss string) func(w http.ResponseWriter, r *http.Request) {
+func SigninPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
-			ShowError(w, r, t, err, siteName)
+			ShowError(w, r, t, err, session)
 			return
 		}
 
 		// HTTP GET to the signin page should return the full signin/signup page
 		if r.Method != "POST" {
-			SignupPage(t, am, siteName, siteDescription, supplimentalCss)(w, r)
+			SignupPage(t, am)(w, r)
 			return
 		}
 
@@ -28,23 +28,20 @@ func SigninPage(t *template.Template, am AccessManager, siteName, siteDescriptio
 		session, failure, err := am.Authenticate(HostFromRequest(r), r.FormValue("signin_email"), r.FormValue("signin_password"), ip, session.UserAgent(), session.Lang())
 		if err != nil {
 			am.Error(session, `auth`, "Error during authentication: %v", err)
-			ShowError(w, r, t, errors.New("An error occurred, please try again shortly."), siteName)
+			ShowError(w, r, t, errors.New("An error occurred, please try again shortly."), session)
 			return
 		}
 		if failure != "" || session == nil {
 			session, err := LookupSession(r, am)
 
 			p := &SignupPageData{}
-			p.SiteName = siteName
-			p.SiteDescription = siteDescription
-			p.SupplimentalCss = supplimentalCss
+			p.Session = session
 			p.Title = []string{"Signin"}
 			p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 			p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 			p.Email = strings.TrimSpace(r.FormValue("email"))
 			p.Password = strings.TrimSpace(r.FormValue("password"))
 			p.Password2 = strings.TrimSpace(r.FormValue("password2"))
-			p.Session = session
 			if r.FormValue("r") != "" {
 				p.Referer = r.FormValue("r")
 			}
