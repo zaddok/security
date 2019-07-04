@@ -699,7 +699,6 @@ window.addEventListener('click', ieh, true);
 		div.success::before { content: '\f058'; color: #7b6; opacity: 0.7; }
 		div.success p a, div.success p > a { color: #482 !important; font-size: 1rem;}
 
-
 {{.Session.Theme.Css | safe}}
 	</style>
 </head>
