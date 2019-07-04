@@ -16,6 +16,9 @@ var COOKIE_DAYS = 365
 
 // Register pages specific to the security package
 func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
+	if themes == nil {
+		themes = make(map[string]Theme)
+	}
 
 	st := template.New("page")
 	fm := template.FuncMap{

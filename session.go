@@ -59,6 +59,9 @@ func RegisterDefaultTheme(name, description, css string) {
 	}
 }
 func RegisterTheme(site, name, description, css string) {
+	if themes == nil {
+		themes = make(map[string]Theme)
+	}
 	theme := &ThemeInfo{
 		name:        name,
 		description: description,
