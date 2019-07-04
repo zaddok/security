@@ -40,6 +40,10 @@ func (am *CqlAccessManager) GetCustomRoleTypes() []RoleType {
 	return r
 }
 
+func (am *CqlAccessManager) DefaultLocale() *time.Location {
+	return am.defaultLocale
+}
+
 func (am *CqlAccessManager) AddCustomRoleType(uid, name, description string) {
 	if uid == "" {
 		return

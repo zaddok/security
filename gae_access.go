@@ -38,6 +38,10 @@ type GaeAccessManager struct {
 	defaultLocale             *time.Location
 }
 
+func (am *GaeAccessManager) DefaultLocale() *time.Location {
+	return am.defaultLocale
+}
+
 func (am *GaeAccessManager) GetCustomRoleTypes() []RoleType {
 	r := make([]RoleType, len(am.roleTypes), len(am.roleTypes))
 	for i, rt := range am.roleTypes {

@@ -88,6 +88,7 @@ type AccessManager interface {
 
 	WipeDatastore(namespace string) error
 
+	DefaultLocale() *time.Location
 	Syslogger
 }
 
