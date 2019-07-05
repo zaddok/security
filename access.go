@@ -88,6 +88,8 @@ type AccessManager interface {
 
 	WipeDatastore(namespace string) error
 
+	// AvailableSites returns a list of virtual hosts that have data of some form in the database
+	AvailableSites() []string
 	DefaultLocale() *time.Location
 	Syslogger
 }

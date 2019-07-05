@@ -59,6 +59,22 @@ func (am *GaeAccessManager) RunVirtualHostSetupHandler(site string) {
 	}
 }
 
+func (am *GaeAccessManager) AvailableSites() []string {
+	var sites []string
+
+	q := datastore.NewQuery("__namespace__").KeysOnly()
+	keys, err := am.client.GetAll(am.ctx, q, nil)
+	if err != nil {
+		fmt.Printf("Failed looking up available sites: %v\n", err)
+	} else {
+		for _, k := range keys {
+			sites = append(sites, k.Name)
+		}
+	}
+	fmt.Printf("Current Keyspaces: %s\n", strings.Join(sites, ", "))
+	return sites
+}
+
 func (am *GaeAccessManager) AddCustomRoleType(uid, name, description string) {
 	if uid == "" {
 		return

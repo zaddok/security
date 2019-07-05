@@ -61,6 +61,10 @@ func (am *CqlAccessManager) RunVirtualHostSetupHandler(site string) {
 	}
 }
 
+func (am *CqlAccessManager) AvailableSites() []string {
+	return []string{"unimplemented"}
+}
+
 type CqlRoleType struct {
 	Uid         string
 	Name        string
