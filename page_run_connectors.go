@@ -35,19 +35,19 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 
 			for _, s := range scheduled {
 				if s.Disabled == true {
-					w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (disabled)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
+					w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (disabled)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
 					continue
 				}
 				if s.LastRun != nil && s.LastRun.Unix()+60*5 > now.Unix() {
 					// Skip when last run was less than 5 minutes ago
-					w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (sleeping)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
+					w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (sleeping)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
 					continue
 				}
 
 				if s.Frequency == "hourly" {
 					if s.LastRun == nil || s.LastRun.In(defaultTimezone).Hour() != now.Hour() {
 						// Connector has never run, or was run in a different hour of the day
-						w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
+						w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (run_now)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
 						if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 							am.Notice(session, `connector`, "Cannot run connectors in development environment as a task.")
 							found := am.GetConnectorInfoByLabel(s.Label)
@@ -77,7 +77,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 						if s.LastRun == nil || s.LastRun.In(defaultTimezone).Day() != now.Day() {
 							// Connector has never run, we are on the correct hour of the day, and it
 							// has not yet run today.
-							w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (run_now)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
+							w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (run_now)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
 							if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 								am.Notice(session, `connector`, "Cannot run connectors in development environment.")
 							} else {
