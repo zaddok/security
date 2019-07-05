@@ -301,6 +301,7 @@ func RedirectHandler(target string) func(w http.ResponseWriter, r *http.Request)
 func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err error, session Session) {
 	w.WriteHeader(http.StatusInternalServerError)
 	type Page struct {
+		Session         Session
 		SiteName        string
 		SiteDescription string
 		Title           []string
@@ -309,6 +310,7 @@ func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err
 		Today           string
 	}
 	err = t.ExecuteTemplate(w, "error", &Page{
+		session,
 		session.Theme().Name(),
 		session.Theme().Description(),
 		[]string{"System error"},
@@ -324,6 +326,7 @@ func ShowError(w http.ResponseWriter, r *http.Request, t *template.Template, err
 func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Template, session Session) {
 	w.WriteHeader(http.StatusNotFound)
 	type Page struct {
+		Session         Session
 		SiteName        string
 		SiteDescription string
 		Title           []string
@@ -332,6 +335,7 @@ func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Templ
 		Today           string
 	}
 	err := t.ExecuteTemplate(w, "error_not_found", &Page{
+		session,
 		session.Theme().Name(),
 		session.Theme().Description(),
 		[]string{"Not found"},
@@ -346,6 +350,7 @@ func ShowErrorNotFound(w http.ResponseWriter, r *http.Request, t *template.Templ
 func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Template, session Session) {
 	w.WriteHeader(http.StatusForbidden)
 	type Page struct {
+		Session         Session
 		SiteName        string
 		SiteDescription string
 		Title           []string
@@ -353,6 +358,7 @@ func ShowErrorForbidden(w http.ResponseWriter, r *http.Request, t *template.Temp
 		Today           time.Time
 	}
 	err := t.ExecuteTemplate(w, "error_forbidden", &Page{
+		session,
 		session.Theme().Name(),
 		session.Theme().Description(),
 		[]string{"Permission Denied"},
