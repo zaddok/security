@@ -98,7 +98,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 					}
 				}
 				// Connector was already run recently, or it is not the right time to run it.
-				w.Write([]byte(fmt.Sprintf(" - %s %s %s %v (not time)\n", s.Uuid, s.Label, s.Frequency, s.LastRun)))
+				w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (not time)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
 			}
 		}
 
