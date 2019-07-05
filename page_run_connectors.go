@@ -57,7 +57,11 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 
 							}
 						} else {
-							_, err := am.CreateTask("connector", s.Uuid)
+							message := make(map[string]interface{})
+							message["site"] = session.Site()
+							message["type"] = "connector"
+							message["scheduledconnector"] = s.Uuid
+							_, err := am.CreateTask("connector", message)
 							if err == nil {
 								s.LastRun = &now
 								err = am.UpdateScheduledConnector(s, session)
@@ -81,7 +85,11 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 							if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
 								am.Notice(session, `connector`, "Cannot run connectors in development environment.")
 							} else {
-								_, err := am.CreateTask("connector", s.Uuid)
+								message := make(map[string]interface{})
+								message["site"] = session.Site()
+								message["type"] = "connector"
+								message["scheduledconnector"] = s.Uuid
+								_, err := am.CreateTask("connector", message)
 								if err == nil {
 									s.LastRun = &now
 									err = am.UpdateScheduledConnector(s, session)

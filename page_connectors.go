@@ -127,7 +127,11 @@ func ConnectorsPage(t *template.Template, am AccessManager) func(w http.Response
 
 			} else {
 				// When not on DEV
-				_, err = am.CreateTask("connector", s.Uuid)
+				message := make(map[string]interface{})
+				message["site"] = session.Site()
+				message["type"] = "connector"
+				message["scheduledconnector"] = s.Uuid
+				_, err = am.CreateTask("connector", message)
 				if err == nil {
 					now := time.Now()
 					s.LastRun = &now

@@ -29,6 +29,7 @@ type GaeAccessManager struct {
 	notificationEventHandlers []NotificationEventHandler
 	authenticationHandlers    []AuthenticationHandler
 	preAuthenticationHandlers []PreAuthenticationHandler
+	taskHandlers              map[string]TaskHandler
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
 	sessionCache              gcache.Cache

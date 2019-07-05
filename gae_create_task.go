@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -9,8 +10,27 @@ import (
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2beta3"
 )
 
+func (am *GaeAccessManager) RegisterTaskHandler(name string, handler TaskHandler) {
+	if am.taskHandlers == nil {
+		am.taskHandlers = make(map[string]TaskHandler)
+	}
+
+	am.taskHandlers[name] = handler
+}
+
+func (am *GaeAccessManager) RunTaskHandler(name string, session Session, message map[string]interface{}) (bool, error) {
+	if am.taskHandlers == nil {
+		return false, nil
+	}
+	v, found := am.taskHandlers[name]
+	if !found {
+		return false, nil
+	}
+	return true, v(session, message)
+}
+
 // CreateTask creates a new task in your App Engine queue.
-func (a *GaeAccessManager) CreateTask(queueID, message string) (string, error) {
+func (a *GaeAccessManager) CreateTask(queueID string, message map[string]interface{}) (string, error) {
 	if a.projectId == "" {
 		return "", errors.New("Project ID must be specified")
 	}
@@ -19,6 +39,16 @@ func (a *GaeAccessManager) CreateTask(queueID, message string) (string, error) {
 	}
 	if queueID == "" {
 		return "", errors.New("Queue ID must be specified")
+	}
+	if _, ok := message["site"]; ok == false {
+		return "", errors.New("Virtual host must be specified using \"site\" field in message")
+	}
+	if _, ok := message["type"]; ok == false {
+		return "", errors.New("Task type must be specified using \"type\" field in message")
+	}
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return "", errors.New("Failed marshalling message to json: " + err.Error())
 	}
 
 	// Create a new Cloud Tasks client instance.
@@ -47,10 +77,7 @@ func (a *GaeAccessManager) CreateTask(queueID, message string) (string, error) {
 		},
 	}
 
-	// Add a payload message if one is present.
-	if message != "" {
-		req.Task.GetAppEngineHttpRequest().Body = []byte(message)
-	}
+	req.Task.GetAppEngineHttpRequest().Body = []byte(jsonMessage)
 
 	_, err = client.CreateTask(ctx, req)
 	if err != nil {

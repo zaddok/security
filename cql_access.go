@@ -28,6 +28,7 @@ type CqlAccessManager struct {
 	notificationEventHandlers []NotificationEventHandler
 	authenticationHandlers    []AuthenticationHandler
 	preAuthenticationHandlers []PreAuthenticationHandler
+	taskHandlers              map[string]TaskHandler
 	connectorInfo             []*ConnectorInfo
 	defaultLocale             *time.Location
 }
@@ -835,6 +836,38 @@ func (am *CqlAccessManager) DeleteScheduledConnector(uuid string, updator Sessio
 	return errors.New("unimplemented")
 }
 
-func (am *CqlAccessManager) CreateTask(queueID, message string) (string, error) {
+func (am *CqlAccessManager) RegisterTaskHandler(name string, handler TaskHandler) {
+	if am.taskHandlers == nil {
+		am.taskHandlers = make(map[string]TaskHandler)
+	}
+	am.taskHandlers[name] = handler
+}
+
+func (am *CqlAccessManager) RunTaskHandler(name string, session Session, message map[string]interface{}) (bool, error) {
+	if am.taskHandlers == nil {
+		return false, nil
+	}
+	v, found := am.taskHandlers[name]
+	if !found {
+		return false, nil
+	}
+	return true, v(session, message)
+}
+
+func (a *CqlAccessManager) CreateTask(queueID string, message map[string]interface{}) (string, error) {
+	if queueID == "" {
+		return "", errors.New("Queue ID must be specified")
+	}
+	if _, ok := message["site"]; ok == false {
+		return "", errors.New("Virtual host must be specified using \"site\" field in message")
+	}
+	if _, ok := message["type"]; ok == false {
+		return "", errors.New("Task type must be specified using \"type\" field in message")
+	}
+	jsonMessage, err := json.Marshal(message)
+	if err != nil {
+		return "", errors.New("Failed marshalling message to json: " + err.Error())
+	}
+	fmt.Println(jsonMessage)
 	return "Unimplemented", errors.New("unimplemented")
 }

@@ -103,7 +103,7 @@ func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *t
 	http.HandleFunc("/z/picklist/", PicklistPage(st, am))
 	http.HandleFunc("/z/run_connectors", RunConnectorsPage(st, am, defaultTimezone))
 	http.HandleFunc("/z/settings", SettingsPage(st, am))
-
+	http.HandleFunc("/z/task", TaskHandlerPage(st, am))
 	http.HandleFunc("/i/loading.gif", BinaryFile(&loadingGif, 604800))
 
 	http.HandleFunc("/font/fa-regular-400.eot", BinaryFile(&FAregularEOT, 604800))

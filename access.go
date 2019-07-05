@@ -35,7 +35,10 @@ type AccessManager interface {
 	PicklistStore() PicklistStore
 	SetVirtualHostSetupHandler(fn VirtualHostSetup)
 	RunVirtualHostSetupHandler(site string)
-	CreateTask(queueID, message string) (string, error)
+
+	CreateTask(queueID string, message map[string]interface{}) (string, error)
+	RegisterTaskHandler(name string, handler TaskHandler)
+	RunTaskHandler(name string, session Session, message map[string]interface{}) (bool, error)
 
 	GetCustomRoleTypes() []RoleType
 	AddCustomRoleType(uid, name, description string)
@@ -217,6 +220,8 @@ type PreAuthenticationHandler func(AccessManager, Session, string) error
 
 // Register a callback handler when a an event occurs on a particular atched item
 type NotificationEventHandler func(watch Watch, updator Session, am AccessManager) (bool, error)
+
+type TaskHandler func(session Session, message map[string]interface{}) error
 
 const emailHtmlTemplates string = `
 {{define "signup_confirmation_html"}}
