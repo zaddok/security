@@ -36,6 +36,8 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 				return
 			}
 
+			fmt.Println(virtualHost, "has", len(scheduled), "connectors")
+
 			for _, s := range scheduled {
 				if s.Disabled == true {
 					w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (disabled)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
