@@ -38,6 +38,14 @@ type GaeAccessManager struct {
 	defaultLocale             *time.Location
 }
 
+func (am *GaeAccessManager) ProjectId() string {
+	return am.projectId
+}
+
+func (am *GaeAccessManager) LocationId() string {
+	return am.locationId
+}
+
 func (am *GaeAccessManager) DefaultLocale() *time.Location {
 	return am.defaultLocale
 }
