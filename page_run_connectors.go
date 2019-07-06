@@ -20,6 +20,9 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 		}
 
 		for _, virtualHost := range am.AvailableSites() {
+			if virtualHost == "" || virtualHost == "d3rPsL77Wh.com" || virtualHost == "keyspaces" || virtualHost == "psc-au.tai.io" || virtualHost == "localhost" {
+				continue
+			}
 			// We will run the connectors for each virtual host in the datastore
 			session, err := am.GetSystemSession(virtualHost, "Connector Scheduler", "Task")
 			if err != nil {
@@ -48,7 +51,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 					if s.LastRun == nil || s.LastRun.In(defaultTimezone).Hour() != now.Hour() {
 						// Connector has never run, or was run in a different hour of the day
 						w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (run_now)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
-						if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
+						if virtualHost == "localhost" || strings.HasPrefix(virtualHost, "dev") {
 							am.Notice(session, `connector`, "Cannot run connectors in development environment as a task.")
 							found := am.GetConnectorInfoByLabel(s.Label)
 							err := found.Run(am, s, session)
@@ -58,7 +61,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 							}
 						} else {
 							message := make(map[string]interface{})
-							message["site"] = session.Site()
+							message["site"] = virtualHost
 							message["type"] = "connector"
 							message["scheduledconnector"] = s.Uuid
 							_, err := am.CreateTask("connector", message)
@@ -82,11 +85,11 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 							// Connector has never run, we are on the correct hour of the day, and it
 							// has not yet run today.
 							w.Write([]byte(fmt.Sprintf(" - %s %s %s %s %v (run_now)\n", virtualHost, s.Uuid, s.Label, s.Frequency, s.LastRun)))
-							if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
+							if virtualHost == "localhost" || strings.HasPrefix(virtualHost, "dev") {
 								am.Notice(session, `connector`, "Cannot run connectors in development environment.")
 							} else {
 								message := make(map[string]interface{})
-								message["site"] = session.Site()
+								message["site"] = virtualHost
 								message["type"] = "connector"
 								message["scheduledconnector"] = s.Uuid
 								_, err := am.CreateTask("connector", message)
