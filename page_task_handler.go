@@ -41,20 +41,36 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 			return
 		}
 
-		fmt.Println("Recieved task. Queue:", queueName, "Message:", string(bodyData))
-
 		message := make(map[string]interface{})
 		err = json.Unmarshal(bodyData, &message)
 		if err != nil {
+			fmt.Printf("Received task on '%s' queue. Message: %s\n", queueName, string(bodyData))
 			fmt.Printf("Task(%s): Failed decoding message %v\n", taskId, err)
 			http.Error(w, "Failed decoding request body: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		fmt.Println("    site:", message["site"].(string))
-		fmt.Println("    type:", message["type"].(string))
+		task := ""
+		site := ""
+		if _, ok = message["site"]; ok {
+			site = message["site"].(string)
+		}
+		if _, ok = message["type"]; ok {
+			site = message["type"].(string)
+		}
+		fmt.Printf("Received task '%s' on '%s' queue for host '%s'. Message: %s\n", task, queueName, site, string(bodyData))
+		fmt.Printf("   Message: %s\n", string(bodyData))
 
-		session := am.GuestSession(message["site"].(string), ip, "", "")
+		if site == "" {
+			fmt.Printf("unknown site")
+			return
+		}
+		if task == "" {
+			fmt.Printf("unknown task type")
+			return
+		}
+
+		session := am.GuestSession(site, ip, "", "")
 		b := am.GetSyslogBundle(session.Site())
 		defer b.Put()
 
