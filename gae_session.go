@@ -273,6 +273,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 		if v != nil {
 			session = v.(*GaeSession)
 			if session.ip != ip {
+				fmt.Println("ccd", site, session.ip, ip, cookie)
 				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
 				session.ip = ip
 			}
@@ -290,6 +291,7 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 			}
 
 			if session.ip != ip {
+				fmt.Println("cds", site, session.ip, ip, cookie)
 				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
 				session.ip = ip
 			}
