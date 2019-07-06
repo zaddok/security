@@ -21,6 +21,9 @@ git.apache.org/thrift.git v0.12.0/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqbl
 git.tai.io/zadok/security v0.23.12/go.mod h1:rDYHczIzN5EzS1JfhR6Gr+LEgQJfQT9G+36g1xsYUPk=
 git.tai.io/zadok/security v0.24.1/go.mod h1:JGgidgSqyV1QMMF61V6as+ERcOmIn2mSHp7Jik3rnwU=
 git.tai.io/zadok/security v0.24.9/go.mod h1:BQHdTHrxZImroOY+delQrJ2YQJxDX94DQBgfvGZffUU=
+git.tai.io/zadok/security v0.37.0/go.mod h1:YXv9TeLKiTgwNB4YRLE4Mo3GqlunYn2d9idMsUhnfa8=
+git.tai.io/zadok/sis v0.29.6 h1:lL7S365+AHJTKtXnyoffLTH/SCymTKhUNsu+qlr0s4M=
+git.tai.io/zadok/sis v0.29.6/go.mod h1:oqrFVYJU1DL22lIBu0wHgtkzhGEtc7bTtOpZ7vERMTA=
 github.com/360EntSecGroup-Skylar/excelize v1.4.0 h1:43rak9uafmwSJpXfFO1heKQph8tP3nlfWJWFQQtW1R0=
 github.com/360EntSecGroup-Skylar/excelize v1.4.0/go.mod h1:R8KYLmGns0vDPe6/HyphW0mzW+MFexlGDafU0ykVEnU=
 github.com/360EntSecGroup-Skylar/excelize v1.4.1 h1:l55mJb6rkkaUzOpSsgEeKYtS6/0gHwBYyfo5Jcjv/Ks=
@@ -132,6 +135,8 @@ github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7V
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
+github.com/knd/gochimp3 v0.0.0-20190522075203-cb6909c4e587 h1:/6xK7eQI7WtstmTI7t6pLVTDuXQBm4+Qh1JtoN8ZOeU=
+github.com/knd/gochimp3 v0.0.0-20190522075203-cb6909c4e587/go.mod h1:7WlyRx/GH3iThueumrKMxdnFqsionWghTgGQ/ANiUOA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/kr/logfmt v0.0.0-20140226030751-b84e30acd515/go.mod h1:+0opPa2QZZtGFBFZlji/RkVcI2GknAs/DXo4wKdlNEc=
@@ -225,6 +230,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/zaddok/formsite v0.1.4 h1:ACaGhWb+1XjBPvusjeJEwjcGA7uwamHVQ6GuRabGCc8=
 github.com/zaddok/formsite v0.1.4/go.mod h1:zObfNuRmruvHJYrBg4iY+zXIYCcxjve6u1SpD7s4uE0=
+github.com/zaddok/formsite v0.1.6 h1:+74mtygS3j/nXKSGGVqggJj87BR4PKeStpvmK57M/5o=
+github.com/zaddok/formsite v0.1.6/go.mod h1:zObfNuRmruvHJYrBg4iY+zXIYCcxjve6u1SpD7s4uE0=
 github.com/zaddok/log v0.0.0-20181204025159-298eaace4328 h1:b3GHCd+ETL8qm/QQUhJ16LiCqNxB/YOKJZs5oCicReA=
 github.com/zaddok/log v0.0.0-20181204025159-298eaace4328/go.mod h1:91o9I7iHMu1ZD0qZIVBO5m2Ie57kSsFYan2ofT0tle8=
 github.com/zaddok/moodle v0.1.1 h1:XT2q0wbqb5Sr3Nem7JfeeIYoCVJOTKgQVci18Cc+Bv4=
@@ -232,6 +239,10 @@ github.com/zaddok/moodle v0.1.1/go.mod h1:QE1GmdFOtgl3TgL+Gvcm1KYBHQZxuud4EmnUvw
 github.com/zaddok/moodle v0.1.6/go.mod h1:L5lTUL7nvDJMpnCT7rasbg2spOk+FrJIY3Xf+fQMs5Q=
 github.com/zaddok/moodle v0.1.10 h1:7oE1m9+z8UYylvdnmJOqJyaPtwN/Ep6e1cRJr2pwnjE=
 github.com/zaddok/moodle v0.1.10/go.mod h1:L5lTUL7nvDJMpnCT7rasbg2spOk+FrJIY3Xf+fQMs5Q=
+github.com/zaddok/moodle v0.1.12 h1:lhsbkhtybdnndTQtvMDBsA8ayfoCl6wNwYKibW/GM7A=
+github.com/zaddok/moodle v0.1.12/go.mod h1:L5lTUL7nvDJMpnCT7rasbg2spOk+FrJIY3Xf+fQMs5Q=
+github.com/zaddok/tga v0.0.2 h1:USQLEjV5YLO6/G65Iq3BR08b6RiQ+z5+yAxMWS2VZZg=
+github.com/zaddok/tga v0.0.2/go.mod h1:1tGn6Bm31K7ZJTKePkEC4qSBtruserxBQZbZggkRDAU=
 go.opencensus.io v0.18.0 h1:Mk5rgZcggtbvtAun5aJzAtjKKN/t0R3jJPlWILlv938=
 go.opencensus.io v0.18.0/go.mod h1:vKdFvxhtzZ9onBp9VKHK8z/sRpBMnKAsufL7wlDrCOA=
 go.opencensus.io v0.19.0 h1:+jrnNy8MR4GZXvwF9PEuSyHxA4NaTf6601oNRwCSXq0=

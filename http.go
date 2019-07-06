@@ -122,6 +122,8 @@ func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *t
 	http.HandleFunc("/font/materialicons.ttf", BinaryFile(&materialIconsTtf, 604800))
 	http.HandleFunc("/font/materialicons.woff", BinaryFile(&materialIconsWoff, 604800))
 
+	am.RegisterTaskHandler("connector", connectorTask(am))
+
 	// Set a default theme in case the user of the framework doesnt set the default theme
 	if defaultTheme == nil {
 		RegisterDefaultTheme("Site Name", "Site Description", "")
