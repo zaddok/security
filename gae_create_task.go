@@ -10,6 +10,8 @@ import (
 	taskspb "google.golang.org/genproto/googleapis/cloud/tasks/v2beta3"
 )
 
+// RegiosterTaskHandler hooks a task handling function with a named task type. Incoming /z/task requests from any
+// queue are routed to these functions based on the "type" json field.
 func (am *GaeAccessManager) RegisterTaskHandler(name string, handler TaskHandler) {
 	if am.taskHandlers == nil {
 		am.taskHandlers = make(map[string]TaskHandler)
@@ -18,6 +20,7 @@ func (am *GaeAccessManager) RegisterTaskHandler(name string, handler TaskHandler
 	am.taskHandlers[name] = handler
 }
 
+// RunTaskHandler runs a named task. The name is derived from the "type" value in the json message.
 func (am *GaeAccessManager) RunTaskHandler(name string, session Session, message map[string]interface{}) (bool, error) {
 	if am.taskHandlers == nil {
 		return false, nil
