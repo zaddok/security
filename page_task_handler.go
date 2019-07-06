@@ -75,7 +75,7 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		defer b.Put()
 
 		// Log and output details of the task.
-		b.Add(queueName, "", "debug", "Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData))
+		b.Add(queueName, "", "debug", fmt.Sprintf("Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData)))
 
 		found, err := am.RunTaskHandler(task, session, message)
 
