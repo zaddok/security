@@ -61,7 +61,7 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		// Log and output details of the task.
 		b.Add(queueName, "", "debug", fmt.Sprintf("Task(%s): Recieved task %s: %s", taskId, queueName, string(bodyData)))
 
-		found, err := am.RunTaskHandler(message["task"].(string), session, message)
+		found, err := am.RunTaskHandler(message["type"].(string), session, message)
 
 		if !found {
 			w.WriteHeader(202) // Accepted ok, but cant do anything
