@@ -41,6 +41,8 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 			return
 		}
 
+		fmt.Println("Recieved task. Queue:", queueName, "Message:", string(bodyData))
+
 		message := make(map[string]interface{})
 		err = json.Unmarshal(bodyData, &message)
 		if err != nil {
@@ -48,6 +50,9 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 			http.Error(w, "Failed decoding request body: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+
+		fmt.Println("    site:", message["site"].(string))
+		fmt.Println("    type:", message["type"].(string))
 
 		session := am.GuestSession(message["site"].(string), ip, "", "")
 		b := am.GetSyslogBundle(session.Site())
@@ -61,6 +66,7 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		if !found {
 			w.WriteHeader(202) // Accepted ok, but cant do anything
 			b.Add(queueName, session.IP(), "warn", fmt.Sprintf("Task(%s): Unhandled task type: %s", taskId, queueName))
+			fmt.Println("    Task unhandled from queue:", queueName)
 			return
 		}
 		if err != nil {
