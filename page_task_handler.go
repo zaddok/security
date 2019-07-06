@@ -56,9 +56,9 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 			site = message["site"].(string)
 		}
 		if _, ok = message["type"]; ok {
-			site = message["type"].(string)
+			task = message["type"].(string)
 		}
-		fmt.Printf("Received task '%s' on '%s' queue for host '%s'. Message: %s\n", task, queueName, site, string(bodyData))
+		fmt.Printf("Received task '%s' on '%s' queue for host '%s'.\n", task, queueName, site)
 		fmt.Printf("   Message: %s\n", string(bodyData))
 
 		if site == "" {
@@ -75,9 +75,9 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		defer b.Put()
 
 		// Log and output details of the task.
-		b.Add(queueName, "", "debug", fmt.Sprintf("Task(%s): Recieved task %s: %s", taskId, queueName, string(bodyData)))
+		b.Add(queueName, "", "debug", "Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData))
 
-		found, err := am.RunTaskHandler(message["type"].(string), session, message)
+		found, err := am.RunTaskHandler(task, session, message)
 
 		if !found {
 			w.WriteHeader(202) // Accepted ok, but cant do anything
