@@ -26,7 +26,7 @@ func (am *GaeAccessManager) RunTaskHandler(name string, session Session, message
 		return false, nil
 	}
 	v, found := am.taskHandlers[name]
-	if !found {
+	if !found || v == nil {
 		return false, nil
 	}
 	return true, v(session, message)

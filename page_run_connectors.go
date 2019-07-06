@@ -20,7 +20,7 @@ func RunConnectorsPage(t *template.Template, am AccessManager, defaultTimezone *
 		}
 
 		for _, virtualHost := range am.AvailableSites() {
-			if virtualHost == "" || virtualHost == "d3rPsL77Wh.com" || virtualHost == "keyspaces" || virtualHost == "psc-au.tai.io" || virtualHost == "localhost" {
+			if virtualHost == "" || virtualHost == "d3rPsL77Wh.com" || virtualHost == "keyspaces" || virtualHost == "psc-au.tai.io" || virtualHost == "localhost" || virtualHost == "bN79aft4SD.com" || virtualHost == "CJciEHHYss.com" || virtualHost == "YWbgsyjzcM.com" || virtualHost == "dev.montebo.com" {
 				continue
 			}
 			// We will run the connectors for each virtual host in the datastore
