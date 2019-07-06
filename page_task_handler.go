@@ -62,17 +62,21 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		fmt.Printf("   Message: %s\n", string(bodyData))
 
 		if site == "" {
-			fmt.Printf("unknown site")
-			return
-		}
-		if task == "" {
-			fmt.Printf("unknown task type")
+			w.WriteHeader(202) // Accepted ok, but cant do anything
+			fmt.Printf("unknown site\n")
 			return
 		}
 
 		session := am.GuestSession(site, ip, "", "")
 		b := am.GetSyslogBundle(session.Site())
 		defer b.Put()
+
+		if task == "" {
+			fmt.Printf("unknown task type\n")
+			w.WriteHeader(202) // Accepted ok, but cant do anything
+			b.Add(queueName, session.IP(), "warn", fmt.Sprintf("Task(%s): Unknown task type: %s", taskId, queueName))
+			return
+		}
 
 		// Log and output details of the task.
 		b.Add(queueName, "", "debug", fmt.Sprintf("Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData)))
