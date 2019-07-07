@@ -273,15 +273,15 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 		v, _ := g.sessionCache.Get(cookie)
 		if v != nil {
 			session = v.(*GaeSession)
-			if session.ip != ip {
-				fmt.Println("ccd", site, session.ip, ip, cookie)
-				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
-				session.ip = ip
-			}
 			// Fill the transient/non-persisted fields
 			session.userAgent = userAgent
 			session.lang = lang
 			session.locale = g.defaultLocale
+			session.site = site
+			if session.ip != ip {
+				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
+				session.ip = ip
+			}
 		} else {
 			session = new(GaeSession)
 			err := g.client.Get(g.ctx, k, session)
@@ -289,12 +289,6 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 				return g.GuestSession(site, ip, userAgent, lang), nil
 			} else if err != nil {
 				return g.GuestSession(site, ip, userAgent, lang), err
-			}
-
-			if session.ip != ip {
-				fmt.Println("cds", site, session.ip, ip, cookie)
-				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
-				session.ip = ip
 			}
 
 			// Fill the transient/non-persisted fields
@@ -305,6 +299,12 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 			session.userAgent = userAgent
 			session.lang = lang
 			session.locale = g.defaultLocale
+
+			if session.ip != ip {
+				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
+				session.ip = ip
+			}
+
 			g.sessionCache.Set(cookie, session)
 		}
 
