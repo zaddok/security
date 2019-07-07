@@ -209,14 +209,8 @@ func ConnectorsPage(t *template.Template, am AccessManager) func(w http.Response
 				day, _ := strconv.Atoi(r.FormValue("day"))
 				connector.Hour = hour
 				connector.Day = day
-				/*
-					scheduled := &ScheduledConnector{
-						ExternalSystemUuid: r.FormValue("external_system_uuid"),
-						Label:              label,
-						Frequency:          r.FormValue("frequency"),
-						Hour:               hour,
-						Day:                day,
-					}*/
+				connector.Frequency = r.FormValue("frequency")
+
 				for _, x := range cType.Config {
 					connector.SetConfig(x[0], r.FormValue("cv_"+strings.ToLower(strings.Replace(x[0], " ", "_", -1))))
 				}
