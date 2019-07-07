@@ -10,9 +10,9 @@ import (
 )
 
 type CqlExternalSystem struct {
-	uuid   string     `json:",omitempty"`
-	etype  string     `json:"type,omitempty", datastore:"type"` // Moodle, Blackboard, D2L, Wordpress, Formsite, etc...
-	config []KeyValue `json:",omitempty"`
+	uuid   string
+	etype  string `datastore:"type"` // Moodle, Blackboard, D2L, Wordpress, Formsite, etc...
+	config []KeyValue
 }
 
 func (es *CqlExternalSystem) Type() string {
@@ -28,9 +28,9 @@ func (es *CqlExternalSystem) Config() []KeyValue {
 }
 
 type CqlExternalSystemId struct {
-	externalSystemUuid string `json:",omitempty"`
-	etype              string `json:"type,omitempty", datastore:"type"` // Moodle,  Formsite, etc
-	value              string `json:",omitempty"`
+	externalSystemUuid string
+	etype              string `datastore:"type"` // Moodle,  Formsite, etc
+	value              string
 }
 
 func (es *CqlExternalSystemId) Uuid() string {

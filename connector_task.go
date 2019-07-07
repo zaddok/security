@@ -38,6 +38,5 @@ func connectorTask(am AccessManager) func(session Session, message map[string]in
 			am.Notice(session, `connector`, "Task(%s): Scheduled connector contains unknown connector type label: %s", message["type"].(string), connector.Label)
 			return nil
 		}
-		return nil
 	}
 }
