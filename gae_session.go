@@ -1,7 +1,6 @@
 package security
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -273,11 +272,13 @@ func (g *GaeAccessManager) Session(site, ip, cookie, userAgent, lang string) (Se
 		v, _ := g.sessionCache.Get(cookie)
 		if v != nil {
 			session = v.(*GaeSession)
+
 			// Fill the transient/non-persisted fields
 			session.userAgent = userAgent
 			session.lang = lang
 			session.locale = g.defaultLocale
 			session.site = site
+
 			if session.ip != ip {
 				g.Debug(session, `auth`, "Session IP for %s moving fom %s to %s", session.DisplayName(), session.ip, ip)
 				session.ip = ip
