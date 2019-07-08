@@ -1349,7 +1349,7 @@ var AdminTemplate = `
 	<div id="logo"></div>
 	<div id="header">
 		<div id="buttons">
-			<span><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span><a href="/z/picklist/" class="p"><span>Picklists</span></a></span><span><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span><a href="/z/settings" class="s"><span>Settings</span></a></span>
+			<span><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span><a href="/z/picklist/" class="p"><span>Lists</span></a></span><span><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span><a href="/z/settings" class="s"><span>Settings</span></a></span>
 		</div>
 	</div>
 	<div id="content">

@@ -125,11 +125,43 @@ func PicklistPage(t *template.Template, am AccessManager) func(w http.ResponseWr
 var picklistTemplate = `
 {{define "picklist_admin"}}
 {{template "admin_header" .}}
+<div class="submenu">
+<a href="/z/picklist/" class="picklist">Drop-down menus</a>
+<a href="/z/organisations">Organisations</a>
+</div>
 <div id="actions">
 {{if $.Session.HasRole "s4"}}<a href="javascript:document.getElementById('myModal').style.display='block'" class="note">Add Item</a>{{end}}
 </div>
 
 <style type="text/css">
+div.submenu {
+	background: #226;
+	color: white;
+	text-align:center;
+	padding: 0.5em;
+	width: 110%;
+	margin-left: -2em;
+	margin-top: -1.5em;
+}
+div.submenu a, div.submenu a:visited {
+	color: white;
+	display: inline-block;
+	padding: 0 0.3em 0 0.3em;
+}
+div.submenu a::before {
+	padding-right: 0.3em;
+	padding-left: 0.2em;
+	font-size: 1em;
+	opacity: 0.7;
+	font-family: FontAwesome;
+	content: "\f1ad";
+}
+div.submenu a.picklist::before {
+	font-family: FontAwesomeSolid;
+	content: "\f46d";
+}
+div#actions { margin-top: 0.2em; }
+
 /* Popup box css */
 .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); }
 .modal .close { color: #8d8; float: right; font-size: 1.7em; font-weight: bold; }
