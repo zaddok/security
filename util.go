@@ -293,6 +293,8 @@ func SendEmailWithAttachment(am AccessManager, session Session, subject, toEmail
 	smtpUser := am.Setting().GetWithDefault(session.Site(), "smtp.user", "")
 	supportName := am.Setting().GetWithDefault(session.Site(), "support_team.name", "")
 	supportEmail := am.Setting().GetWithDefault(session.Site(), "support_team.email", "")
+	supportReplyEmail := am.Setting().GetWithDefault(session.Site(), "support_team.reply.email", "")
+	supportBounceEmail := am.Setting().GetWithDefault(session.Site(), "support_team.bounce.email", "")
 
 	if smtpHostname == "" {
 		results = append(results, "Missing \"smtp.hostname\" host, setting, cant send message notification")
@@ -323,6 +325,12 @@ func SendEmailWithAttachment(am AccessManager, session Session, subject, toEmail
 		w.Write([]byte(fmt.Sprintf("To: %s <%s>\r\n", toName, toEmail)))
 	} else {
 		w.Write([]byte(fmt.Sprintf("To: %s\r\n", toEmail)))
+	}
+	if supportReplyEmail != "" {
+		w.Write([]byte(fmt.Sprintf("Reply-To: %s\r\n", supportReplyEmail)))
+	}
+	if supportBounceEmail != "" {
+		w.Write([]byte(fmt.Sprintf("Return-Path: %s\r\n", supportBounceEmail)))
 	}
 	w.Write([]byte("Content-transfer-encoding: 8BIT\r\n"))
 	w.Write([]byte("MIME-version: 1.0\r\n"))

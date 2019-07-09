@@ -182,6 +182,14 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 	if val == nil {
 		am.Setting().Put(site, "support_team.email", "support@example.com")
 	}
+	val = am.Setting().Get(site, "support_team.reply.email")
+	if val == nil {
+		am.Setting().Put(site, "support_team.reply.email", "")
+	}
+	val = am.Setting().Get(site, "support_team.bounce.email")
+	if val == nil {
+		am.Setting().Put(site, "support_team.bounce.email", "")
+	}
 
 	if wait {
 		prefilPicklists(site, am)
