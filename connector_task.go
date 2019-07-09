@@ -31,11 +31,11 @@ func connectorTask(am AccessManager) func(session Session, message map[string]in
 				am.Error(session, `connector`, "Task(%s) failed", message["type"].(string), err)
 				return nil
 			}
-			am.Error(session, `connector`, "Task(%s) success", message["type"].(string))
+			am.Debug(session, `connector`, "Task(%s) success", message["type"].(string))
 			return nil
 		} else {
 			fmt.Printf("Task(%s): Scheduled connector contains unknown connector type label: %s", message["type"].(string), connector.Label)
-			am.Notice(session, `connector`, "Task(%s): Scheduled connector contains unknown connector type label: %s", message["type"].(string), connector.Label)
+			am.Error(session, `connector`, "Task(%s): Scheduled connector contains unknown connector type label: %s", message["type"].(string), connector.Label)
 			return nil
 		}
 	}
