@@ -990,7 +990,6 @@ var AdminTemplate = `
 
 			div#header div#buttons {
 				display: inline-block;
-				border-right: 0.5px solid #333;
 			}
 			div#buttons > span:hover {
 					  background: #3e0a01;
@@ -998,20 +997,24 @@ var AdminTemplate = `
 			div#buttons > span {
 				display: inline-block;
 				min-height: 3.5em;
-				min-width: 4em;
-				border-left: 0.5px solid #333;
 				text-align:center;
+				padding-left: 1em;
+				padding-right: 1em;
+				padding-left: 1em;
+				padding-right: 1em;
 			}
 			div#header div#buttons a {
 				display: inline-block;
-				font-size: 0.9em;
+				font-size: 0.96em;
 				color: white;
+				-webkit-font-smoothing: antialiased;
+				-webkit-user-select: none;
 				text-decoration: none;
-				margin-top: 0.7em;
+				margin-top: 1.1em;
 			}
 			div#buttons a > span:before {
 				font-family: FontAwesomeSolid;
-				font-size: 1.6em;
+				font-size: 0em;
 				display:block;
 				padding:0; margin:0;
 				content: "\f0ae";
@@ -1351,6 +1354,19 @@ var AdminTemplate = `
 			th[aria-sort=ascending]:not(.no-sort):after { border-bottom: none; border-width: 4px 4px 0; }
 			th[aria-sort]:not(.no-sort):after { visibility: visible; opacity: 0.4; }
 			th[role=columnheader]:not(.no-sort):hover:after { visibility: visible; opacity: 1; }
+
+			#signout {
+				float: right;
+				color: white;
+				font-size: 1em;
+				background-repeat: no-repeat;
+				margin-right: 1.4em;
+				margin-top: 1.15em;
+				background-size: 1.24em;
+				display: block;
+				height: 2em;
+				width: 3m;
+			}
                 </style>
 </head>
 <body class="admin">
@@ -1358,6 +1374,9 @@ var AdminTemplate = `
 	<div id="header">
 		<div id="buttons">
 			<span><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span><a href="/z/picklist/" class="p"><span>Lists</span></a></span><span><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span><a href="/z/settings" class="s"><span>Settings</span></a></span>
+		</div>
+		<div id="signout">
+			<a href="/signout"><img height="20" width="20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAQAAAD/5HvMAAABE0lEQVR4Ae3ZAQYCURSF4Vcwe2ii9haREghtL2iaBSQwlFpCAfgDPIBDzjVx/xV8PJd33ZJlWZZJ0bBjwNXAlqboMeeGuxszlTOhI6KOiQZaEdVKA/VE1WugD1G9NRC1YghqCUqQUoKYc6INAwmcO/CgDQGJHCrJDNI4KskP2gDopIgnO4ok/xTrJB3kJ+kgP8kAcpF0kJ+kg/ykH0D8kEAyg3SSH6STxgV6sYgH6Rw/SOfEj/1B4eggP0cH+Tk6yM/RQW6OAWTgGL6wOicexFrgRK9BAid6URQ4wav0U+cYQTWWXCrHDTJEghKUoPfYTgsXour/9Dw1pSOiM9OiRcsVd1dmRY+GPQOu7vIROMuyLPsCX05DXhbIXwMAAAAASUVORK5CYII="/></a>
 		</div>
 	</div>
 	<div id="content">
@@ -1367,7 +1386,7 @@ var AdminTemplate = `
 {{define "admin_footer"}}
         </div>
         <div id="footer">
-Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}. <a href="/z/feedback">Feedback</a> <a href="/">Home</a> <a href="/signout">Sign out</a>.
+Currently signed in as {{.Session.FirstName}} {{.Session.LastName}}.<br><a href="/z/feedback">Feedback</a> <a href="/">Home</a> <a href="/signout">Sign out</a>.
         </div>
 </body>
 </html>
