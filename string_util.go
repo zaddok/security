@@ -61,7 +61,7 @@ func ToWords(text string) []string {
 				word += string(v)
 			}
 			lastChar = v
-		} else if v == '_' || v == ' ' || v == '-' || v == '.' || v == ',' || v == '[' || v == ']' {
+		} else if v == '_' || v == ' ' || v == '-' || v == '.' || v == ',' || v == '[' || v == ']' || v == '\r' || v == '\n' {
 			if word != "" {
 				words = append(words, word)
 				word = ""
