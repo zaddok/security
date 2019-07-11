@@ -99,6 +99,10 @@ func (s *GaeSession) IsAuthenticated() bool {
 	return s.authenticated
 }
 
+func (s *GaeSession) Roles() []string {
+	return strings.FieldsFunc(s.roles, func(c rune) bool { return c == ':' })
+}
+
 func (s *GaeSession) HasRole(uid string) bool {
 	if s.roleMap == nil {
 		s.roleMap = make(map[string]bool)

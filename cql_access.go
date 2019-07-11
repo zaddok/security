@@ -816,6 +816,10 @@ func (s *CqlSession) HasRole(uid string) bool {
 	return found
 }
 
+func (s *CqlSession) Roles() []string {
+	return strings.FieldsFunc(s.roles, func(c rune) bool { return c == ':' })
+}
+
 func (am *CqlAccessManager) GetScheduledConnectors(requestor Session) ([]*ScheduledConnector, error) {
 	return nil, errors.New("unimplemented")
 }

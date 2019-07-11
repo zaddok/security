@@ -17,6 +17,7 @@ type Session interface {
 	Email() string
 	IsAuthenticated() bool
 	HasRole(uid string) bool
+	Roles() []string
 	UserAgent() string
 	Lang() string
 	Locale() *time.Location
