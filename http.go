@@ -977,6 +977,7 @@ var AdminTemplate = `
 				background-color: #6d1202;
 			}
 			div#logo {
+				cursor: pointer;
 				padding: 0.6em;
 				background: #6d1202 url(/psc_logo_white.svg) no-repeat 0.8em 0.8em;
 				background-size: 9.88em 2em;
@@ -992,7 +993,8 @@ var AdminTemplate = `
 				display: inline-block;
 			}
 			div#buttons > span:hover {
-					  background: #3e0a01;
+					cursor: pointer;
+					background: #3e0a01;
 			}
 			div#buttons > span {
 				display: inline-block;
@@ -1356,12 +1358,14 @@ var AdminTemplate = `
 			th[role=columnheader]:not(.no-sort):hover:after { visibility: visible; opacity: 1; }
 
 			#signout {
+				cursor: pointer;
 				float: right;
 				color: white;
 				font-size: 1em;
 				background-repeat: no-repeat;
-				margin-right: 1.4em;
-				margin-top: 1.15em;
+				padding-left: 0.7em;
+				padding-right: 1.4em;
+				padding-top: 1.15em;
 				background-size: 1.24em;
 				display: block;
 				height: 2em;
@@ -1370,10 +1374,10 @@ var AdminTemplate = `
                 </style>
 </head>
 <body class="admin">
-	<div id="logo"></div>
+	<div id="logo" onclick="window.location='/'"></div>
 	<div id="header">
 		<div id="buttons">
-			<span><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span><a href="/z/picklist/" class="p"><span>Lists</span></a></span><span><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span><a href="/z/settings" class="s"><span>Settings</span></a></span>
+			<span onclick="window.location='/z/accounts'"><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span onclick="window.location='/z/picklist'"><a href="/z/picklist/" class="p"><span>Lists</span></a></span><span onclick="window.location='/z/audit'"><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span onclick="window.location='/z/connectors'"><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span onclick="window.location='/z/settings'"><a href="/z/settings" class="s"><span>Settings</span></a></span>
 		</div>
 		<div id="signout">
 			<a href="/signout"><img height="20" width="20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAQAAAD/5HvMAAABE0lEQVR4Ae3ZAQYCURSF4Vcwe2ii9haREghtL2iaBSQwlFpCAfgDPIBDzjVx/xV8PJd33ZJlWZZJ0bBjwNXAlqboMeeGuxszlTOhI6KOiQZaEdVKA/VE1WugD1G9NRC1YghqCUqQUoKYc6INAwmcO/CgDQGJHCrJDNI4KskP2gDopIgnO4ok/xTrJB3kJ+kgP8kAcpF0kJ+kg/ykH0D8kEAyg3SSH6STxgV6sYgH6Rw/SOfEj/1B4eggP0cH+Tk6yM/RQW6OAWTgGL6wOicexFrgRK9BAid6URQ4wav0U+cYQTWWXCrHDTJEghKUoPfYTgsXour/9Dw1pSOiM9OiRcsVd1dmRY+GPQOu7vIROMuyLPsCX05DXhbIXwMAAAAASUVORK5CYII="/></a>
