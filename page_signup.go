@@ -141,7 +141,7 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 			ip, err := am.LookupIp(session.IP())
 			if err != nil {
 				fmt.Println("LookupIp() failed", err)
-			} else if ip != nil {
+			} else if ip == nil {
 				message := make(map[string]interface{})
 				message["type"] = "ip-lookup"
 				message["site"] = session.Site()
