@@ -136,6 +136,16 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 			w.Write([]byte(fmt.Sprintf("Error displaying 'signin_page' page: %v", err)))
 			return
 		}
+
+		go func() {
+			ip, err := am.LookupIp(session.IP())
+			if err == nil && ip == nil {
+				message := make(map[string]interface{})
+				message["type"] = "ip-lookup"
+				am.CreateTask("ip-lookup", message)
+
+			}
+		}()
 	}
 }
 

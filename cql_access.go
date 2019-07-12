@@ -840,6 +840,14 @@ func (am *CqlAccessManager) DeleteScheduledConnector(uuid string, updator Sessio
 	return errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) LookupIp(ip string) (IPInfo, error) {
+	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) SaveIp(ip, country, region, city, timezone, organisation string) error {
+	return errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) RegisterTaskHandler(name string, handler TaskHandler) {
 	if am.taskHandlers == nil {
 		am.taskHandlers = make(map[string]TaskHandler)

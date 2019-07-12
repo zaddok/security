@@ -89,6 +89,9 @@ type AccessManager interface {
 	UpdateScheduledConnector(connector *ScheduledConnector, updator Session) error
 	DeleteScheduledConnector(uuid string, updator Session) error
 
+	LookupIp(ip string) (IPInfo, error)
+	SaveIp(ip, country, region, city, timezone, organisation string) error
+
 	WipeDatastore(namespace string) error
 
 	// AvailableSites returns a list of virtual hosts that have data of some form in the database
@@ -208,6 +211,15 @@ type ExternalSystemId interface {
 	ExternalSystemUuid() string
 	Type() string
 	Value() string
+}
+
+type IPInfo interface {
+	IP() string
+	Country() string
+	Region() string
+	City() string
+	Timezone() string
+	Organisation() string
 }
 
 // Check an email (username) and password against an external authentication source

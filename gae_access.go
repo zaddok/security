@@ -33,6 +33,7 @@ type GaeAccessManager struct {
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
 	sessionCache              gcache.Cache
+	ipCache                   gcache.Cache
 	projectId                 string
 	locationId                string
 	defaultLocale             *time.Location
@@ -340,6 +341,7 @@ func NewGaeAccessManager(projectId, locationId string, locale *time.Location) (A
 		template:       t,
 		systemSessions: map[string]Session{},
 		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
+		ipCache:        gcache.New(30).LRU().Expiration(time.Second * 120).Build(),
 		projectId:      projectId,
 		locationId:     locationId,
 		defaultLocale:  locale,
@@ -1775,4 +1777,151 @@ func SyncKeyValueList(fieldName string, a, b *[]*KeyValue, bulk EntityAuditLogCo
 	}
 
 	return updated
+}
+
+func (am *GaeAccessManager) LookupIp(ip string) (IPInfo, error) {
+	v, _ := am.ipCache.Get(ip)
+	if v != nil {
+		return v.(*GaeIPInfo), nil
+	}
+
+	k := datastore.NameKey("IP", ip, nil)
+	i := &GaeIPInfo{}
+
+	err := am.client.Get(am.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return i, nil
+
+}
+
+func (am *GaeAccessManager) SaveIp(ip, country, region, city, timezone, organisation string) error {
+	k := datastore.NameKey("IP", ip, nil)
+	now := time.Now()
+	i := &GaeIPInfo{
+		ip:           ip,
+		country:      country,
+		region:       region,
+		city:         city,
+		timezone:     timezone,
+		organisation: organisation,
+		fetched:      &now,
+	}
+	if _, err := am.client.Put(am.ctx, k, i); err != nil {
+		return err
+	}
+	return nil
+}
+
+type GaeIPInfo struct {
+	ip           string
+	country      string
+	region       string
+	city         string
+	timezone     string
+	organisation string
+	fetched      *time.Time
+}
+
+func (ip *GaeIPInfo) IP() string {
+	return ip.ip
+}
+
+func (ip *GaeIPInfo) Country() string {
+	return ip.country
+}
+
+func (ip *GaeIPInfo) Region() string {
+	return ip.region
+}
+
+func (ip *GaeIPInfo) City() string {
+	return ip.city
+}
+
+func (ip *GaeIPInfo) Timezone() string {
+	return ip.timezone
+}
+
+func (ip *GaeIPInfo) Organisation() string {
+	return ip.organisation
+}
+
+func (ip *GaeIPInfo) Fetched() *time.Time {
+	return ip.fetched
+}
+
+func (ip *GaeIPInfo) Location() string {
+	return ip.country + "," + ip.region + ", " + ip.city
+}
+
+func (p *GaeIPInfo) Load(ps []datastore.Property) error {
+	for _, i := range ps {
+		switch i.Name {
+		case "IP":
+			p.ip = i.Value.(string)
+			break
+		case "Country":
+			p.country = i.Value.(string)
+			break
+		case "Region":
+			p.region = i.Value.(string)
+			break
+		case "City":
+			p.city = i.Value.(string)
+			break
+		case "Timezone":
+			p.timezone = i.Value.(string)
+			break
+		case "Organisation":
+			p.organisation = i.Value.(string)
+			break
+		case "Fetched":
+			if i.Value != nil {
+				t := i.Value.(time.Time)
+				p.fetched = &t
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func (p *GaeIPInfo) Save() ([]datastore.Property, error) {
+	props := []datastore.Property{
+		{
+			Name:  "IP",
+			Value: p.ip,
+		},
+		{
+			Name:  "Country",
+			Value: p.country,
+		},
+		{
+			Name:  "Region",
+			Value: p.region,
+		},
+		{
+			Name:  "City",
+			Value: p.city,
+		},
+		{
+			Name:  "Timezone",
+			Value: p.timezone,
+		},
+		{
+			Name:  "Organisation",
+			Value: p.organisation,
+		},
+	}
+
+	if p.fetched != nil {
+		props = append(props, datastore.Property{Name: "Fetched", Value: p.fetched})
+	}
+
+	return props, nil
 }
