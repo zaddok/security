@@ -139,11 +139,16 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 
 		go func() {
 			ip, err := am.LookupIp(session.IP())
+			if err != nil {
+				fmt.Println("LookupIp() failed", err)
+			}
 			if err == nil && ip == nil {
 				message := make(map[string]interface{})
 				message["type"] = "ip-lookup"
-				am.CreateTask("ip-lookup", message)
-
+				_, err := am.CreateTask("ip-lookup", message)
+				if err != nil {
+					fmt.Println("Create 'ip-lookup' task failed", err)
+				}
 			}
 		}()
 	}
