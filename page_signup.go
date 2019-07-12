@@ -145,6 +145,7 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 				message := make(map[string]interface{})
 				message["type"] = "ip-lookup"
 				message["site"] = session.Site()
+				message["ip"] = session.IP()
 				_, err := am.CreateTask("ip-lookup", message)
 				if err != nil {
 					fmt.Println("Create 'ip-lookup' task failed", err)

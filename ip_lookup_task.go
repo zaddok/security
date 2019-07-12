@@ -58,7 +58,7 @@ func ipLookupTask(am AccessManager) func(session Session, message map[string]int
 				fmt.Println("Region:", geo.RegionName)
 		*/
 
-		address := session.IP()
+		address := message["ip"].(string)
 		apikey := "7a1efe3a2de431c490520c32b6618bf7d29f4d0f4f60f9a5a2ce177f"
 		url := "https://api.ipdata.co/" + address + "?api-key=" + apikey
 		am.Debug(session, `auth`, "Task(%s): Looking up ip: %s", message["type"].(string), address)
