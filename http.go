@@ -1365,7 +1365,7 @@ var AdminTemplate = `
 				background-repeat: no-repeat;
 				padding-left: 0.7em;
 				padding-right: 1.4em;
-				padding-top: 1.15em;
+				padding-top: 1.07em;
 				background-size: 1.24em;
 				display: block;
 				height: 2em;
@@ -1380,7 +1380,7 @@ var AdminTemplate = `
 			<span onclick="window.location='/z/accounts'"><a href="/z/accounts" class="a"><span>Accounts</span></a></span><span onclick="window.location='/z/picklist'"><a href="/z/picklist/" class="p"><span>Lists</span></a></span><span onclick="window.location='/z/audit'"><a href="/z/audit" class="l"><span>Audit</span></a></span>{{if .Session.HasRole "c6"}}<span onclick="window.location='/z/connectors'"><a href="/z/connectors" class="x"><span>Connector</span></a></span>{{end}}<span onclick="window.location='/z/settings'"><a href="/z/settings" class="s"><span>Settings</span></a></span>
 		</div>
 		<div id="signout">
-			<a href="/signout"><img height="20" width="20" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAQAAAD/5HvMAAABE0lEQVR4Ae3ZAQYCURSF4Vcwe2ii9haREghtL2iaBSQwlFpCAfgDPIBDzjVx/xV8PJd33ZJlWZZJ0bBjwNXAlqboMeeGuxszlTOhI6KOiQZaEdVKA/VE1WugD1G9NRC1YghqCUqQUoKYc6INAwmcO/CgDQGJHCrJDNI4KskP2gDopIgnO4ok/xTrJB3kJ+kgP8kAcpF0kJ+kg/ykH0D8kEAyg3SSH6STxgV6sYgH6Rw/SOfEj/1B4eggP0cH+Tk6yM/RQW6OAWTgGL6wOicexFrgRK9BAid6URQ4wav0U+cYQTWWXCrHDTJEghKUoPfYTgsXour/9Dw1pSOiM9OiRcsVd1dmRY+GPQOu7vIROMuyLPsCX05DXhbIXwMAAAAASUVORK5CYII="/></a>
+			<a href="/signout"><img style="height:1.3em; width:1.3em" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAQAAAD/5HvMAAABE0lEQVR4Ae3ZAQYCURSF4Vcwe2ii9haREghtL2iaBSQwlFpCAfgDPIBDzjVx/xV8PJd33ZJlWZZJ0bBjwNXAlqboMeeGuxszlTOhI6KOiQZaEdVKA/VE1WugD1G9NRC1YghqCUqQUoKYc6INAwmcO/CgDQGJHCrJDNI4KskP2gDopIgnO4ok/xTrJB3kJ+kgP8kAcpF0kJ+kg/ykH0D8kEAyg3SSH6STxgV6sYgH6Rw/SOfEj/1B4eggP0cH+Tk6yM/RQW6OAWTgGL6wOicexFrgRK9BAid6URQ4wav0U+cYQTWWXCrHDTJEghKUoPfYTgsXour/9Dw1pSOiM9OiRcsVd1dmRY+GPQOu7vIROMuyLPsCX05DXhbIXwMAAAAASUVORK5CYII="/></a>
 		</div>
 	</div>
 	<div id="content">
