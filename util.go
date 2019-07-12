@@ -337,19 +337,26 @@ func SendEmailWithAttachment(am AccessManager, session Session, subject, toEmail
 	w.Write([]byte("Content-type: multipart/alternative; charset=\"UTF-8\"; boundary="))
 	w.Write([]byte(boundary))
 	w.Write([]byte("\r\n\r\n"))
-	w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
-	w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n\r\n"))
-	//w.Write([]byte("Content-Disposition: inline\r\n"))
-	w.Write(textContent)
 
-	w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
-	w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
-	w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
-	w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+	if len(textContent) > 0 {
+		w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
+		w.Write([]byte("Content-Type: text/plain; charset=\"UTF-8\"; format=\"flowed\"\r\n"))
+		w.Write([]byte("Content-Transfer-Encoding: 8bit\r\n\r\n"))
+		//w.Write([]byte("Content-Disposition: inline\r\n"))
+		w.Write(textContent)
+		w.Write([]byte("\r\n\r\n"))
+	}
+
+	if len(htmlContent) > 0 {
+		w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
+		w.Write([]byte("Content-Type: text/html; charset=\"UTF-8\"\r\n"))
+		w.Write([]byte("Content-Transfer-Encoding: base64\r\n\r\n"))
+		w.Write([]byte(base64.StdEncoding.EncodeToString(htmlContent)))
+		w.Write([]byte("\r\n\r\n"))
+	}
 
 	if attachmentName != "" && attachmentType != "" && len(attachment) > 0 {
-		w.Write([]byte(fmt.Sprintf("\r\n\r\n--%s\r\n", boundary)))
+		w.Write([]byte(fmt.Sprintf("--%s\r\n", boundary)))
 		w.Write([]byte("Content-Type: " + attachmentType + "; charset=\"UTF-8\"; name=\"=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(attachmentName)) + "?=\"\r\n"))
 		w.Write([]byte("Content-Transfer-Encoding: base64\r\n"))
 		w.Write([]byte("Content-Disposition: attachment; filename=\"=?UTF-8?B?" + base64.StdEncoding.EncodeToString([]byte(attachmentName)) + "?=\"\r\n\r\n"))
