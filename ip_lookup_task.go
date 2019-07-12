@@ -69,9 +69,17 @@ func ipLookupTask(am AccessManager) func(session Session, message map[string]int
 		}
 		defer response.Body.Close()
 
+		if response.StatusCode != 200 {
+			am.Error(session, `auth`, "Task(%s): Looking up ip %s failed: status %d", message["type"].(string), address, response.StatusCode)
+			return err
+		}
+		am.Debug(session, `auth`, "Task(%s): Looking up ip %s: status %d", message["type"].(string), address, response.StatusCode)
+
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
+			am.Debug(session, `auth`, "Task(%s): Looking up ip %s failed: %v", message["type"].(string), address, err)
 			fmt.Println(err)
+			return err
 		}
 
 		type TZ struct {
@@ -93,7 +101,14 @@ func ipLookupTask(am AccessManager) func(session Session, message map[string]int
 		var geo GeoIP
 		err = json.Unmarshal(body, &geo)
 		if err != nil {
+			am.Debug(session, `auth`, "Task(%s): Looking up ip %s failed: %v", message["type"].(string), address, err)
 			fmt.Println(err)
+			return err
+		}
+
+		if geo.Ip == "" {
+			am.Debug(session, `auth`, "Task(%s): Looking up ip %s failed: empty response", message["type"].(string), address)
+			return err
 		}
 
 		/*
