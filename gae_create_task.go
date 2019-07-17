@@ -49,9 +49,29 @@ func (a *GaeAccessManager) CreateTask(queueID string, message map[string]interfa
 	if _, ok := message["type"]; ok == false {
 		return "", errors.New("Task type must be specified using \"type\" field in message")
 	}
+
 	jsonMessage, err := json.Marshal(message)
 	if err != nil {
 		return "", errors.New("Failed marshalling message to json: " + err.Error())
+	}
+
+	// If we are running on localhost immediately run the task in a thread and be done with it.
+	if a.projectId == "sis-local" {
+		go func() {
+			task := message["type"].(string)
+			site := message["site"].(string)
+			session := a.GuestSession(site, "127.0.0.1", "", "")
+			fmt.Printf("Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueID, site, string(jsonMessage))
+			found, err := a.RunTaskHandler(task, session, message)
+			if !found {
+				fmt.Printf("Task(%s): Unhandled task type: %s\n", task, queueID)
+				return
+			}
+			if err != nil {
+				fmt.Printf("Failed executing task %s: %v\n", queueID, err)
+			}
+		}()
+		return "", nil
 	}
 
 	// Create a new Cloud Tasks client instance.
