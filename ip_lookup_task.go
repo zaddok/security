@@ -65,7 +65,8 @@ func ipLookupTask(am AccessManager) func(session Session, message map[string]int
 
 		response, err := http.Get(url)
 		if err != nil {
-			fmt.Println(err)
+			am.Error(session, `auth`, "Task(%s): Looking up ip %s failed: error %v", message["type"].(string), address, err)
+			return err
 		}
 		defer response.Body.Close()
 
