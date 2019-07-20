@@ -40,6 +40,30 @@ func (t *GaeTicketManager) GetTicket(uuid string, requestor Session) (Ticket, er
 	return &ticket, nil
 }
 
+// GetTicket looks up a parentless ticket by ticked uuid
+func (t *GaeTicketManager) SetTicketStatus(uuid, status string, requestor Session) error {
+	k := datastore.NameKey("Ticket", uuid, nil)
+	k.Namespace = requestor.Site()
+
+	var ticket GaeTicket
+	err := t.client.Get(t.ctx, k, &ticket)
+	if err == datastore.ErrNoSuchEntity {
+		return err
+	} else if err != nil {
+		return err
+	}
+
+	if ticket.Status != status {
+		ticket.Status = status
+	}
+	if _, err := t.client.Put(t.ctx, k, &ticket); err != nil {
+		t.am.Error(requestor, `ticket`, "SetTicketStatus() failed. Error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
 // GetTicketWithParent looks up a ticket by uuid with a specfic parent object
 func (t *GaeTicketManager) GetTicketWithParent(parentType, parentUuid, uuid string, requestor Session) (Ticket, error) {
 	pk := datastore.NameKey(parentType, parentUuid, nil)

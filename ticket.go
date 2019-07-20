@@ -25,6 +25,8 @@ type TicketManager interface {
 	AddTicket(status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
 	AddTicketResponse(response TicketResponse, requestor Session) error
 
+	SetTicketStatus(uuid, status string, requestor Session) error
+
 	Setting() Setting
 	PicklistStore() PicklistStore
 }
