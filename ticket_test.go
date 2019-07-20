@@ -75,6 +75,7 @@ func TestTicketManager(t *testing.T) {
 	}
 
 	// Basic child ticket creation
+	uuid2 := ""
 	{
 		_, err := tm.AddTicketWithParent(
 			"Student",
@@ -116,7 +117,7 @@ func TestTicketManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("tm.AddTicket() failed: %v", err)
 		}
-		_, err = tm.AddTicketWithParent(
+		ticket, err := tm.AddTicketWithParent(
 			"Student",
 			"uuid2",
 			TicketOpen,
@@ -136,10 +137,11 @@ func TestTicketManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("tm.AddTicket() failed: %v", err)
 		}
+		uuid2 = ticket.Uuid()
 
 	}
 
-	// There are four open tickets. Three of which are child tickets of another object
+	// There are three open tickets and one archived. Three of which are child tickets of another object
 	{
 		tickets, err := tm.GetTicketsByStatus(TicketOpen, user)
 		if err != nil {
@@ -156,6 +158,31 @@ func TestTicketManager(t *testing.T) {
 		}
 		if len(tickets) != 2 {
 			t.Fatalf("tm.GetTicketsByStatus() expecting 2 open tickets, not %d", len(tickets))
+		}
+
+	}
+
+	// There are three open tickets and two archived.
+	{
+		err := tm.AddParentedTicketResponse("Student", "uuid2", uuid2, TicketArchived, "This is a response", "Body of the response message is here.", user)
+		if err != nil {
+			t.Fatalf("tm.AddTicketResponse() failed: %v", err)
+		}
+
+		tickets, err := tm.GetTicketsByStatus(TicketOpen, user)
+		if err != nil {
+			t.Fatalf("tm.GetTicketsByStatus() failed: %v", err)
+		}
+		if len(tickets) != 2 {
+			t.Fatalf("tm.GetTicketsByStatus() expecting 2 open tickets, not %d", len(tickets))
+		}
+
+		tickets, err = tm.GetTicketsByStatus(TicketArchived, user)
+		if err != nil {
+			t.Fatalf("tm.GetTicketsByStatus() failed: %v", err)
+		}
+		if len(tickets) != 2 {
+			t.Fatalf("tm.GetTicketsByStatus() expecting 2 archived tickets, not %d", len(tickets))
 		}
 
 	}

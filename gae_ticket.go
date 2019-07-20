@@ -2,6 +2,7 @@ package security
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -184,30 +185,6 @@ func (t *GaeTicketManager) GetTicket(uuid string, session Session) (Ticket, erro
 	return &ticket, nil
 }
 
-// GetTicket looks up a parentless ticket by ticked uuid
-func (t *GaeTicketManager) SetTicketStatus(uuid string, status TicketStatus, session Session) error {
-	k := datastore.NameKey("Ticket", uuid, nil)
-	k.Namespace = session.Site()
-
-	var ticket GaeTicket
-	err := t.client.Get(t.ctx, k, &ticket)
-	if err == datastore.ErrNoSuchEntity {
-		return err
-	} else if err != nil {
-		return err
-	}
-
-	if ticket.Status() != status {
-		ticket.status = status
-	}
-	if _, err := t.client.Put(t.ctx, k, &ticket); err != nil {
-		t.am.Error(session, `ticket`, "SetTicketStatus() failed. Error: %v", err)
-		return err
-	}
-
-	return nil
-}
-
 // GetTicketWithParent looks up a ticket by uuid with a specfic parent object
 func (t *GaeTicketManager) GetTicketWithParent(parentType, parentUuid, uuid string, session Session) (Ticket, error) {
 	pk := datastore.NameKey(parentType, parentUuid, nil)
@@ -383,7 +360,76 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, st
 	return &ticket, nil
 }
 
+// AddTicketResponse adds a child record to the datastore containing a response. The status of the parent ticket will be updated if required. Subject and Message fields are optional.
 func (t *GaeTicketManager) AddTicketResponse(ticketUuid string, status TicketStatus, subject, message string, session Session) error {
+	return t.AddParentedTicketResponse("", "", ticketUuid, status, subject, message, session)
+}
+
+// AddTicketResponse adds a child record to the datastore containing a response. The status of the parent ticket will be updated if required. Subject and Message fields are optional.
+func (t *GaeTicketManager) AddParentedTicketResponse(recordType string, recordUuid string, ticketUuid string, status TicketStatus, subject, message string, session Session) error {
+	if session == nil {
+		return errors.New("Session variable must be specified")
+	}
+
+	now := time.Now()
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	pk := datastore.NameKey("Ticket", ticketUuid, nil)
+	pk.Namespace = session.Site()
+
+	if recordType != "" {
+		ak := datastore.NameKey(recordType, recordUuid, nil)
+		ak.Namespace = session.Site()
+		pk = datastore.NameKey("Ticket", ticketUuid, ak)
+		pk.Namespace = session.Site()
+	}
+
+	// Ticket is fetched to check if the ticket status has been changed, and to update the response counter
+	_, err = t.client.RunInTransaction(t.ctx, func(tx *datastore.Transaction) error {
+
+		var ticket GaeTicket
+		err = tx.Get(pk, &ticket)
+		if err == datastore.ErrNoSuchEntity {
+			return err
+		} else if err != nil {
+			return err
+		}
+
+		if ticket.status == status && message == "" && subject == "" {
+			// There is literally nothing to save
+			return nil
+		}
+
+		// If ticket status has changed, parent must be updated
+		ticket.status = status
+		ticket.responseCount = ticket.responseCount + 1
+		if _, err := tx.Put(pk, &ticket); err != nil {
+			return err
+		}
+
+		k := datastore.NameKey("TicketResponse", uuid.String(), pk)
+		k.Namespace = session.Site()
+
+		var response GaeTicketResponse
+		response.uuid = uuid.String()
+		response.ticketUuid = ticket.uuid
+		response.status = status
+		response.subject = subject
+		response.message = message
+		response.created = &now
+		response.userAgent = session.UserAgent()
+		response.ip = session.IP()
+		_, err := tx.Put(k, &response)
+		return err
+	})
+	if err != nil {
+		t.am.Error(session, `ticket`, "AddTicketResponse() failed. Error: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -562,7 +608,7 @@ func (p *GaeTicketResponse) Save() ([]datastore.Property, error) {
 		},
 		{
 			Name:  "Status",
-			Value: p.status,
+			Value: string(p.status),
 		},
 		{
 			Name:  "PersonUUID",
