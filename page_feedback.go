@@ -73,13 +73,13 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func
 			}
 
 			_, err = tm.AddTicket(
-				"open",
+				TicketOpen,
+				TechnicalSupportTicket,
 				session.PersonUuid(),
 				session.FirstName(),
 				session.LastName(),
 				session.Email(),
-				"f",
-				p.MessageSubject+"\nURL: "+p.CurrentUrl,
+				"Feedback link used. "+p.MessageSubject+"\nURL: "+p.CurrentUrl,
 				p.MessageText,
 				p.CurrentIP,
 				[]string{"feedback"},

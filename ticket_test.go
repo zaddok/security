@@ -32,12 +32,12 @@ func TestTicketManager(t *testing.T) {
 	// Basic ticket creation
 	{
 		ticket, err := tm.AddTicket(
-			"open",
+			TicketArchived,
+			SubjectEnrolmentTicket,
 			user.PersonUuid(),
 			user.FirstName(),
 			user.LastName(),
 			user.Email(),
-			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
 			"127.0.0.1",
@@ -49,25 +49,28 @@ func TestTicketManager(t *testing.T) {
 		if err != nil {
 			t.Fatalf("tm.AddTicket() failed: %v", err)
 		}
-		if ticket.GetUuid() == "" {
+		if ticket.Uuid() == "" {
 			t.Fatalf("AddTicket() did not return the generated uuid.")
 		}
 		// Check the ticket is persisted and loaded correctly
-		r, err := tm.GetTicket(ticket.GetUuid(), user)
+		r, err := tm.GetTicket(ticket.Uuid(), user)
 		if err != nil {
 			t.Fatalf("tm.GetTicket() failed %s", err)
 		}
 		if r == nil {
 			t.Fatalf("tm.GetTicket() returned no response")
 		}
-		if r.GetFirstName() != user.FirstName() {
-			t.Fatalf("tm.GetTicket() did not return firstname %s. It returned %s", user.FirstName(), r.GetFirstName())
+		if r.FirstName() != user.FirstName() {
+			t.Fatalf("tm.GetTicket() did not return firstname %s. It returned %s", user.FirstName(), r.FirstName())
 		}
-		if r.GetType() != "f" {
-			t.Fatalf("tm.GetTicket() did not return type \"f\". It returned %s", r.GetType())
+		if r.Status() != TicketArchived {
+			t.Fatalf("tm.GetTicket() did not return status \"%v\". It returned %s", TicketArchived, r.Status())
 		}
-		if r.GetUserAgent() != ticket.GetUserAgent() {
-			t.Fatalf("tm.GetTicket() did not return user agent \"%s\". It returned %s", ticket.GetUserAgent(), r.GetUserAgent())
+		if r.Type() != SubjectEnrolmentTicket {
+			t.Fatalf("tm.GetTicket() did not return type \"%v\". It returned %s", SubjectEnrolmentTicket, r.Type())
+		}
+		if r.UserAgent() != ticket.UserAgent() {
+			t.Fatalf("tm.GetTicket() did not return user agent \"%s\". It returned %s", ticket.UserAgent(), r.UserAgent())
 		}
 	}
 
@@ -76,12 +79,12 @@ func TestTicketManager(t *testing.T) {
 		_, err := tm.AddTicketWithParent(
 			"Student",
 			"uuid1",
-			"open",
+			TicketOpen,
+			SubjectEnrolmentTicket,
 			user.PersonUuid(),
 			user.FirstName(),
 			user.LastName(),
 			user.Email(),
-			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
 			"127.0.0.1",
@@ -96,12 +99,12 @@ func TestTicketManager(t *testing.T) {
 		_, err = tm.AddTicketWithParent(
 			"Student",
 			"uuid1",
-			"open",
+			TicketOpen,
+			SubjectEnrolmentTicket,
 			user.PersonUuid(),
 			user.FirstName(),
 			user.LastName(),
 			user.Email(),
-			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
 			"127.0.0.1",
@@ -116,12 +119,12 @@ func TestTicketManager(t *testing.T) {
 		_, err = tm.AddTicketWithParent(
 			"Student",
 			"uuid2",
-			"open",
+			TicketOpen,
+			SubjectEnrolmentTicket,
 			user.PersonUuid(),
 			user.FirstName(),
 			user.LastName(),
 			user.Email(),
-			"f",
 			"Sample subject message",
 			"Sample message content to be read by someone",
 			"127.0.0.1",
@@ -138,16 +141,16 @@ func TestTicketManager(t *testing.T) {
 
 	// There are four open tickets. Three of which are child tickets of another object
 	{
-		tickets, err := tm.GetTicketsByStatus("open", user)
+		tickets, err := tm.GetTicketsByStatus(TicketOpen, user)
 		if err != nil {
 			t.Fatalf("tm.GetTicketsByStatus() failed: %v", err)
 		}
-		if len(tickets) != 4 {
-			t.Fatalf("tm.GetTicketsByStatus() expecting 4 open tickets, not %d", len(tickets))
+		if len(tickets) != 3 {
+			t.Fatalf("tm.GetTicketsByStatus() expecting 3 open tickets, not %d", len(tickets))
 		}
 
 		// 2 tickets attached to student(uuid1)
-		tickets, err = tm.GetTicketsByStatusParentUuid("open", "Student", "uuid1", user)
+		tickets, err = tm.GetTicketsByStatusParentRecord(TicketOpen, "Student", "uuid1", user)
 		if err != nil {
 			t.Fatalf("tm.GetTicketsByStatus() failed: %v", err)
 		}

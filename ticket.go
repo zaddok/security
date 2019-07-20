@@ -6,49 +6,70 @@ import (
 
 type TicketManager interface {
 	// GetTicket looks up a parentless ticket by ticked uuid
-	GetTicket(uuid string, requestor Session) (Ticket, error)
+	GetTicket(uuid string, session Session) (Ticket, error)
 
 	// GetTicketWithParent looks up a ticket by uuid with a specfic parent object
-	GetTicketWithParent(parentType, parentUuid, uuid string, requestor Session) (Ticket, error)
+	GetTicketWithParent(parentType, parentUuid, uuid string, session Session) (Ticket, error)
 
-	GetTicketsByStatus(status string, requestor Session) ([]Ticket, error)
-	GetTicketsByEmail(email string, requestor Session) ([]Ticket, error)
-	GetTicketsByPersonUuid(personUuid string, requestor Session) ([]Ticket, error)
-	GetTicketsByParentUuid(parentType, parentUuid string, requestor Session) ([]Ticket, error)
-	GetTicketsByStatusParentUuid(status, parentType, parentUuid string, requestor Session) ([]Ticket, error)
+	GetTicketsByStatus(status TicketStatus, session Session) ([]Ticket, error)
+	GetTicketsByEmail(email string, session Session) ([]Ticket, error)
+	GetTicketsByPersonUuid(personUuid string, session Session) ([]Ticket, error)
+	GetTicketsByParentRecord(parentType, parentUuid string, session Session) ([]Ticket, error)
+	GetTicketsByStatusParentRecord(status TicketStatus, recordType, recordUuid string, session Session) ([]Ticket, error)
 
 	GetTicketResponses(uuid string) ([]TicketResponse, error)
 
-	SearchTickets(keyword string, requestor Session) ([]Ticket, error)
+	SearchTickets(keyword string, session Session) ([]Ticket, error)
 
-	AddTicketWithParent(parentType, parentUuid, status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
-	AddTicket(status, personUuid, firstName, lastName, email, ticketType, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, requestor Session) (Ticket, error)
-	AddTicketResponse(response TicketResponse, requestor Session) error
-
-	SetTicketStatus(uuid, status string, requestor Session) error
+	AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error)
+	AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error)
+	AddTicketResponse(ticketUuid string, status TicketStatus, subject, message string, session Session) error
 
 	Setting() Setting
 	PicklistStore() PicklistStore
 }
 
+type TicketStatus string
+
+const (
+	TicketOpen     TicketStatus = "open"
+	TicketArchived TicketStatus = "archived"
+	TicketDeleted  TicketStatus = "deleted"
+)
+
+type TicketType string
+
+const (
+	CourseEnrolmentTicket  TicketType = "course"
+	SubjectEnrolmentTicket TicketType = "subject"
+	EnquiryTicket          TicketType = "enquiry"
+	AcademicTicket         TicketType = "academic"
+	TechnicalSupportTicket TicketType = "support"
+)
+
 // Information about a support ticket
 type Ticket interface {
-	GetUuid() string
-	GetStatus() string     // Open, Closed
-	GetPersonUuid() string // If signed in, this is the person that initiated the ticket
-	GetFirstName() string
-	GetLastName() string
-	GetEmail() string
-	GetSubject() string
-	GetType() string // New Feature, Bug, Enhancement, etc...
-	GetMessage() string
-	GetIP() string
-	GetTags() []string
-	GetResponseCount() int64
-	GetAssignedTo() []TicketViewer
-	GetWatchedBy() []TicketViewer
-	GetUserAgent() string
-	GetCreated() time.Time
+	Uuid() string
+	Type() TicketType
+	Status() TicketStatus
+
+	PersonUuid() string // PersonUuid is set if this ticket was raised by an authenticated person
+
+	FirstName() string // FirstName is set if this ticket was raised by a non authenticated person
+	LastName() string  // LastName is set if this tickt was raised by a non authenticated person
+	Email() string     // Email is set if this ticket was raised by a non authenticated person
+
+	IP() string
+	UserAgent() string
+
+	Subject() string
+	Message() string
+	Tags() []string
+	ResponseCount() int64
+	AssignedTo() []TicketViewer
+	WatchedBy() []TicketViewer
+	Created() *time.Time
+	ActionAfter() *time.Time
 }
 
 type TicketViewer struct {
@@ -58,14 +79,15 @@ type TicketViewer struct {
 
 // Information about a support ticket
 type TicketResponse interface {
-	GetUuid() string
-	GetTicketUuid() string
-	GetPersonUuid() string // Person who created this response
-	GetPersonDisplayName() string
-	GetStatus() string // Respondant selected this status
-	GetSubject() string
-	GetMessage() string
-	GetIP() string
-	GetUserAgent() string
-	GetCreated() time.Time
+	Uuid() string
+	Status() TicketStatus // Respondant selected this status
+	TicketUuid() string
+	PersonUuid() string // Person who created this response
+	PersonDisplayName() string
+	Subject() string // Optional subject for response
+	Message() string // Optional message for response
+
+	IP() string
+	UserAgent() string
+	Created() *time.Time
 }
