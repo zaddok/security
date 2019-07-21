@@ -37,8 +37,8 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func
 			Session:          session,
 			Title:            []string{"Send feedback", "Feedback"},
 			CurrentUrl:       r.Referer(),
-			CurrentUserAgent: r.UserAgent(),
-			CurrentIP:        IpFromRequest(r),
+			CurrentUserAgent: session.UserAgent(),
+			CurrentIP:        session.IP(),
 		}
 
 		if r.FormValue("message_subject") != "" {
@@ -81,10 +81,8 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func
 				session.Email(),
 				"Feedback link used. "+p.MessageSubject+"\nURL: "+p.CurrentUrl,
 				p.MessageText,
-				p.CurrentIP,
 				[]string{"feedback"},
 				[]TicketViewer{}, []TicketViewer{},
-				p.CurrentUserAgent,
 				session)
 
 			if err == nil {

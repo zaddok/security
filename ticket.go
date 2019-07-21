@@ -21,8 +21,8 @@ type TicketManager interface {
 
 	SearchTickets(keyword string, session Session) ([]Ticket, error)
 
-	AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error)
-	AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error)
+	AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error)
+	AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error)
 	AddTicketResponse(ticketUuid string, status TicketStatus, subject, message string, session Session) error
 	AddParentedTicketResponse(recordType string, recordUuid string, ticketUuid string, status TicketStatus, subject, message string, session Session) error
 

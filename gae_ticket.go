@@ -315,11 +315,11 @@ func (t *GaeTicketManager) SearchTickets(keyword string, session Session) ([]Tic
 	return tickets, nil
 }
 
-func (t *GaeTicketManager) AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error) {
-	return t.AddTicketWithParent("", "", status, ticketType, personUuid, firstName, lastName, email, subject, message, ip, tags, assignedTo, watchedBy, userAgent, session)
+func (t *GaeTicketManager) AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
+	return t.AddTicketWithParent("", "", status, ticketType, personUuid, firstName, lastName, email, subject, message, tags, assignedTo, watchedBy, session)
 }
 
-func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message, ip string, tags []string, assignedTo, watchedBy []TicketViewer, userAgent string, session Session) (Ticket, error) {
+func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
 	var ticket GaeTicket
 
 	uuid, err := uuid.NewUUID()
@@ -337,11 +337,11 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, st
 	ticket.subject = subject
 	ticket.ticketType = ticketType
 	ticket.message = message
-	ticket.ip = ip
 	ticket.tags = tags
 	ticket.assignedTo = assignedTo
 	ticket.watchedBy = watchedBy
-	ticket.userAgent = userAgent
+	ticket.ip = session.IP()
+	ticket.userAgent = session.UserAgent()
 	ticket.created = &now
 
 	var pk *datastore.Key = nil
