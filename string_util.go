@@ -99,12 +99,24 @@ func ToWords(text string) []string {
 
 	var results []string
 	for i := 0; i < len(words); i++ {
-		if i+2 < len(words) && words[i] == "u" && words[i+1] == "r" && words[i+2] == "l" {
+		if i+1 < len(words) && words[i] == "i" && words[i+1] == "p" {
+			results = append(results, "ip")
+			i = i + 2
+		} else if i+1 < len(words) && words[i] == "i" && words[i+1] == "d" {
+			results = append(results, "id")
+			i = i + 2
+		} else if i+2 < len(words) && words[i] == "u" && words[i+1] == "r" && words[i+2] == "l" {
 			results = append(results, "url")
+			i = i + 2
+		} else if i+2 < len(words) && words[i] == "u" && words[i+1] == "s" && words[i+2] == "i" {
+			results = append(results, "usi")
 			i = i + 2
 		} else if i+3 < len(words) && words[i] == "u" && words[i+1] == "u" && words[i+2] == "i" && words[i+3] == "d" {
 			results = append(results, "uuid")
 			i = i + 3
+		} else if i+5 < len(words) && words[i] == "c" && words[i+1] == "r" && words[i+2] == "i" && words[i+3] == "c" && words[i+4] == "o" && words[i+5] == "s" {
+			results = append(results, "cricos")
+			i = i + 5
 		} else {
 			results = append(results, words[i])
 		}
