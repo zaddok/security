@@ -101,10 +101,10 @@ func ToWords(text string) []string {
 	for i := 0; i < len(words); i++ {
 		if i+1 < len(words) && words[i] == "i" && words[i+1] == "p" {
 			results = append(results, "ip")
-			i = i + 2
+			i = i + 1
 		} else if i+1 < len(words) && words[i] == "i" && words[i+1] == "d" {
 			results = append(results, "id")
-			i = i + 2
+			i = i + 1
 		} else if i+2 < len(words) && words[i] == "u" && words[i+1] == "r" && words[i+2] == "l" {
 			results = append(results, "url")
 			i = i + 2
