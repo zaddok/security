@@ -145,6 +145,24 @@ func (am *GaeAccessManager) GetExternalSystems(requestor Session) ([]ExternalSys
 	return items[:], nil
 }
 
+func (am *GaeAccessManager) GetExternalSystemCached(uuid string, session Session) (ExternalSystem, error) {
+	if uuid == "" {
+		return nil, errors.New("Invalid UUID")
+	}
+
+	r, _ := am.systemCache.Get(uuid)
+	if r != nil {
+		return r.(ExternalSystem), nil
+	}
+
+	es, err := am.GetExternalSystem(uuid, session)
+	if err == nil && es != nil {
+		am.systemCache.Set(uuid, es)
+	}
+
+	return es, err
+}
+
 func (am *GaeAccessManager) GetExternalSystem(uuid string, session Session) (ExternalSystem, error) {
 	if uuid == "" {
 		return nil, errors.New("Invalid UUID")

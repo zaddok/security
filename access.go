@@ -51,6 +51,7 @@ type AccessManager interface {
 	GetExternalSystems(requestor Session) ([]ExternalSystem, error)
 	GetExternalSystemsByType(etype string, requestor Session) ([]ExternalSystem, error)
 	GetExternalSystem(uuid string, requestor Session) (ExternalSystem, error)
+	GetExternalSystemCached(uuid string, requestor Session) (ExternalSystem, error)
 	AddExternalSystem(etype string, config []KeyValue, updator Session) (ExternalSystem, error)
 	UpdateExternalSystem(uuid string, config []KeyValue, updator Session) error
 	DeleteExternalSystem(uuid string, updator Session) error

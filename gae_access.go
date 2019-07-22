@@ -32,6 +32,7 @@ type GaeAccessManager struct {
 	taskHandlers              map[string]TaskHandler
 	connectorInfo             []*ConnectorInfo
 	systemSessions            map[string]Session
+	systemCache               gcache.Cache
 	sessionCache              gcache.Cache
 	ipCache                   gcache.Cache
 	projectId                 string
@@ -340,6 +341,7 @@ func NewGaeAccessManager(projectId, locationId string, locale *time.Location) (A
 		picklistStore:  picklistStore,
 		template:       t,
 		systemSessions: map[string]Session{},
+		systemCache:    gcache.New(200).LRU().Expiration(time.Second * 120).Build(),
 		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
 		ipCache:        gcache.New(30).LRU().Expiration(time.Second * 120).Build(),
 		projectId:      projectId,

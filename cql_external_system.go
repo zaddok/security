@@ -57,6 +57,10 @@ func (sis *CqlAccessManager) GetExternalSystem(uuid string, session Session) (Ex
 	return nil, errors.New("Unimplemented")
 }
 
+func (sis *CqlAccessManager) GetExternalSystemCached(uuid string, session Session) (ExternalSystem, error) {
+	return nil, errors.New("Unimplemented")
+}
+
 func (sis *CqlAccessManager) AddExternalSystem(etype string, config []KeyValue, updator Session) (ExternalSystem, error) {
 	return nil, errors.New("Unimplemented")
 }
