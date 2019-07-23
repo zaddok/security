@@ -3,6 +3,7 @@ package security
 import (
 	"fmt"
 	"os"
+	"sort"
 	"testing"
 	"time"
 
@@ -10,6 +11,50 @@ import (
 
 	"github.com/zaddok/log"
 )
+
+// Fully replace contents of the destination array with the source array
+func TestSyncKeyValueList(t *testing.T) {
+	src := []*KeyValue{
+		&KeyValue{"a", "1"},
+		&KeyValue{"c", "3"},
+		&KeyValue{"b", "2"},
+		&KeyValue{"x", ""},
+	}
+	dst := []*KeyValue{
+		&KeyValue{"b", "2"},
+		&KeyValue{"c", "3a"},
+		&KeyValue{"d", "4"},
+		&KeyValue{"y", ""},
+	}
+
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid("student.Uuid", "updator.GetPersonUuid()", "updator.GetDisplayName()")
+
+	SyncKeyValueList("test", &src, &dst, bulk)
+
+	sort.Slice(dst, func(i, j int) bool {
+		return dst[i].Key < dst[j].Key
+	})
+	sort.Slice(bulk.Items, func(i, j int) bool {
+		return bulk.Items[i].Attribute < bulk.Items[j].Attribute
+	})
+
+	for _, i := range dst {
+		fmt.Println(i.Key, i.Value)
+	}
+	for _, item := range bulk.Items {
+		fmt.Println(item.Attribute, item.OldValue, item.NewValue)
+	}
+
+	if len(dst) != 3 || dst[0].Key != "a" || dst[1].Key != "b" || dst[2].Key != "c" {
+		t.Fatalf("SyncKeyValueList() failed: expecting a,b,c")
+	}
+
+	if bulk.Items[0].Attribute != "test.a" || bulk.Items[1].Attribute != "test.c" || bulk.Items[2].Attribute != "test.d" {
+		t.Fatalf("SyncKeyValueList() failed: expecting test.a,test.c,test.d")
+	}
+
+}
 
 // Test access manager
 func TestWatch(t *testing.T) {
