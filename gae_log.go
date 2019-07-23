@@ -367,11 +367,11 @@ type GaeEntityAudit struct {
 	Date       time.Time
 	EntityUuid string
 	Attribute  string
-	OldValue   string
-	NewValue   string
-	ValueType  string
+	OldValue   string `datastore:",noindex"`
+	NewValue   string `datastore:",noindex"`
+	ValueType  string `datastore:",noindex"`
 	PersonUuid string
-	PersonName string
+	PersonName string `datastore:",noindex"`
 }
 
 func (e *GaeEntityAudit) GetDate() time.Time {
@@ -480,7 +480,7 @@ type GaeEntityAuditLogCollection struct {
 	Uuid       string
 	EntityUuid string
 	PersonUuid string
-	PersonName string
+	PersonName string `datastore:",noindex"`
 	Date       time.Time
 	Items      []GaeEntityAudit
 }
