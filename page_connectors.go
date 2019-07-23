@@ -441,7 +441,7 @@ td a.add::before {
 {{end}}
 
 	<tr><td colspan="2"><h3 class="schedule">Schedule</h3></td></tr>
-	<tr><td>Frequency</td><td style="vertical-align:middle">
+	<tr><th>Frequency</th><td style="vertical-align:middle">
 		<input type="radio" name="frequency" value="daily"{{if eq .Frequency "daily"}} checked{{end}}> Daily <select name="hour">
 <option value="7"{{if eq .Hour 7}} selected{{end}}>7am</option>
 <option value="8"{{if eq .Hour 8}} selected{{end}}>8am</option>
@@ -678,8 +678,8 @@ tr.disabled td {
 	<th></th>
 	<th>Type</th>
 	<th></th>
-	<th>Hour</th>
 	<th>Type</th>
+	<th>Hour</th>
 	<th>Last Run</th>
 	<th></th>
 </thead>
