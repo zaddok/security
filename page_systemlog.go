@@ -53,9 +53,33 @@ table#system_log tr.notice td {
 table#system_log tr.debug td {
 	color: #aaa;
 }
+.togglebar::before{
+	content: '\f0b0';
+	display: inline-block;
+	font-family: FontAwesomeSolid;
+	opacity 0.45;
+	margin-top: -0.05em;
+	font-size: 1.2em;
+}
 </style>
 
 <h1 style="text-align:center; margin-bottom: 1.5em">System Log</h1>
+
+<script>
+var tdi = false
+function toggleDebug() {
+		if (tdi == false) {
+			s = document.getElementsByClassName('debug'); for (var i = 0; i < s.length; i++) { s[i].style.display="table-row"; }
+		} else {
+			s = document.getElementsByClassName('debug'); for (var i = 0; i < s.length; i++) { s[i].style.display="none" }
+		}
+		tdi = !tdi
+}
+</script>
+
+<div class="togglebar" style="text-align:right; font-size: 0.85em; color: #999">
+<a onclick="toggleDebug()">Show Debug Messages</a>
+</div>
 
 {{if .Entries}}
 <table id="system_log">
@@ -67,8 +91,8 @@ table#system_log tr.debug td {
 		<th>Message</th>
 	</tr>
 	{{range .Entries}}
-	<tr class="{{.GetLevel}} {{.GetComponent}}">
-		<td>{{.GetRecorded | audit_time}}</td>
+	<tr class="{{.GetLevel}} {{.GetComponent}}"{{if eq .GetLevel "debug"}} style="display:none"{{end}}>
+		<td style="white-space:nowrap">{{.GetRecorded | audit_time}}</td>
 		<td>{{.GetIP}}</td>
 		<td>{{.GetLevel}}</td>
 		<td>{{.GetComponent}}</td>

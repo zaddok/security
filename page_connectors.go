@@ -110,8 +110,7 @@ func ConnectorsPage(t *template.Template, am AccessManager) func(w http.Response
 
 			// Task queue is only available on appengine. Handle tasks differently on localhost
 			if session.Site() == "localhost" || strings.HasPrefix(session.Site(), "dev") {
-				// When on DEV
-				am.Notice(session, `connector`, "Cannot run connectors in development environment.")
+				am.Notice(session, `connector`, "Connector running in development environment mode.")
 				found := am.GetConnectorInfoByLabel(s.Label)
 				if found != nil {
 
@@ -748,13 +747,37 @@ tr.ERROR td {
 tr td:first-child {
 	white-space: nowrap;
 }
+.togglebar::before{
+	content: '\f0b0';
+	display: inline-block;
+	font-family: FontAwesomeSolid;
+	opacity 0.45;
+	margin-top: -0.05em;
+	font-size: 1.2em;
+}
 </style>
 
 <h1>Connector Log: ({{len .LogEntry}} lines)</h1>
 
+<script>
+var tdi = false
+function toggleDebug() {
+		if (tdi == false) {
+			s = document.getElementsByClassName('DEBUG'); for (var i = 0; i < s.length; i++) { s[i].style.display="table-row"; }
+		} else {
+			s = document.getElementsByClassName('DEBUG'); for (var i = 0; i < s.length; i++) { s[i].style.display="none" }
+		}
+		tdi = !tdi
+}
+</script>
+
+<div class="togglebar" style="text-align:right; font-size: 0.85em; color: #999">
+<a onclick="toggleDebug()">Show Debug Messages</a>
+</div>
+
 <table>
 {{range .LogEntry}}
-<tr class="{{.Level}}">
+<tr class="{{.Level}}"{{if eq .GetLevel "DEBUG"}} style="display:none"{{end}}>
 	<td>{{.Recorded | log_date}}</td>
 	<td>{{.Level}}</td>
 	<td>{{.Message}}</td>
