@@ -12,6 +12,12 @@ func ToCamelCase(text string) string {
 			words[i] = "URL"
 		} else if w == "uuid" {
 			words[i] = "UUID"
+		} else if w == "id" {
+			words[i] = "ID"
+		} else if w == "ul" {
+			words[i] = "UL"
+		} else if w == "USI" {
+			words[i] = "usi"
 		} else {
 			words[i] = strings.ToUpper(words[i][0:1]) + words[i][1:]
 		}
@@ -26,6 +32,12 @@ func ToCamelCaseSpaced(text, separator string) string {
 			words[i] = "URL"
 		} else if w == "uuid" {
 			words[i] = "UUID"
+		} else if w == "id" {
+			words[i] = "ID"
+		} else if w == "ul" {
+			words[i] = "UL"
+		} else if w == "usi" {
+			words[i] = "USI"
 		} else {
 			words[i] = strings.ToUpper(words[i][0:1]) + words[i][1:]
 		}
@@ -105,8 +117,8 @@ func ToWords(text string) []string {
 		} else if i+1 < len(words) && words[i] == "i" && words[i+1] == "d" {
 			results = append(results, "id")
 			i = i + 1
-		} else if i+1 < len(words) && words[i] == "u" && words[i+1] == "g" {
-			results = append(results, "ug")
+		} else if i+1 < len(words) && words[i] == "u" && words[i+1] == "l" {
+			results = append(results, "ul")
 			i = i + 1
 		} else if i+2 < len(words) && words[i] == "d" && words[i+1] == "n" && words[i+2] == "a" {
 			results = append(results, "dna")
