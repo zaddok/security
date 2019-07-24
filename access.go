@@ -212,6 +212,7 @@ type ExternalSystemId interface {
 	ExternalSystemUuid() string
 	Type() string
 	Value() string
+	SetValue() string
 }
 
 type IPInfo interface {

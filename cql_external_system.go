@@ -45,6 +45,10 @@ func (es *CqlExternalSystemId) Value() string {
 	return es.value
 }
 
+func (es *CqlExternalSystemId) SetValue(v string) {
+	es.value = v
+}
+
 func (sis *CqlAccessManager) GetExternalSystemsByType(etype string, requestor Session) ([]ExternalSystem, error) {
 	return nil, errors.New("Unimplemented")
 }

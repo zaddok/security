@@ -103,6 +103,10 @@ func (es *GaeExternalSystemId) Value() string {
 	return es.EValue
 }
 
+func (es *GaeExternalSystemId) SetValue(v string) {
+	es.EValue = v
+}
+
 func NewGaeExternalSystemId(i ExternalSystemId) *GaeExternalSystemId {
 	return &GaeExternalSystemId{
 		EExternalSystemUuid: i.ExternalSystemUuid(),
