@@ -222,3 +222,76 @@ func (am *GaeAccessManager) DeleteExternalSystem(uuid string, updator Session) e
 func (am *GaeAccessManager) UpdateExternalSystem(uuid string, config []KeyValue, updator Session) error {
 	return errors.New("Unimplemented")
 }
+
+func SyncExternalSystemId(fieldName string, a, b *[]ExternalSystemId, bulk EntityAuditLogCollection) bool {
+	updated := false
+	if fieldName != "" {
+		fieldName = fieldName + "."
+	}
+
+	// Look for added items
+	adds := []ExternalSystemId{}
+	for _, x := range *a {
+		var found ExternalSystemId = nil
+		for _, y := range *b {
+			if x.Type() == y.Type() {
+				found = x
+				break
+			}
+		}
+		if found == nil {
+			// a has an extra item, to add it to b
+			if x.Value() != "" {
+				bulk.AddItem(fieldName+x.Type(), "", x.Value())
+				adds = append(adds, x)
+				updated = true
+			}
+		}
+	}
+	for _, add := range adds {
+		*b = append(*b, add)
+	}
+
+	// Look for removed items
+	for _, x := range *b {
+		var found ExternalSystemId = nil
+		for _, y := range *a {
+			if y.Type() == x.Type() {
+				found = x
+			}
+		}
+		if found == nil {
+			// a has a missing item, remove it from b
+			if x.Value() != "" {
+				bulk.AddItem(fieldName+x.Type(), x.Value(), "")
+				x.SetValue("")
+				updated = true
+			}
+		}
+	}
+
+	for _, _ = range *b {
+		for i, v := range *b {
+			if v.Value() == "" {
+				*b = append((*b)[0:i], (*b)[i+1:]...)
+				break
+			}
+		}
+	}
+
+	// Look for matching items
+	for _, x := range *b {
+		for _, y := range *a {
+			if x.Type() == y.Type() {
+				// item is in both, compare it
+				if x.Value() != y.Value() {
+					bulk.AddItem(fieldName+x.Type(), x.Value(), y.Value())
+					x.SetValue(y.Value())
+					updated = true
+				}
+			}
+		}
+	}
+
+	return updated
+}

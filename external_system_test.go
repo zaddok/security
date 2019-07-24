@@ -2,6 +2,7 @@ package security
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 )
@@ -136,4 +137,48 @@ func TestExternalSystem(t *testing.T) {
 	if ext3.Describe() != "test.com" {
 		t.Fatalf("GetExternalSystem() external system Describe() should return \"test.com\", not %s", ext3.Describe())
 	}
+}
+
+// Fully replace contents of the destination array with the source array
+func TestSyncExternalSystemId(t *testing.T) {
+	src := []ExternalSystemId{
+		&GaeExternalSystemId{EType: "a", EValue: "1"},
+		&GaeExternalSystemId{EType: "b", EValue: "2"},
+		&GaeExternalSystemId{EType: "c", EValue: "3"},
+		&GaeExternalSystemId{EType: "x", EValue: ""},
+	}
+	dst := []ExternalSystemId{
+		&GaeExternalSystemId{EType: "b", EValue: "2"},
+		&GaeExternalSystemId{EType: "c", EValue: "3a"},
+		&GaeExternalSystemId{EType: "d", EValue: "4"},
+		&GaeExternalSystemId{EType: "y", EValue: ""},
+	}
+
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid("student.Uuid", "updator.GetPersonUuid()", "updator.GetDisplayName()")
+
+	SyncExternalSystemId("test", &src, &dst, bulk)
+
+	sort.Slice(dst, func(i, j int) bool {
+		return dst[i].Type() < dst[j].Type()
+	})
+	sort.Slice(bulk.Items, func(i, j int) bool {
+		return bulk.Items[i].Attribute < bulk.Items[j].Attribute
+	})
+
+	for _, i := range dst {
+		fmt.Println(i.Type(), i.Value())
+	}
+	for _, item := range bulk.Items {
+		fmt.Println(item.Attribute, item.OldValue, "->", item.NewValue)
+	}
+
+	if len(dst) != 3 || dst[0].Type() != "a" || dst[1].Type() != "b" || dst[2].Type() != "c" {
+		t.Fatalf("SyncExternalSystemId(() failed: expecting a,b,c. Found %d items", len(dst))
+	}
+
+	if bulk.Items[0].Attribute != "test.a" || bulk.Items[1].Attribute != "test.c" || bulk.Items[2].Attribute != "test.d" {
+		t.Fatalf("SyncExternalSystemId(() failed: expecting test.a,test.c,test.d")
+	}
+
 }
