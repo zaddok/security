@@ -890,7 +890,7 @@ var FuzzyNameMatch [][]string = [][]string{
 	{"ray", "raymond"},
 	{"raymond", "ray"},
 	{"reba", "beck", "becca"},
-	{"rebecca", "beck", "becca", "reba", "becky", "beckie", "bec", "rebekah"},
+	{"rebecca", "beck", "becca", "reba", "becky", "beckie", "bec", "bek", "rebekah"},
 	{"reg", "reggie"},
 	{"reggie", "reginald"},
 	{"regina", "reggie", "gina"},
