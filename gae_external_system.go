@@ -107,6 +107,41 @@ func (es *GaeExternalSystemId) SetValue(v string) {
 	es.EValue = v
 }
 
+func (p *GaeExternalSystemId) Load(ps []datastore.Property) error {
+	for _, i := range ps {
+		switch i.Name {
+		case "ExternalSystemUuid":
+			p.EExternalSystemUuid = i.Value.(string)
+			break
+		case "Type":
+			p.EType = i.Value.(string)
+			break
+		case "Value":
+			p.EValue = i.Value.(string)
+			break
+		}
+	}
+	return nil
+}
+
+func (p *GaeExternalSystemId) Save() ([]datastore.Property, error) {
+	props := []datastore.Property{
+		{
+			Name:  "ExternalSystemUuid",
+			Value: p.EExternalSystemUuid,
+		},
+		{
+			Name:  "Type",
+			Value: p.EType,
+		},
+		{
+			Name:  "Value",
+			Value: p.EValue,
+		},
+	}
+	return props, nil
+}
+
 func NewGaeExternalSystemId(i ExternalSystemId) *GaeExternalSystemId {
 	return &GaeExternalSystemId{
 		EExternalSystemUuid: i.ExternalSystemUuid(),
