@@ -1,20 +1,3 @@
-// Provides a Log interface that can be used to wrap other logging
-// interfaces to allow swapping out log interfaces.
-//
-// Log to stdout:
-//
-//    log := NewStdoutLog()
-//    log.Error("My name is: %s", name)
-//
-// Log using syslog:
-//
-//    log, err := log.NewLog("myapp")
-//    if err != nil {
-//        fmt.Fprintln(os.Stderr, "Failure to setup syslog logging: %v", err)
-//        os.Exit(1)
-//    }
-//    log.Error("My name is: %s", name)
-//
 package security
 
 import (
@@ -29,31 +12,6 @@ import (
 
 	"cloud.google.com/go/datastore"
 )
-
-type LogCollection interface {
-	GetUuid() string
-	GetComponent() string
-	GetBegan() *time.Time
-	GetCompleted() *time.Time
-	GetPersonUuid() string
-}
-
-type LogEntry interface {
-	GetUuid() string
-	GetLogUuid() string
-	GetRecorded() time.Time
-	GetComponent() string
-	GetLevel() string
-	GetMessage() string
-}
-type SystemLog interface {
-	GetIP() string
-	GetUuid() string
-	GetRecorded() time.Time
-	GetComponent() string
-	GetLevel() string
-	GetMessage() string
-}
 
 type DatastoreLog struct {
 	client    *datastore.Client
@@ -126,12 +84,13 @@ func (le *GaeLogEntry) GetMessage() string {
 }
 
 type GaeSystemLog struct {
-	Recorded  time.Time
-	IP        string `datastore:",noindex"`
-	Component string `datastore:",noindex"`
-	Level     string `datastore:",noindex"`
-	Message   string `datastore:",noindex"`
-	Uuid      string `datastore:",noindex"`
+	Recorded   time.Time
+	IP         string `datastore:",noindex"`
+	PersonUuid string `datastore:",noindex"`
+	Component  string `datastore:",noindex"`
+	Level      string `datastore:",noindex"`
+	Message    string `datastore:",noindex"`
+	Uuid       string `datastore:",noindex"`
 }
 
 func (le *GaeSystemLog) GetUuid() string {
@@ -140,6 +99,10 @@ func (le *GaeSystemLog) GetUuid() string {
 
 func (le *GaeSystemLog) GetRecorded() time.Time {
 	return le.Recorded
+}
+
+func (le *GaeSystemLog) GetPersonUuid() string {
+	return le.PersonUuid
 }
 
 func (le *GaeSystemLog) GetIP() string {
@@ -244,11 +207,6 @@ func (am *GaeAccessManager) Error(session Session, component, message string, ar
 		fmt.Println(err)
 		fmt.Println(component, session.IP(), i.Level, fmt.Sprintf(message, args...))
 	}
-}
-
-type SyslogBundle interface {
-	Put()
-	Add(component, ip, level, message string)
 }
 
 type GaeSyslogBundle struct {

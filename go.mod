@@ -2,7 +2,6 @@ module git.tai.io/zadok/security
 
 require (
 	cloud.google.com/go v0.36.0
-	git.tai.io/zadok/sis v0.29.6
 	github.com/bluele/gcache v0.0.0-20190301044115-79ae3b2d8680
 	github.com/gocql/gocql v0.0.0-20190301043612-f6df8288f9b4
 	github.com/google/uuid v1.1.1
