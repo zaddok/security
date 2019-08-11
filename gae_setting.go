@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
 type GaeSetting struct {
@@ -17,10 +19,19 @@ type GaeSetting struct {
 	sites   map[string]map[string]string
 }
 
-func NewGaeSetting(projectID string) (Setting, *datastore.Client, context.Context) {
+func NewGaeSetting(projectId string) (Setting, *datastore.Client, context.Context) {
+	var err error
+	var client *datastore.Client
 	ctx := context.Background()
 
-	client, err := datastore.NewClient(ctx, projectID)
+	// if projectId contains a colon, we are testing locally and connecting to a port
+	if strings.LastIndex(projectId, ":") > 0 {
+		client, err = datastore.NewClient(ctx, "test", option.WithEndpoint(projectId),
+			option.WithoutAuthentication(),
+			option.WithGRPCDialOption(grpc.WithInsecure()))
+	} else {
+		client, err = datastore.NewClient(ctx, projectId)
+	}
 	if err != nil {
 		fmt.Printf("Failed to create client: %v", err)
 	}
