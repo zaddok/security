@@ -2,46 +2,16 @@ package security
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
-
-func requireEnv(name string, t *testing.T) string {
-	value := os.Getenv(name)
-	if value == "" {
-		t.Fatalf("Environment variable required: %s", name)
-	}
-	return value
-}
-
-func inferLocation(t *testing.T) string {
-	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	location := "australia-southeast1"
-	if project == "sis-us" {
-		location = "us-west2"
-	}
-	return location
-}
 
 // Test settings
 func TestSettings(t *testing.T) {
 
-	/*
-		cluster := gocql.NewCluster(requireEnv("CASSANDRA_NODE", t))
-		cluster.Keyspace = requireEnv("CASSANDRA_KEYSPACE", t)
-		cluster.ProtoVersion = 4
-		cluster.Timeout = 1 * time.Minute
-		cluster.Consistency = gocql.LocalOne
-		cql, err := cluster.CreateSession()
-		if err != nil {
-			t.Fatalf("Connect to test data store failed: %v", err)
-			return
-		}
-	*/
 	host := RandomString(20) + ".test.com"
 	host2 := RandomString(20) + ".test.com"
 
-	s, _, _ := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
+	s, _, _ := NewGaeSetting(projectId)
 
 	// Test Put with two different hostnames
 	{
@@ -55,7 +25,7 @@ func TestSettings(t *testing.T) {
 		}
 	}
 
-	s, _, _ = NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
+	s, _, _ = NewGaeSetting(projectId)
 
 	// Test Get and ensure value for right hostname was returned
 	{

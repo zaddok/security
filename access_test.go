@@ -1,9 +1,14 @@
 package security
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"os/exec"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,7 +67,7 @@ func TestWatch(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -125,7 +130,7 @@ func TestPersonManagement(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -219,7 +224,7 @@ func TestSystemSessionManagement(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -265,7 +270,7 @@ func TestScheduledConnectors(t *testing.T) {
 	l := log.NewStdoutLogDebug()
 	defer l.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -465,7 +470,7 @@ func TestAccessManager(t *testing.T) {
 	log := log.NewStdoutLogDebug()
 	defer log.Close()
 
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -560,30 +565,78 @@ func dumpSystemLog(am AccessManager, site string) {
 }
 
 var TestSite string
+var projectId string
 
 func TestMain(m *testing.M) {
-	// setup
 
-	value := os.Getenv("SITE_HOSTNAME")
-	if value == "" {
-		TestSite = RandomString(10) + ".com"
-	} else {
-		TestSite = value
+	// Start datastore emulator
+	cmd := exec.Command("gcloud", "beta", "emulators", "datastore", "start", "--no-store-on-disk")
+	stdout, err := cmd.StderrPipe()
+	if err != nil {
+		fmt.Println("Failed creating pipe to datastore emulator.", err)
+		os.Exit(1)
 	}
+	if err := cmd.Start(); err != nil {
+		fmt.Println("Failed starting datastore emulator.", err)
+		os.Exit(1)
+	}
+	scanner := bufio.NewScanner(stdout)
+	scanner.Split(bufio.ScanLines)
+	host := ""
+	for scanner.Scan() {
+		m := scanner.Text()
+		if m == "[datastore] Dev App Server is now running." {
+			fmt.Println(m)
+			break
+		}
+		i := strings.Index(m, "DATASTORE_EMULATOR_HOST=")
+		if i > 0 {
+			host = m[i+24:]
+			fmt.Println(m)
+			fmt.Println(host + ".")
+			fmt.Println()
+		}
+	}
+	projectId = host
+
+	// setup
+	TestSite = RandomString(10) + ".com"
+
 	code := m.Run()
 
 	// cleanup
-
-	// If we used a random keyspace, we want to go ahead and
-	// wipe any left behind data
-	if os.Getenv("SITE_HOSTNAME") == "" && os.Getenv("GOOGLE_CLOUD_PROJECT") != "" {
-		am, _, _, _ := NewGaeAccessManager(os.Getenv("GOOGLE_CLOUD_PROJECT"), "", time.Now().Location())
-		err := am.WipeDatastore(TestSite)
-		if err != nil {
-			fmt.Println("Failed to cleanup datastore:", err)
-		}
-
+	url := "http://" + host + "/shutdown"
+	req, err := http.NewRequest("POST", url, nil)
+	b := &http.Client{}
+	resp, err := b.Do(req)
+	if err != nil {
+		fmt.Println("Failed POST'ing shutdown request to datastore emulator", err)
+		return
 	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
 
 	os.Exit(code)
+}
+
+func requireEnv(name string, t *testing.T) string {
+	if name == "GOOGLE_CLOUD_PROJECT" {
+		return projectId
+	}
+
+	value := os.Getenv(name)
+	if value == "" {
+		t.Fatalf("Environment variable required: %s", name)
+	}
+	return value
+}
+
+func inferLocation(t *testing.T) string {
+	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	location := "australia-southeast1"
+	if project == "sis-us" {
+		location = "us-west2"
+	}
+	return location
 }

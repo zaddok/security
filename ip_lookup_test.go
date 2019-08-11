@@ -13,7 +13,7 @@ func TestIPLookup(t *testing.T) {
 	defer l.Close()
 
 	// Initialize helper API objects
-	am, err, _, _ := NewGaeAccessManager(requireEnv("GOOGLE_CLOUD_PROJECT", t), inferLocation(t), time.Now().Location())
+	am, err, _, _ := NewGaeAccessManager(projectId, inferLocation(t), time.Now().Location())
 	if err != nil {
 		t.Fatalf("NewGaeAccessManager() failed: %v", err)
 	}
@@ -34,6 +34,7 @@ func TestIPLookup(t *testing.T) {
 		gs := am.GuestSession("example.com", "111.243.45.179", "", "en-US")
 		message := make(map[string]interface{})
 		message["type"] = "ip-lookup"
+		message["ip"] = gs.IP()
 		err := ipLookupTask(am)(gs, message)
 		if err != nil {
 			t.Fatalf("ipLookup() task failed: %v", err)
@@ -42,6 +43,9 @@ func TestIPLookup(t *testing.T) {
 		ip, err := am.LookupIp(gs.IP())
 		if err != nil {
 			t.Fatalf("LookupIp() failed: %v", err)
+		}
+		if ip == nil {
+			t.Fatalf("ipLookup() lookup %s task failed. No IP response value returned", gs.IP())
 		}
 		if ip.Country() != "Taiwan" {
 			t.Fatalf("LookupIp() expected country \"Taiwan\" but found %s", ip.Country())
@@ -55,6 +59,7 @@ func TestIPLookup(t *testing.T) {
 		gs := am.GuestSession("example.com", "128.250.18.1", "", "en-US")
 		message := make(map[string]interface{})
 		message["type"] = "ip-lookup"
+		message["ip"] = gs.IP()
 		err := ipLookupTask(am)(gs, message)
 		if err != nil {
 			t.Fatalf("ipLookup() task failed: %v", err)

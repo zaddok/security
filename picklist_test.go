@@ -22,8 +22,8 @@ func TestPicklistStore(t *testing.T) {
 	host := RandomString(20) + ".test.com"
 	host2 := RandomString(20) + ".test.com"
 
-	_, client, ctx := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
-	s := NewGaePicklistStore(requireEnv("GOOGLE_CLOUD_PROJECT", t), client, ctx)
+	_, client, ctx := NewGaeSetting(projectId)
+	s := NewGaePicklistStore(projectId, client, ctx)
 
 	// Test Put with two different hostnames
 	{
@@ -47,7 +47,7 @@ func TestPicklistStore(t *testing.T) {
 		s.AddPicklistItem(host2, "country", "tw", "Taiwan", "T Desc1", 10)
 	}
 
-	s = NewGaePicklistStore(requireEnv("GOOGLE_CLOUD_PROJECT", t), client, ctx)
+	s = NewGaePicklistStore(projectId, client, ctx)
 
 	{
 		pkl, err := s.GetPicklist(host, "sex")

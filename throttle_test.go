@@ -6,20 +6,7 @@ import (
 
 func TestThrottle(t *testing.T) {
 
-	/*
-		cluster := gocql.NewCluster(requireEnv("CASSANDRA_NODE", t))
-		cluster.Keyspace = requireEnv("CASSANDRA_KEYSPACE", t)
-		cluster.ProtoVersion = 4
-		cluster.Timeout = 1 * time.Minute
-		cluster.Consistency = gocql.LocalOne
-		cql, err := cluster.CreateSession()
-		if err != nil {
-			t.Fatalf("Connect to test data store failed: %v", err)
-			return
-		}
-	*/
-
-	s, client, ctx := NewGaeSetting(requireEnv("GOOGLE_CLOUD_PROJECT", t))
+	s, client, ctx := NewGaeSetting(projectId)
 	throttle := NewGaeThrottle(s, client, ctx)
 
 	// Test basic operation
