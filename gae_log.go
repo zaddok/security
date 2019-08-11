@@ -221,7 +221,7 @@ func (sb *GaeSyslogBundle) Put() {
 	if len(sb.Item) > 499 {
 		fmt.Println("Syslog bundle greater than 500 entries.")
 		sb.Item = sb.Item[0:498]
-		sb.Add("datastore", "", "error", "Syslog bundle greater than 500 entries.")
+		sb.Add("datastore", "", "error", ``, "Syslog bundle greater than 500 entries.")
 	}
 	go func() {
 		if _, err := sb.client.PutMulti(sb.ctx, sb.Key, sb.Item); err != nil {
@@ -230,13 +230,14 @@ func (sb *GaeSyslogBundle) Put() {
 	}()
 }
 
-func (sb *GaeSyslogBundle) Add(component, ip, level, message string) {
+func (sb *GaeSyslogBundle) Add(component, ip, level, personUuid, message string) {
 	i := GaeSystemLog{
-		Recorded:  time.Now(),
-		Component: component,
-		IP:        ip,
-		Level:     level,
-		Message:   message}
+		Recorded:   time.Now(),
+		Component:  component,
+		IP:         ip,
+		Level:      level,
+		PersonUuid: personUuid,
+		Message:    message}
 	sb.Item = append(sb.Item, i)
 	k := datastore.IncompleteKey("SystemLog", nil)
 	k.Namespace = sb.site

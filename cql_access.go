@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/gocql/gocql"
 
 	"github.com/zaddok/log"
@@ -28,6 +29,10 @@ type CqlAccessManager struct {
 	notificationEventHandlers []NotificationEventHandler
 	authenticationHandlers    []AuthenticationHandler
 	preAuthenticationHandlers []PreAuthenticationHandler
+	systemCache               gcache.Cache
+	sessionCache              gcache.Cache
+	ipCache                   gcache.Cache
+	personCache               gcache.Cache
 	taskHandlers              map[string]TaskHandler
 	connectorInfo             []*ConnectorInfo
 	defaultLocale             *time.Location
@@ -118,6 +123,10 @@ func NewCqlAccessManager(cql *gocql.Session, log log.Log) (AccessManager, error)
 		log:           log,
 		setting:       settings,
 		picklistStore: nil, //TODO
+		personCache:   gcache.New(200).LRU().Expiration(time.Second * 240).Build(),
+		systemCache:   gcache.New(200).LRU().Expiration(time.Second * 120).Build(),
+		sessionCache:  gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
+		ipCache:       gcache.New(30).LRU().Expiration(time.Second * 120).Build(),
 		template:      t,
 	}, nil
 }
@@ -460,6 +469,30 @@ func (am *CqlAccessManager) GetWatching(requestor Session) ([]Watch, error) {
 
 func (am *CqlAccessManager) GetWatchers(objectUuid string, requestor Session) ([]Watch, error) {
 	return nil, errors.New("unimplemented")
+}
+
+func (am *CqlAccessManager) GetPersonCached(uuid string, session Session) (Person, error) {
+	if !session.HasRole("s1") && session.PersonUuid() != uuid {
+		return nil, errors.New("Permission denied.")
+	}
+
+	var person Person
+	v, _ := am.personCache.Get(uuid)
+	if v != nil {
+		person = v.(Person)
+		return person, nil
+	}
+
+	r, err := am.GetPerson(uuid, session)
+	if err != nil {
+		return nil, err
+	}
+	if r == nil {
+		return nil, nil
+	}
+	am.personCache.Set(uuid, person)
+
+	return person, nil
 }
 
 func (am *CqlAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {

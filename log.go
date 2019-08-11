@@ -41,7 +41,7 @@ type SystemLog interface {
 // SyslogBundle caches a sequence of SystemLog entities for bulk writing to the data store.
 type SyslogBundle interface {
 	Put()
-	Add(component, ip, level, message string)
+	Add(component, ip, level, personUuid, message string)
 }
 
 // EntityChange records changes to attributes of an object, who changed the attribute, and when.

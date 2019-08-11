@@ -37,6 +37,9 @@ func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *t
 		"timeout": func(site string) int {
 			return am.Setting().GetInt(site, "session.expiry", 60*60*24) + 2
 		},
+		"person": func(uuid string, session Session) (Person, error) {
+			return am.GetPersonCached(uuid, session)
+		},
 		"lookup": func(site, category, code string) (template.HTML, error) {
 			i, err := am.PicklistStore().GetPicklistItem(site, category, code)
 			if err != nil {
@@ -149,7 +152,7 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 		return
 	}
 	firsts[site] = true
-	syslog.Add(`startup`, ``, `debug`, "First access to site "+site+" since appserver start")
+	syslog.Add(`startup`, ``, `debug`, ``, "First access to site "+site+" since appserver start")
 
 	val := am.Setting().Get(site, "self.signup")
 	if val == nil || *val == "" {
@@ -195,7 +198,7 @@ func FirstRequestOnSiteWait(site string, am AccessManager, wait bool) {
 	if wait {
 		prefilPicklists(site, am)
 		am.RunVirtualHostSetupHandler(site)
-		syslog.Add(`startup`, ``, `debug`, "Virtualhost setup for "+site+" completed")
+		syslog.Add(`startup`, ``, `debug`, ``, "Virtualhost setup for "+site+" completed")
 	} else {
 		go func() {
 			prefilPicklists(site, am)

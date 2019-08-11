@@ -112,6 +112,13 @@ func TestAccountManagement(t *testing.T) {
 		if len(people) != 2 {
 			t.Fatalf("am.GetPeople() should return two results, not %d", len(people))
 		}
+		p1, err := am.GetPerson(uuid, user)
+		if err != nil {
+			t.Fatalf("am.GetPerson() failed: %v", err)
+		}
+		if p1.FirstName() != "Jason" {
+			t.Fatalf("am.GetPerson() should return first name 'Jason' not %s", p1.FirstName())
+		}
 	}
 
 	// Test updating an account
@@ -160,6 +167,24 @@ func TestAccountManagement(t *testing.T) {
 			fmt.Println(e)
 		}
 
+	}
+
+	// Test Create Anoter and read from cache
+	{
+		uuid, err := am.AddPerson(TestSite, "Over", "Tone", "overtone@test.com", "s1:s2:s3:s4", HashPassword("fIr10g--"), "127.0.0.1", nil)
+		if err != nil {
+			t.Fatalf("am.AddPerson() failed: %v", err)
+		}
+		p1, err := am.GetPersonCached(uuid, user)
+		if err != nil {
+			t.Fatalf("am.GetPersonCached() failed: %v", err)
+		}
+		if p1 == nil {
+			t.Fatalf("am.GetPersonCached() failed to return a record. uuid: %s", uuid)
+		}
+		if p1.FirstName() != "Over" {
+			t.Fatalf("am.GetPerson() should return first name 'Over' not %s", p1.FirstName())
+		}
 	}
 
 }

@@ -35,6 +35,7 @@ type GaeAccessManager struct {
 	systemCache               gcache.Cache
 	sessionCache              gcache.Cache
 	ipCache                   gcache.Cache
+	personCache               gcache.Cache
 	projectId                 string
 	locationId                string
 	defaultLocale             *time.Location
@@ -341,6 +342,7 @@ func NewGaeAccessManager(projectId, locationId string, locale *time.Location) (A
 		picklistStore:  picklistStore,
 		template:       t,
 		systemSessions: map[string]Session{},
+		personCache:    gcache.New(200).LRU().Expiration(time.Second * 240).Build(),
 		systemCache:    gcache.New(200).LRU().Expiration(time.Second * 120).Build(),
 		sessionCache:   gcache.New(200).LRU().Expiration(time.Second * 60).Build(),
 		ipCache:        gcache.New(30).LRU().Expiration(time.Second * 120).Build(),
@@ -584,11 +586,11 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 
 	syslog := NewGaeSyslogBundle(site, g.client, g.ctx)
 	defer syslog.Put()
-	syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication attempt for '%s'", email))
+	syslog.Add(`auth`, ip, `debug`, ``, fmt.Sprintf("Authentication attempt for '%s'", email))
 
 	email = strings.ToLower(strings.TrimSpace(email))
 	if throttled, _ := g.throttle.IsThrottled(email); throttled {
-		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
+		syslog.Add(`auth`, ip, `info`, ``, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site, ip, userAgent, lang), "Repeated signin failures were detected from your location, please wait a few minutes and try again.", nil
 	}
 
@@ -596,13 +598,13 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", email).Limit(1)
 	_, err := g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Person lookup Error: %v", err))
+		syslog.Add(`auth`, ip, `error`, ``, fmt.Sprintf("Authenticate() Person lookup Error: %v", err))
 		return session, "", err
 	}
 	if len(items) > 0 {
 		if items[0].password == nil || *items[0].password == "" {
 			g.throttle.Increment(email)
-			syslog.Add(`auth`, ip, `warn`, fmt.Sprintf("Authentication for '%s' blocked. Account has no password.", email))
+			syslog.Add(`auth`, ip, `warn`, items[0].Uuid(), fmt.Sprintf("Authentication for '%s' blocked. Account has no password.", email))
 			return session, "Invalid email address or password.", nil
 		}
 
@@ -614,19 +616,19 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 			for _, auth := range g.authenticationHandlers {
 				ok, err := auth(g, session, email, password)
 				if ok {
-					syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("External Authentication for '%s' succeeded.", email))
+					syslog.Add(`auth`, ip, `debug`, items[0].Uuid(), fmt.Sprintf("External Authentication for '%s' succeeded.", email))
 					externallyAuthenticated = true
 					break
 				}
 				if err != nil {
-					syslog.Add(`auth`, ip, `warning`, fmt.Sprintf("External Authentication for '%s' failed. Error: %v", email, err))
+					syslog.Add(`auth`, ip, `warning`, items[0].Uuid(), fmt.Sprintf("External Authentication for '%s' failed. Error: %v", email, err))
 					return g.GuestSession(site, ip, userAgent, lang), "Communication with authentication service failed. Please try again.", nil
 				}
 			}
 
 			if !externallyAuthenticated {
 				g.throttle.Increment(email)
-				syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
+				syslog.Add(`auth`, ip, `notice`, items[0].Uuid(), fmt.Sprintf("Authentication for '%s' failed. Incorrect password.", email))
 				return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 			}
 		}
@@ -634,19 +636,19 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 		now := time.Now()
 		items[0].lastSignin = &now
 		items[0].lastSigninIP = ip
-		k := datastore.NameKey("Person", items[0].uuid, nil)
+		k := datastore.NameKey("Person", items[0].Uuid(), nil)
 		k.Namespace = site
 		if _, err := g.client.Put(g.ctx, k, &items[0]); err != nil {
-			syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Person update Error: %v", err))
+			syslog.Add(`auth`, ip, `error`, items[0].Uuid(), fmt.Sprintf("Authenticate() Person update Error: %v", err))
 			return session, "", err
 		}
 
 		token, err2 := g.createSession(site, items[0].Uuid(), items[0].FirstName(), items[0].LastName(), items[0].Email(), items[0].roles, ip)
 		if err2 != nil {
-			syslog.Add(`auth`, ip, `error`, fmt.Sprintf("Authenticate() Session creation error: %v", err2))
+			syslog.Add(`auth`, ip, `error`, items[0].Uuid(), fmt.Sprintf("Authenticate() Session creation error: %v", err2))
 			return g.GuestSession(site, ip, userAgent, lang), "", err2
 		}
-		syslog.Add(`auth`, ip, `info`, fmt.Sprintf("Authentication success for '%s'", email))
+		syslog.Add(`auth`, ip, `info`, items[0].Uuid(), fmt.Sprintf("Authentication success for '%s'", email))
 
 		session = &GaeSession{
 			site:          site,
@@ -671,14 +673,15 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 		// An invalid email address was entered. If this occurs too many times, stop reporting
 		// back the normal "Invalid email address or password" message prevent the signin form
 		// revealing to a bot that this email address/password combination is invalid.
-		syslog.Add(`auth`, ip, `debug`, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
+		syslog.Add(`auth`, ip, `debug`, items[0].Uuid(), fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site, ip, userAgent, lang), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
 	}
 
 	g.throttle.Increment(ip)
-	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("Authentication for '%s' failed: Unknown email address.", email))
+	syslog.Add(`auth`, ip, `notice`, ``, fmt.Sprintf("Authentication for '%s' failed: Unknown email address.", email))
 	return g.GuestSession(site, ip, userAgent, lang), "Invalid email address or password.", nil
 }
+
 func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
 	var items []SystemLog
 
@@ -960,7 +963,38 @@ func (am *GaeAccessManager) GetWatchers(objectUuid string, requestor Session) ([
 	return items[:], nil
 }
 
+func (am *GaeAccessManager) GetPersonCached(uuid string, session Session) (Person, error) {
+	if uuid == "" {
+		return nil, nil
+	}
+
+	if !session.HasRole("s1") && session.PersonUuid() != uuid {
+		return nil, errors.New("Permission denied.")
+	}
+
+	var person Person
+	v, _ := am.personCache.Get(uuid)
+	if v != nil {
+		person = v.(Person)
+		return person, nil
+	}
+
+	r, err := am.GetPerson(uuid, session)
+	if err != nil {
+		return nil, err
+	}
+	if r == nil {
+		return nil, nil
+	}
+
+	return r, nil
+}
+
 func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
+	if uuid == "" {
+		return nil, nil
+	}
+
 	if !requestor.HasRole("s1") && requestor.PersonUuid() != uuid {
 		return nil, errors.New("Permission denied.")
 	}
@@ -974,6 +1008,9 @@ func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, e
 	} else if err != nil {
 		return nil, err
 	}
+
+	am.personCache.Set(uuid, i)
+
 	return i, nil
 }
 
@@ -1358,10 +1395,10 @@ func (g *GaeAccessManager) AddPerson(site, firstName, lastName, email, roles str
 	k := datastore.NameKey("Person", uuid.String(), nil)
 	k.Namespace = site
 	if _, err := g.client.Put(g.ctx, k, si); err != nil {
-		syslog.Add(`datastore`, ip, `error`, fmt.Sprintf("AddPerson() Person storage failed. Error: %v", err))
+		syslog.Add(`datastore`, ip, `error`, ``, fmt.Sprintf("AddPerson() Person storage failed. Error: %v", err))
 		return "", err
 	}
-	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("New user account created '%s','%s','%s'", firstName, lastName, email))
+	syslog.Add(`auth`, ip, `notice`, uuid.String(), fmt.Sprintf("New user account created '%s','%s','%s'", firstName, lastName, email))
 
 	return uuid.String(), nil
 }
@@ -1377,7 +1414,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	// Check the token is a valid uuid
 	_, err := uuid.Parse(token)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ActivateSignup() called with invalid activation token"))
+		syslog.Add(`auth`, ip, `error`, ``, fmt.Sprintf("ActivateSignup() called with invalid activation token"))
 		return "", "Invalid account activation token", nil
 	}
 
@@ -1388,13 +1425,13 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	si := new(GaeRequestToken)
 	err = g.client.Get(g.ctx, k, si)
 	if err == datastore.ErrNoSuchEntity {
-		syslog.Add(`auth`, ip, `error`, "ActivateSignup() called with activation token not in the datastore.")
+		syslog.Add(`auth`, ip, `error`, ``, "ActivateSignup() called with activation token not in the datastore.")
 		return "", "Invalid activation token", nil
 	} else if err != nil {
-		syslog.Add(`auth`, ip, `error`, "ActivateSignup() failure: "+err.Error())
+		syslog.Add(`auth`, ip, `error`, ``, "ActivateSignup() failure: "+err.Error())
 		return "", "Activation service failed, please try again.", err
 	} else if si.Expiry+int64(maxAge) < time.Now().Unix() {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ActivateSignup() called with expired activation token: %d < %d ", si.Expiry, time.Now().Unix()))
+		syslog.Add(`auth`, ip, `error`, ``, fmt.Sprintf("ActivateSignup() called with expired activation token: %d < %d ", si.Expiry, time.Now().Unix()))
 		return "", "Invalid activation token", nil
 	}
 	i := &NewUserInfo{}
@@ -1405,21 +1442,21 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 	q := datastore.NewQuery("Person").Namespace(site).Filter("Email = ", i.Email).Limit(1)
 	_, err = g.client.GetAll(g.ctx, q, &items)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, "ActivateSignup() email lookup failure: "+err.Error())
+		syslog.Add(`auth`, ip, `error`, ``, "ActivateSignup() email lookup failure: "+err.Error())
 		return "", "Activation service failed, please try again.", err
 	}
 	if len(items) > 0 {
-		syslog.Add(`auth`, ip, `error`, "ActivateSignup() Email address already exists: "+err.Error())
+		syslog.Add(`auth`, ip, `error`, ``, "ActivateSignup() Email address already exists: "+err.Error())
 		return "", "Can't complete account activation, this email address has recently been activated by a different person.", nil
 	}
 
 	// NewUserInfo doesnt carry roles, should it?
 	uuid, aerr := g.AddPerson(site, i.FirstName, i.LastName, i.Email, "", i.Password, ip, nil)
 	if aerr != nil {
-		syslog.Add(`auth`, ip, `error`, "AddPerson() failed: "+aerr.Error())
+		syslog.Add(`auth`, ip, `error`, uuid, "AddPerson() failed: "+aerr.Error())
 		return "", "", aerr
 	}
-	syslog.Add(`auth`, ip, `notice`, fmt.Sprintf("New user account activated '%s','%s','%s'", i.FirstName, i.LastName, i.Email))
+	syslog.Add(`auth`, ip, `notice`, uuid, fmt.Sprintf("New user account activated '%s','%s','%s'", i.FirstName, i.LastName, i.Email))
 
 	// NewUserInfo doesn't permit default/initial roles. Should it?
 	token, err2 := g.createSession(site, uuid, i.FirstName, i.LastName, i.Email, "", ip)
@@ -1427,7 +1464,7 @@ func (g *GaeAccessManager) ActivateSignup(site, token, ip string) (string, strin
 		return token, "", nil
 	}
 
-	syslog.Add(`auth`, ip, `error`, "AddPerson() createSession() failure: "+err2.Error())
+	syslog.Add(`auth`, ip, `error`, uuid, "AddPerson() createSession() failure: "+err2.Error())
 	return "", "", err2
 }
 
@@ -1438,7 +1475,7 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 	// Check the token is a valid uuid
 	_, err := uuid.Parse(token)
 	if err != nil {
-		syslog.Add(`auth`, ip, `error`, "ResetPassword() requested with invalid uuid.")
+		syslog.Add(`auth`, ip, `error`, ``, "ResetPassword() requested with invalid uuid.")
 		return false, "Invalid password reset token.", nil
 	}
 
@@ -1449,13 +1486,13 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 	si := new(GaeRequestToken)
 	err = g.client.Get(g.ctx, k, si)
 	if err == datastore.ErrNoSuchEntity {
-		syslog.Add(`auth`, ip, `error`, "ResetPassword() called with unknown uuid.")
+		syslog.Add(`auth`, ip, `error`, ``, "ResetPassword() called with unknown uuid.")
 		return false, "Unknown password reset token.", nil
 	} else if err != nil {
-		syslog.Add(`auth`, ip, `error`, "ResetPassword() failure: "+err.Error())
+		syslog.Add(`auth`, ip, `error`, ``, "ResetPassword() failure: "+err.Error())
 		return false, "Password reset service failed, please try again.", err
 	} else if si.Expiry+int64(maxAge) < time.Now().Unix() {
-		syslog.Add(`auth`, ip, `error`, fmt.Sprintf("ResetPassword() called with expired uuid: %v < %v ", si.Expiry, time.Now()))
+		syslog.Add(`auth`, ip, `error`, ``, fmt.Sprintf("ResetPassword() called with expired uuid: %v < %v ", si.Expiry, time.Now()))
 		return false, "This password reset link has expired.", nil
 	}
 
@@ -1465,16 +1502,20 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 	k.Namespace = site
 	err = g.client.Get(g.ctx, k, &person)
 	if err == datastore.ErrNoSuchEntity {
-		syslog.Add(`auth`, ip, `error`, "Password Reset token pointed to unknown person uuid")
+		syslog.Add(`auth`, ip, `error`, ``, "Password Reset token pointed to unknown person uuid")
 		return false, "Reset password service failed, please try again.", err
 	} else if err != nil {
-		syslog.Add(`auth`, ip, `error`, "ResetPassword() datastore error: "+err.Error())
+		syslog.Add(`auth`, ip, `error`, ``, "ResetPassword() datastore error: "+err.Error())
 		return false, "Reset password service failed, please try again.", err
 	}
 	person.password = HashPassword(password)
 	_, err = g.client.Put(g.ctx, k, &person)
-
-	return true, "Your password has been reset", nil
+	if err != nil {
+		syslog.Add(`auth`, ip, `error`, person.Uuid(), "ResetPassword success")
+		return true, "Your password has been reset", nil
+	} else {
+		return false, "Password reset failed", err
+	}
 }
 
 type GaeScheduledConnector struct {

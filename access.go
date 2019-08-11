@@ -14,6 +14,7 @@ type AccessManager interface {
 	Authenticate(host, email, password, ip, userAgent, lang string) (Session, string, error)
 
 	GetPerson(uuid string, requestor Session) (Person, error)
+	GetPersonCached(uuid string, requestor Session) (Person, error)
 	GetPersonByFirstNameLastName(site, firstname, lastname string, requestor Session) (Person, error)
 	GetPersonByEmail(site, email string, requestor Session) (Person, error)
 	GetPeople(requestor Session) ([]Person, error)

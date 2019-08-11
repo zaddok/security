@@ -74,24 +74,24 @@ func TaskHandlerPage(t *template.Template, am AccessManager) func(w http.Respons
 		if task == "" {
 			fmt.Printf("unknown task type\n")
 			w.WriteHeader(202) // Accepted ok, but cant do anything
-			b.Add(queueName, session.IP(), "warn", fmt.Sprintf("Task(%s): Unknown task type: %s", taskId, queueName))
+			b.Add(queueName, session.IP(), "warn", ``, fmt.Sprintf("Task(%s): Unknown task type: %s", taskId, queueName))
 			return
 		}
 
 		// Log and output details of the task.
-		b.Add(queueName, "", "debug", fmt.Sprintf("Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData)))
+		b.Add(queueName, "", "debug", ``, fmt.Sprintf("Received task '%s' on '%s' queue for host '%s'. %s\n", task, queueName, site, string(bodyData)))
 
 		found, err := am.RunTaskHandler(task, session, message)
 
 		if !found {
 			w.WriteHeader(202) // Accepted ok, but cant do anything
-			b.Add(queueName, session.IP(), "warn", fmt.Sprintf("Task(%s): Unhandled task type: %s", taskId, queueName))
+			b.Add(queueName, session.IP(), "warn", ``, fmt.Sprintf("Task(%s): Unhandled task type: %s", taskId, queueName))
 			fmt.Println("    Task unhandled from queue:", queueName)
 			return
 		}
 		if err != nil {
 			msg := fmt.Sprintf("Failed executing task %s: %v", queueName, err)
-			b.Add("connector", session.IP(), "error", msg)
+			b.Add("connector", session.IP(), ``, "error", msg)
 			http.Error(w, msg, http.StatusInternalServerError)
 		}
 

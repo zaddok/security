@@ -93,7 +93,12 @@ function toggleDebug() {
 	{{range .Entries}}
 	<tr class="{{.GetLevel}} {{.GetComponent}}"{{if eq .GetLevel "debug"}} style="display:none"{{end}}>
 		<td style="white-space:nowrap">{{.GetRecorded | audit_time}}</td>
-		<td>{{.GetIP}}</td>
+{{$p := person .GetPersonUuid $.Session}}
+{{if $p}}
+		<td>{{$p.DisplayName}}</td>
+{{else}}
+		<td>{{.GetIP}} {{.GetPersonUuid}}</td>
+{{end}}
 		<td>{{.GetLevel}}</td>
 		<td>{{.GetComponent}}</td>
 		<td>{{.GetMessage}}</td>
