@@ -673,7 +673,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 		// An invalid email address was entered. If this occurs too many times, stop reporting
 		// back the normal "Invalid email address or password" message prevent the signin form
 		// revealing to a bot that this email address/password combination is invalid.
-		syslog.Add(`auth`, ip, `debug`, items[0].Uuid(), fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
+		syslog.Add(`auth`, ip, `debug`, ``, fmt.Sprintf("Authentication for '%s' blocked by throttle", email))
 		return g.GuestSession(site, ip, userAgent, lang), "Repeated signin failures were detected, please wait a few minutes and try again.", nil
 	}
 
