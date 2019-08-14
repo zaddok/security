@@ -13,6 +13,8 @@ import (
 
 // Information about a support ticket
 type GaeTicket struct {
+	parentType    string
+	parentUuid    string
 	uuid          string
 	ticketType    TicketType
 	status        TicketStatus
@@ -30,6 +32,14 @@ type GaeTicket struct {
 	responseCount int64
 	created       *time.Time
 	actionAfter   *time.Time
+}
+
+func (t *GaeTicket) ParentType() string {
+	return t.parentType
+}
+
+func (t *GaeTicket) ParentUuid() string {
+	return t.parentUuid
 }
 
 func (t *GaeTicket) Uuid() string {
@@ -445,6 +455,14 @@ func (t *GaeTicketManager) Setting() Setting {
 
 func (t *GaeTicketManager) PicklistStore() PicklistStore {
 	return t.am.PicklistStore()
+}
+
+func (p *GaeTicket) LoadKey(k *datastore.Key) error {
+	if k != nil && k.Parent != nil {
+		p.parentType = k.Parent.Kind
+		p.parentUuid = k.Parent.Name
+	}
+	return nil
 }
 
 func (p *GaeTicket) Load(ps []datastore.Property) error {
