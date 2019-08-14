@@ -81,6 +81,7 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func
 				session.Email(),
 				"Feedback link used. "+p.MessageSubject+"\nURL: "+p.CurrentUrl,
 				p.MessageText,
+				nil,
 				[]string{"feedback"},
 				[]TicketViewer{}, []TicketViewer{},
 				session)

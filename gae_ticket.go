@@ -325,11 +325,11 @@ func (t *GaeTicketManager) SearchTickets(keyword string, session Session) ([]Tic
 	return tickets, nil
 }
 
-func (t *GaeTicketManager) AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
-	return t.AddTicketWithParent("", "", status, ticketType, personUuid, firstName, lastName, email, subject, message, tags, assignedTo, watchedBy, session)
+func (t *GaeTicketManager) AddTicket(status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, actionAfter *time.Time, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
+	return t.AddTicketWithParent("", "", status, ticketType, personUuid, firstName, lastName, email, subject, message, actionAfter, tags, assignedTo, watchedBy, session)
 }
 
-func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
+func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, status TicketStatus, ticketType TicketType, personUuid, firstName, lastName, email, subject, message string, actionAfter *time.Time, tags []string, assignedTo, watchedBy []TicketViewer, session Session) (Ticket, error) {
 	var ticket GaeTicket
 
 	uuid, err := uuid.NewUUID()
@@ -340,13 +340,14 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, st
 
 	ticket.uuid = uuid.String()
 	ticket.status = status
+	ticket.ticketType = ticketType
 	ticket.personUuid = personUuid
 	ticket.firstName = firstName
 	ticket.lastName = lastName
 	ticket.email = email
 	ticket.subject = subject
-	ticket.ticketType = ticketType
 	ticket.message = message
+	ticket.actionAfter = actionAfter
 	ticket.tags = tags
 	ticket.assignedTo = assignedTo
 	ticket.watchedBy = watchedBy
