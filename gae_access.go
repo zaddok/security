@@ -633,6 +633,7 @@ func (g *GaeAccessManager) Authenticate(site, email, password, ip, userAgent, la
 			}
 		}
 
+		// Password matched
 		now := time.Now()
 		items[0].lastSignin = &now
 		items[0].lastSigninIP = ip
