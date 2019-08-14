@@ -1511,11 +1511,11 @@ func (g *GaeAccessManager) ResetPassword(site, token, password, ip string) (bool
 	}
 	person.password = HashPassword(password)
 	_, err = g.client.Put(g.ctx, k, &person)
-	if err != nil {
+	if err == nil {
 		syslog.Add(`auth`, ip, `error`, person.Uuid(), "ResetPassword success")
 		return true, "Your password has been reset", nil
 	} else {
-		return false, "Password reset failed", err
+		return false, "Password reset failed. Please try again shortly.", err
 	}
 }
 
