@@ -50,6 +50,8 @@ const (
 
 // Information about a support ticket
 type Ticket interface {
+	ParentType() string
+	ParentUuid() string
 	Uuid() string
 	Type() TicketType
 	Status() TicketStatus
