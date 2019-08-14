@@ -357,6 +357,12 @@ func (t *GaeTicketManager) AddTicketWithParent(parentType, parentUuid string, st
 		return nil, err
 	}
 
+	err = t.am.TriggerNotificationEvent(session.Site()+"."+string(ticketType), session)
+	if err != nil {
+		//TODO: What should we do here?
+		return &ticket, nil
+	}
+
 	return &ticket, nil
 }
 
