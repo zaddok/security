@@ -714,10 +714,12 @@ window.addEventListener('click', ieh, true);
 		div.error, div.error::before { color: #400; background: #ffb9b9; border-color: #efa9a9; }
 		div.error::before { color: #844; opacity: 0.7;}
 		div.error p a, div.error p > a { color: #844 !important; font-size: 1rem;}
+		body #signin_box div.error > p { color: #400; margin:0 0 0 1.65em; padding:0; }
 
 		div.success, div.success::before { color: #041; background: #b9ffde; border-color: #aec; }
 		div.success::before { content: '\f058'; color: #7b6; opacity: 0.7; }
 		div.success p a, div.success p > a { color: #482 !important; font-size: 1rem;}
+		body #signin_box div.success > p { color: #041; margin:0 0 0 1.65em; padding:0; }
 
 {{.Session.Theme.CSS | safe}}
 	</style>
