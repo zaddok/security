@@ -301,7 +301,9 @@ func BinaryFile(data *[]byte, cacheTime int) func(w http.ResponseWriter, r *http
 func Render(r *http.Request, w http.ResponseWriter, t *template.Template, template string, i interface{}) error {
 	// w.Header().Add("Strict-Transport-Security", "max-age=3600")
 	w.Header().Set("Cache-Control", "max-age=0,no-cache,no-store")
-	w.Header().Add("X-Frame-Options", "deny")
+	if frameProtection {
+		w.Header().Add("X-Frame-Options", "deny")
+	}
 	err := t.ExecuteTemplate(w, template, i)
 	if err != nil {
 		w.Write([]byte(fmt.Sprintf("Error displaying %s page: %v", template, err)))
