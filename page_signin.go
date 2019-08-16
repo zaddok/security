@@ -37,6 +37,7 @@ func SigninPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 			p := &SignupPageData{}
 			p.Session = session
 			p.Title = []string{"Signin"}
+			p.Class = "signin"
 			p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 			p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 			p.Email = strings.TrimSpace(r.FormValue("email"))

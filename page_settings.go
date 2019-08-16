@@ -58,25 +58,30 @@ func SettingsPage(t *template.Template, am AccessManager) func(w http.ResponseWr
 		edit := strings.TrimSpace(r.FormValue("edit"))
 		if edit != "" {
 
-			type Page struct {
-				Session Session
-				Title   []string
-				Key     string
-				Value   string
+			type PageInfo struct {
+				Page
+				Key   string
+				Value string
 			}
 			value := am.Setting().GetWithDefault(session.Site(), edit, "")
 			if err != nil {
 				ShowError(w, r, t, err, session)
 				return
 			}
-			Render(r, w, t, "setting_edit", &Page{session, []string{"Edit setting", "System Settings"}, edit, value})
+			p := &PageInfo{
+				Page: Page{
+					Session: session,
+					Title:   []string{"Edit setting", "System Settings"}},
+				Key:   edit,
+				Value: value,
+			}
+			Render(r, w, t, "setting_edit", p)
 
 			return
 		}
 
-		type Page struct {
-			Session  Session
-			Title    []string
+		type PageInfo struct {
+			Page
 			Settings [][]string
 		}
 
@@ -97,7 +102,15 @@ func SettingsPage(t *template.Template, am AccessManager) func(w http.ResponseWr
 			return values[j][0] > values[i][0]
 		})
 
-		Render(r, w, t, "settings", &Page{session, []string{"System Settings"}, values})
+		p := &PageInfo{
+			Page: Page{
+				Session: session,
+				Title:   []string{"System Settings"},
+			},
+			Settings: values,
+		}
+
+		Render(r, w, t, "settings", p)
 	}
 }
 

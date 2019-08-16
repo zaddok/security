@@ -9,8 +9,7 @@ import (
 )
 
 type SignupPageData struct {
-	Session     Session
-	Title       []string
+	Page
 	SigninEmail string
 	FirstName   string
 	LastName    string
@@ -46,6 +45,7 @@ func SignupPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 		p := &SignupPageData{}
 		p.Session = session
 		p.Title = []string{"Signup"}
+		p.Class = "signin"
 		p.FirstName = strings.TrimSpace(r.FormValue("first_name"))
 		p.LastName = strings.TrimSpace(r.FormValue("last_name"))
 		p.Email = strings.TrimSpace(r.FormValue("email"))

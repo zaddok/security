@@ -6,6 +6,15 @@ import (
 )
 
 func ForgotPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
+
+	type PageInfo struct {
+		Page
+		SigninEmail string
+		Errors      []string
+		Infos       []string
+		Successes   []string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -16,17 +25,10 @@ func ForgotPage(t *template.Template, am AccessManager) func(w http.ResponseWrit
 			return
 		}
 
-		type Page struct {
-			Session     Session
-			Title       []string
-			SigninEmail string
-			Errors      []string
-			Infos       []string
-			Successes   []string
-		}
-		p := &Page{}
+		p := &PageInfo{}
 		p.Title = []string{"Lost Password"}
 		p.Session = session
+		p.Class = "signin"
 
 		if r.Method == "POST" && r.FormValue("forgot") != "" {
 			p.Infos = append(p.Infos, "If this email address is in our system, you should receive an email shortly with a password reset link.")

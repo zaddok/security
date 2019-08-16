@@ -7,6 +7,12 @@ import (
 )
 
 func ResetPasswordPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
+
+	type ResetPageData struct {
+		SignupPageData
+		Token string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		AddSafeHeaders(w)
 
@@ -24,14 +30,10 @@ func ResetPasswordPage(t *template.Template, am AccessManager) func(w http.Respo
 			return
 		}
 
-		type ResetPageData struct {
-			SignupPageData
-
-			Token string
-		}
 		p := &ResetPageData{}
 		p.Session = session
 		p.Title = []string{"Reset Password"}
+		p.Class = "signin"
 		p.Token = token
 
 		baseUrl := am.Setting().GetWithDefault(session.Site(), "base.url", "")

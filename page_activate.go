@@ -19,6 +19,7 @@ func ActivatePage(t *template.Template, am AccessManager) func(w http.ResponseWr
 		p := &SignupPageData{}
 		p.Session = session
 		p.Title = []string{"Activate Account"}
+		p.Class = "signin"
 
 		token := r.URL.Path
 		if strings.HasPrefix(token, "/activate/") {

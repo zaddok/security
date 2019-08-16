@@ -9,6 +9,18 @@ import (
 )
 
 func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func(w http.ResponseWriter, r *http.Request) {
+
+	type PageInfo struct {
+		Page
+		MessageSubject   string
+		MessageText      string
+		CurrentUserAgent string
+		CurrentIP        string
+		CurrentUrl       string
+		Feedback         []string
+		BackLink         string
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
@@ -21,21 +33,12 @@ func FeedbackPage(t *template.Template, am AccessManager, tm TicketManager) func
 		}
 		AddSafeHeaders(w)
 
-		type Page struct {
-			Session          Session
-			Title            []string
-			MessageSubject   string
-			MessageText      string
-			CurrentUserAgent string
-			CurrentIP        string
-			CurrentUrl       string
-			Feedback         []string
-			BackLink         string
-		}
-
-		p := &Page{
-			Session:          session,
-			Title:            []string{"Send feedback", "Feedback"},
+		p := &PageInfo{
+			Page: Page{
+				Session: session,
+				Title:   []string{"Send feedback", "Feedback"},
+				Class:   "signin",
+			},
 			CurrentUrl:       r.Referer(),
 			CurrentUserAgent: session.UserAgent(),
 			CurrentIP:        session.IP(),

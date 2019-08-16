@@ -6,6 +6,12 @@ import (
 )
 
 func SystemlogPage(t *template.Template, am AccessManager) func(w http.ResponseWriter, r *http.Request) {
+
+	type LogPage struct {
+		Page
+		Entries []SystemLog
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, err := LookupSession(r, am)
 		if err != nil {
@@ -18,19 +24,19 @@ func SystemlogPage(t *template.Template, am AccessManager) func(w http.ResponseW
 		}
 		AddSafeHeaders(w)
 
-		type Page struct {
-			Session Session
-			Title   []string
-			Entries []SystemLog
-		}
-
 		entries, err := am.GetRecentSystemLog(session)
 		if err != nil {
 			ShowError(w, r, t, err, session)
 			return
 		}
 
-		p := &Page{session, []string{"System Log"}, entries}
+		p := &LogPage{
+			Page: Page{
+				Session: session,
+				Title:   []string{"System Log"},
+			},
+			Entries: entries,
+		}
 
 		Render(r, w, t, "system_log", p)
 	}

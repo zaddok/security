@@ -14,6 +14,12 @@ import (
 
 var COOKIE_DAYS = 365
 
+type Page struct {
+	Session Session
+	Title   []string
+	Class   string
+}
+
 // Register pages specific to the security package
 func RegisterHttpHandlers(am AccessManager, tm TicketManager, defaultTimezone *time.Location, log log.Log) (*template.Template, error) {
 	if themes == nil {
@@ -724,7 +730,7 @@ window.addEventListener('click', ieh, true);
 {{.Session.Theme.CSS | safe}}
 	</style>
 </head>
-<body class="signin">
+<body class="{{.Class}}">
 {{end}}
 
 
