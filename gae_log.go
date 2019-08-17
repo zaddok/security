@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/zaddok/log"
+	"google.golang.org/api/iterator"
 
 	"cloud.google.com/go/datastore"
 )
@@ -244,6 +246,28 @@ func (sb *GaeSyslogBundle) Add(component, ip, level, personUuid, message string)
 	sb.Key = append(sb.Key, k)
 }
 
+func (a *GaeAccessManager) GetRecentSystemLog(requestor Session) ([]SystemLog, error) {
+	var items []SystemLog
+
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
+	q := datastore.NewQuery("SystemLog").Namespace(requestor.Site()).Order("-Recorded").Limit(200)
+	it := a.client.Run(a.ctx, q)
+	for {
+		e := new(GaeSystemLog)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
+}
+
 func NewDatastoreLog(component string, user Session, client *datastore.Client, ctx context.Context) (log.Log, string, error) {
 	cuuid, err := uuid.NewRandom()
 	if err != nil {
@@ -262,6 +286,102 @@ func NewDatastoreLog(component string, user Session, client *datastore.Client, c
 	l := &DatastoreLog{client, ctx, cuuid.String(), component, entry, user}
 	l.Info("Opened")
 	return l, cuuid.String(), nil
+}
+
+// GetEntityChangeLog returns the change records for a particular entity. Authorisation to use this function should
+// be implied by authorisation to access the object the change log is associated with.
+func (am *GaeAccessManager) GetEntityChangeLog(uuid string, requestor Session) ([]EntityAuditLogCollection, error) {
+	var items []EntityAuditLogCollection
+
+	pkey := datastore.NameKey("EntityChange", uuid, nil)
+	pkey.Namespace = requestor.Site()
+
+	q := datastore.NewQuery("EntityChange").Namespace(requestor.Site()).Ancestor(pkey).Limit(500)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeEntityAuditLogCollection)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	sort.Slice(items, func(i, j int) bool {
+		return items[j].GetDate().Before(items[i].GetDate())
+	})
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) AddEntityChangeLog(ec EntityAuditLogCollection, requestor Session) error {
+	var e *GaeEntityAuditLogCollection = ec.(*GaeEntityAuditLogCollection)
+
+	if e.EntityUuid == "" {
+		return errors.New("Invalid entity uuid.")
+	}
+
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+	e.Uuid = uuid.String()
+
+	pkey := datastore.NameKey("EntityChange", e.EntityUuid, nil)
+	pkey.Namespace = requestor.Site()
+	key := datastore.NameKey("EntityChange", e.Uuid, pkey)
+	key.Namespace = requestor.Site()
+
+	if _, err := am.client.Put(am.ctx, key, e); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (am *GaeAccessManager) GetLogCollection(uuid string, requestor Session) ([]LogEntry, error) {
+	var items []LogEntry
+
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
+	q := datastore.NewQuery("LogEntry").Namespace(requestor.Site()).Filter("LogUuid =", uuid).Order("Recorded").Limit(10000)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeLogEntry)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
+}
+
+func (am *GaeAccessManager) GetRecentLogCollections(requestor Session) ([]LogCollection, error) {
+	var items []LogCollection
+
+	if !requestor.HasRole("s1") {
+		return items, errors.New("Permission denied.")
+	}
+
+	q := datastore.NewQuery("LogCollection").Namespace(requestor.Site()).Order("-Began").Limit(200)
+	it := am.client.Run(am.ctx, q)
+	for {
+		e := new(GaeLogCollection)
+		if _, err := it.Next(e); err == iterator.Done {
+			break
+		} else if err != nil {
+			return nil, err
+		}
+		items = append(items, e)
+	}
+
+	return items[:], nil
 }
 
 func (l *DatastoreLog) Close() {
