@@ -17,9 +17,10 @@ func TestStringCamelCase(t *testing.T) {
 		[]string{"myURL", "My URL"},
 		[]string{"go2House", "Go 2 House"},
 		[]string{"uuid to int", "UUID To Int"},
+		[]string{"end 22 end", "End 22 End"},
 	} {
 		if ToCamelCaseSpaced(v[0], " ") != v[1] {
-			t.Fatalf("ToCamelSpaced(\"%s\") failed. Returned: %s", v[0], v[1])
+			t.Fatalf("ToCamelSpaced(\"%s\") failed. Returned: %s Expected: %s", v[0], ToCamelCaseSpaced(v[0], " "), v[1])
 		}
 	}
 

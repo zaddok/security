@@ -66,7 +66,7 @@ func ToWords(text string) []string {
 			}
 			lastChar = v
 		} else if v >= '0' && v <= '9' {
-			if word != "" {
+			if word != "" && (lastChar < '0' || lastChar > '9') {
 				words = append(words, word)
 				word = string(unicode.ToLower(v))
 			} else {
