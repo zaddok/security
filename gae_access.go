@@ -847,11 +847,11 @@ func (am *GaeAccessManager) GetWatchers(objectUuid string, requestor Session) ([
 }
 
 func (am *GaeAccessManager) GetPersonCached(uuid string, session Session) (Person, error) {
-	if uuid == "" {
+	if uuid == "" || session == nil {
 		return nil, nil
 	}
 
-	if !session.HasRole("s1") && session.PersonUuid() != uuid {
+	if !session.IsAuthenticated() {
 		return nil, errors.New("Permission denied.")
 	}
 
@@ -859,31 +859,54 @@ func (am *GaeAccessManager) GetPersonCached(uuid string, session Session) (Perso
 	v, _ := am.personCache.Get(uuid)
 	if v != nil {
 		person = v.(Person)
+		// If user is not admin, only return a subset of fields
+		if !session.HasRole("s1") && session.PersonUuid() != uuid {
+			info := &GaePerson{
+				uuid:      person.Uuid(),
+				firstName: person.FirstName(),
+				lastName:  person.LastName(),
+			}
+			return info, nil
+		}
 		return person, nil
 	}
 
-	r, err := am.GetPerson(uuid, session)
-	if err != nil {
+	// Not in cache, load it
+	k := datastore.NameKey("Person", uuid, nil)
+	k.Namespace = session.Site()
+	i := new(GaePerson)
+	err := am.client.Get(am.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity {
+		return nil, nil
+	} else if err != nil {
 		return nil, err
 	}
-	if r == nil {
-		return nil, nil
+	am.personCache.Set(uuid, i)
+
+	// If user is not admin, only return a subset of fields
+	if !session.HasRole("s1") && session.PersonUuid() != uuid {
+		info := &GaePerson{
+			uuid:      i.Uuid(),
+			firstName: i.FirstName(),
+			lastName:  i.LastName(),
+		}
+		return info, nil
 	}
 
-	return r, nil
+	return i, nil
 }
 
-func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, error) {
+func (am *GaeAccessManager) GetPerson(uuid string, session Session) (Person, error) {
 	if uuid == "" {
 		return nil, nil
 	}
 
-	if !requestor.HasRole("s1") && requestor.PersonUuid() != uuid {
+	if !session.IsAuthenticated() {
 		return nil, errors.New("Permission denied.")
 	}
 
 	k := datastore.NameKey("Person", uuid, nil)
-	k.Namespace = requestor.Site()
+	k.Namespace = session.Site()
 	i := new(GaePerson)
 	err := am.client.Get(am.ctx, k, i)
 	if err == datastore.ErrNoSuchEntity {
@@ -893,6 +916,15 @@ func (am *GaeAccessManager) GetPerson(uuid string, requestor Session) (Person, e
 	}
 
 	am.personCache.Set(uuid, i)
+
+	if !session.HasRole("s1") && session.PersonUuid() != uuid {
+		info := &GaePerson{
+			uuid:      i.Uuid(),
+			firstName: i.FirstName(),
+			lastName:  i.LastName(),
+		}
+		return info, nil
+	}
 
 	return i, nil
 }
