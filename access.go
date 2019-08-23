@@ -122,6 +122,7 @@ type Person interface {
 	LastSigninIP() string
 	Created() *time.Time
 	DisplayName() string
+	HasPassword() bool
 	HasRole(uid string) bool
 }
 

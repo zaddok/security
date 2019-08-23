@@ -290,6 +290,10 @@ func (p *GaePerson) DisplayName() string {
 	return p.firstName + " " + p.lastName
 }
 
+func (p *GaePerson) HasPassword() bool {
+	return !(p.password == nil || *p.password == "" || *p.password == "-")
+}
+
 func (p *GaePerson) HasRole(uid string) bool {
 	if p.roleMap == nil {
 		p.roleMap = make(map[string]bool)
