@@ -22,6 +22,7 @@ type AccessManager interface {
 	// AddPerson creates a new user account. Email must be unique. Password must already be hashed, or nil. Returns the uuid of the created account
 	AddPerson(site, firstName, lastName, email, roles string, password *string, ip string, requestor Session) (string, error)
 	UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error
+	SetPassword(personUuid, password string, updator Session) error
 	DeletePerson(uuid string, updator Session) error
 	SearchPeople(keyword string, requestor Session) ([]Person, error)
 	CheckEmailExists(site, email string) (bool, error)

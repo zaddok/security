@@ -956,6 +956,45 @@ func (am *GaeAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return items[:], nil
 }
 
+// SetPassword changes the password for a person. A user may update their own password or someone with the "Manage Account" role.
+func (am *GaeAccessManager) SetPassword(personUuid, password string, updator Session) error {
+
+	k := datastore.NameKey("Person", personUuid, nil)
+	k.Namespace = updator.Site()
+	i := new(GaePerson)
+	err := am.client.Get(am.ctx, k, i)
+	if err == datastore.ErrNoSuchEntity {
+		return errors.New("Person not found.")
+	} else if err != nil {
+		return err
+	}
+
+	if !updator.HasRole("s3") && updator.PersonUuid() != personUuid {
+		if i.password != nil && *i.password != "" {
+			return errors.New("Permission denied.")
+		}
+	}
+
+	bulk := &GaeEntityAuditLogCollection{}
+	bulk.SetEntityUuidPersonUuid(personUuid, updator.PersonUuid(), updator.DisplayName())
+	if len(password) > 0 {
+		bulk.AddItem("Password", "", "")
+		i.password = HashPassword(password)
+	}
+	if bulk.HasUpdates() {
+		if err = am.AddEntityChangeLog(bulk, updator); err != nil {
+			am.Error(updator, `datastore`, "SetPerson() failed persisting changelog. Error: %v", err)
+			return err
+		}
+		if _, err := am.client.Put(am.ctx, k, i); err != nil {
+			am.Error(updator, `datastore`, "SetPerson() failed. Error: %v", err)
+			return err
+		}
+	}
+	return nil
+
+}
+
 func (am *GaeAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
 	if !updator.HasRole("s3") && updator.PersonUuid() != uuid {
 		return errors.New("Permission denied.")

@@ -503,6 +503,10 @@ func (am *CqlAccessManager) GetPeople(requestor Session) ([]Person, error) {
 	return nil, errors.New("unimplemented")
 }
 
+func (am *CqlAccessManager) SetPassword(personUuid, password string, updator Session) error {
+	return errors.New("unimplemented")
+}
+
 func (am *CqlAccessManager) UpdatePerson(uuid, firstName, lastName, email, roles, password string, updator Session) error {
 	return errors.New("unimplemented")
 }
