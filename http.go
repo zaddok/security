@@ -490,7 +490,7 @@ func IpFromRequest(r *http.Request) string {
 		if len(providedIp) > 0 {
 			i := strings.Index(providedIp, ",")
 			if i > 0 {
-				providedIp = providedIp[0 : i-1]
+				providedIp = providedIp[0 : i]
 			}
 			return strings.TrimSpace(providedIp)
 		}
